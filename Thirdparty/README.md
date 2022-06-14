@@ -1,0 +1,1 @@
+This is where you'll drop the `boost` folder.
