@@ -1,0 +1,7 @@
+.git/
+.vs/
+Thirdparty/
+[Dd]ebug/
+[Rr]elease/
+x64/
+*.vcxproj.*
