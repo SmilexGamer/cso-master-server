@@ -25,7 +25,7 @@ private:
 	void parsePacket_UMsg(TCPConnection::Packet::pointer);
 
 private:
-	std::thread _packet_UMsgThread;
-	std::deque<TCPConnection::Packet::pointer> _packet_UMsgQueue{};
+	thread _packet_UMsgThread;
+	deque<TCPConnection::Packet::pointer> _packet_UMsgQueue{};
 	bool _running{ false };
 };

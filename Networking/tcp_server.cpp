@@ -11,19 +11,19 @@ TCPServer::~TCPServer() {
 
 void TCPServer::Start() {
 	if (_serverThread.joinable()) {
-		std::cout << "[TCPServer] Thread is already running!" << std::endl;
+		cout << "[TCPServer] Thread is already running!\n";
 		return;
 	}
 
-	std::cout << "[TCPServer] Starting!" << std::endl;
+	cout << "[TCPServer] Starting!\n";
 
 	_connections.clear();
-	_serverThread = std::thread(&TCPServer::run, this);
+	_serverThread = thread(&TCPServer::run, this);
 }
 
 void TCPServer::Stop() {
 	if (!_serverThread.joinable()) {
-		std::cout << "[TCPServer] Thread is already shut down!" << std::endl;
+		cout << "[TCPServer] Thread is already shut down!\n";
 		return;
 	}
 
@@ -31,32 +31,32 @@ void TCPServer::Stop() {
 }
 
 int TCPServer::run() {
-	std::cout << "[TCPServer] Thread starting!" << std::endl;
+	cout << "[TCPServer] Thread starting!\n";
 
 	try {
 		startAccept();
 		_ioContext.run();
 	}
-	catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
+	catch (exception& e) {
+		cerr << e.what() << endl;
 		return -1;
 	}
 
-	std::cout << "[TCPServer] Thread shutting down!" << std::endl;
+	cout << "[TCPServer] Thread shutting down!\n";
 	return 0;
 }
 
 int TCPServer::shutdown() {
 	try {
 		if (_serverThread.joinable()) {
-			std::cout << "[TCPServer] Shutting down!" << std::endl;
+			cout << "[TCPServer] Shutting down!\n";
 
 			_ioContext.stop();
 			_serverThread.detach();
 		}
 	}
-	catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
+	catch (exception& e) {
+		cerr << e.what() << endl;
 		return -1;
 	}
 	return 0;
@@ -68,13 +68,13 @@ void TCPServer::startAccept() {
 	// asynchronously accept the connection
 	_acceptor.async_accept(*_socket, [this](const boost::system::error_code& error) {
 		if (!error) {
-			auto connection = TCPConnection::Create(std::move(*_socket));
+			auto connection = TCPConnection::Create(move(*_socket));
 
 			_connections.insert(connection);
 
 			connection->Start(
 				[this](TCPConnection::Packet::pointer packet) { if (OnClientPacket) OnClientPacket(packet); },
-				[&, weak = std::weak_ptr(connection)]{
+				[&, weak = weak_ptr(connection)]{
 					if (auto shared = weak.lock(); shared && _connections.erase(shared)) {
 						if (OnDisconnect) OnDisconnect(shared);
 					}
@@ -82,7 +82,7 @@ void TCPServer::startAccept() {
 			);
 
 			// Tell the client that it has successfully connected to the server
-			connection->WritePacket(std::vector<unsigned char>(connection->WelcomeMessage.begin(), connection->WelcomeMessage.end()));
+			connection->WritePacket(vector<unsigned char>(connection->WelcomeMessage.begin(), connection->WelcomeMessage.end()));
 
 			if (OnConnect) {
 				OnConnect(connection);

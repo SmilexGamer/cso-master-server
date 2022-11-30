@@ -7,11 +7,11 @@ int main() {
 	PacketManager packetManager;
 
 	server.OnConnect = [](TCPConnection::pointer connection) {
-		std::cout << std::format("[TCPServer] Client ({}) has connected to the server", connection->GetEndPoint()) << std::endl;
+		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetEndPoint());
 	};
 
 	server.OnDisconnect = [](TCPConnection::pointer connection) {
-		std::cout << std::format("[TCPServer] Client ({}) has disconnected from the server", connection->GetEndPoint()) << std::endl;
+		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetEndPoint());
 	};
 
 	server.OnClientPacket = [&packetManager](TCPConnection::Packet::pointer packet) {
@@ -24,6 +24,6 @@ int main() {
 	packetManager.packet_LoginManager.Start();
 	packetManager.packet_UMsgManager.Start();
 	
-	std::cin.get();
+	cin.get();
 	return 0;
 }

@@ -7,19 +7,19 @@ PacketManager::~PacketManager() {
 
 void PacketManager::Start() {
 	if (_packetThread.joinable()) {
-		std::cout << "[PacketManager] Thread is already running!" << std::endl;
+		cout << "[PacketManager] Thread is already running!\n";
 		return;
 	}
 
-	std::cout << "[PacketManager] Starting!" << std::endl;
+	cout << "[PacketManager] Starting!\n";
 
 	_packetQueue.clear();
-	_packetThread = std::thread(&PacketManager::run, this);
+	_packetThread = thread(&PacketManager::run, this);
 }
 
 void PacketManager::Stop() {
 	if (!_packetThread.joinable()) {
-		std::cout << "[PacketManager] Thread is already shut down!" << std::endl;
+		cout << "[PacketManager] Thread is already shut down!\n";
 		return;
 	}
 
@@ -28,32 +28,35 @@ void PacketManager::Stop() {
 
 void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 	if (!_running) {
-		std::cout << "[PacketManager] Thread is shut down! Please call Start() again to begin queueing!" << std::endl;
+		cout << "[PacketManager] Thread is shut down! Please call Start() again to begin queueing!\n";
 		return;
 	}
 
-	std::cout << std::format("[PacketManager] Queueing packet from {}", packet->GetConnection()->GetEndPoint()) << std::endl;
+	cout << format("[PacketManager] Queueing packet from {}\n", packet->GetConnection()->GetEndPoint());
 
 	_packetQueue.push_back(packet);
 }
 
 void PacketManager::run() {
-	std::cout << "[PacketManager] Thread starting!" << std::endl;
+	cout << "[PacketManager] Thread starting!\n";
 
 	_running = true;
 	while (_running) {
-		if (_packetQueue.size() == 0) continue;
+		if (_packetQueue.size() == 0) {
+			Sleep(1);
+			continue;
+		}
 
 		parsePacket(_packetQueue.front());
 		_packetQueue.pop_front();
 	}
 
-	std::cout << "[PacketManager] Thread shutting down!" << std::endl;
+	cout << "[PacketManager] Thread shutting down!\n";
 }
 
 void PacketManager::shutdown() {
 	if (_packetThread.joinable()) {
-		std::cout << "[PacketManager] Shutting down!" << std::endl;
+		cout << "[PacketManager] Shutting down!\n";
 
 		_running = false;
 		_packetThread.detach();
@@ -82,7 +85,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 	}
 	default:
 	{
-		std::cout << std::format("[PacketManager] Client ({}) has sent unregistered packet ID {}!", packet->GetConnection()->GetEndPoint(), ID & 0xFF) << std::endl;
+		cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetEndPoint(), ID & 0xFF);
 		break;
 	}
 	}

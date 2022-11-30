@@ -7,19 +7,19 @@ Packet_LoginManager::~Packet_LoginManager() {
 
 void Packet_LoginManager::Start() {
 	if (_packet_LoginThread.joinable()) {
-		std::cout << "[Packet_LoginManager] Thread is already running!" << std::endl;
+		cout << "[Packet_LoginManager] Thread is already running!\n";
 		return;
 	}
 
-	std::cout << "[Packet_LoginManager] Starting!" << std::endl;
+	cout << "[Packet_LoginManager] Starting!\n";
 
 	_packet_LoginQueue.clear();
-	_packet_LoginThread = std::thread(&Packet_LoginManager::run, this);
+	_packet_LoginThread = thread(&Packet_LoginManager::run, this);
 }
 
 void Packet_LoginManager::Stop() {
 	if (!_packet_LoginThread.joinable()) {
-		std::cout << "[Packet_LoginManager] Thread is already shut down!" << std::endl;
+		cout << "[Packet_LoginManager] Thread is already shut down!\n";
 		return;
 	}
 
@@ -28,32 +28,35 @@ void Packet_LoginManager::Stop() {
 
 void Packet_LoginManager::QueuePacket_Login(TCPConnection::Packet::pointer packet) {
 	if (!_running) {
-		std::cout << "[Packet_LoginManager] Thread is shut down! Please call Start() again to begin queueing!" << std::endl;
+		cout << "[Packet_LoginManager] Thread is shut down! Please call Start() again to begin queueing!\n";
 		return;
 	}
 
-	std::cout << std::format("[Packet_LoginManager] Queueing Packet_Login from {}", packet->GetConnection()->GetEndPoint()) << std::endl;
+	cout << format("[Packet_LoginManager] Queueing Packet_Login from {}\n", packet->GetConnection()->GetEndPoint());
 
 	_packet_LoginQueue.push_back(packet);
 }
 
 void Packet_LoginManager::run() {
-	std::cout << "[Packet_LoginManager] Thread starting!" << std::endl;
+	cout << "[Packet_LoginManager] Thread starting!\n";
 
 	_running = true;
 	while (_running) {
-		if (_packet_LoginQueue.size() == 0) continue;
+		if (_packet_LoginQueue.size() == 0) {
+			Sleep(1);
+			continue;
+		}
 
 		parsePacket_Login(_packet_LoginQueue.front());
 		_packet_LoginQueue.pop_front();
 	}
 
-	std::cout << "[Packet_LoginManager] Thread shutting down!" << std::endl;
+	cout << "[Packet_LoginManager] Thread shutting down!\n";
 }
 
 void Packet_LoginManager::shutdown() {
 	if (_packet_LoginThread.joinable()) {
-		std::cout << "[Packet_LoginManager] Shutting down!" << std::endl;
+		cout << "[Packet_LoginManager] Shutting down!\n";
 
 		_running = false;
 		_packet_LoginThread.detach();
@@ -61,19 +64,19 @@ void Packet_LoginManager::shutdown() {
 }
 
 void Packet_LoginManager::parsePacket_Login(TCPConnection::Packet::pointer packet) {
-	std::string username = packet->ReadString();
+	string username = packet->ReadString();
 	unsigned short passwordSize = packet->ReadUInt16_LE();
-	std::string password = packet->ReadString();
-	std::vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
+	string password = packet->ReadString();
+	vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
 	unsigned long pcBang = packet->ReadUInt32_LE();
 	unsigned long ipAddress = packet->ReadUInt32_BE();
 
-	std::cout << std::format("[Packet_LoginManager] Client ({}) has sent Packet_Login - username: {}, passwordSize: {}, password: {}, hardwareID:", packet->GetConnection()->GetEndPoint(), username.c_str(), passwordSize, password.c_str());
+	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login - username: {}, passwordSize: {}, password: {}, hardwareID:", packet->GetConnection()->GetEndPoint(), username.c_str(), passwordSize, password.c_str());
 
 	for (auto c : hardwareID)
 	{
-		std::cout << std::format(" {}", c & 0xFF);
+		cout << format(" {}", c & 0xFF);
 	}
 
-	std::cout << std::format(", pcBang: {}, ipAddress: {}.{}.{}.{}", pcBang, (ipAddress >> 24) & 0xFF, (ipAddress >> 16) & 0xFF, (ipAddress >> 8) & 0xFF, ipAddress & 0xFF) << std::endl;
+	cout << format(", pcBang: {}, ipAddress: {}.{}.{}.{}\n", pcBang, (ipAddress >> 24) & 0xFF, (ipAddress >> 16) & 0xFF, (ipAddress >> 8) & 0xFF, ipAddress & 0xFF);
 }

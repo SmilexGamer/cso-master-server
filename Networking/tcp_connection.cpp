@@ -1,7 +1,7 @@
 #include "tcp_connection.h"
 #include <iostream>
 
-TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, std::vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
+TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
 	_readOffset = 0;
 	_writeOffset = 0;
 
@@ -13,32 +13,32 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 TCPConnection::Packet::~Packet() {
 	if (_source == PacketSource::Client && _readOffset < _length + 4)
 	{
-		std::cout << std::format("[TCPConnection::Packet] Packet from {} has unread data (_readOffset: {}, _length: {}):", _connection->GetEndPoint(), _readOffset, _length);
+		cout << format("[TCPConnection::Packet] Packet from {} has unread data (_readOffset: {}, _length: {}):", _connection->GetEndPoint(), _readOffset, _length);
 
 		for (auto c : ReadArray_UInt8(_length + 4 - _readOffset))
 		{
-			std::cout << std::format(" {}", c & 0xFF);
+			cout << format(" {}", c & 0xFF);
 		}
 
-		std::cout << std::endl;
+		cout << endl;
 	}
 }
 
-TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(std::move(socket)) {
-	std::stringstream endpoint;
+TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(move(socket)) {
+	stringstream endpoint;
 	endpoint << _socket.remote_endpoint();
 
 	_endpoint = endpoint.str();
 }
 
 void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler) {
-	_packetHandler = std::move(packetHandler);
-	_errorHandler = std::move(errorHandler);
+	_packetHandler = move(packetHandler);
+	_errorHandler = move(errorHandler);
 
 	asyncRead();
 }
 
-void TCPConnection::WritePacket(const std::vector<unsigned char>& buffer) {
+void TCPConnection::WritePacket(const vector<unsigned char>& buffer) {
 	bool queueIdle = _outgoingPackets.empty();
 	_outgoingPackets.push(buffer);
 
@@ -62,17 +62,17 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		return;
 	}
 
-	std::vector<unsigned char> buffer(bytesTransferred);
+	vector<unsigned char> buffer(bytesTransferred);
 	buffer_copy(io::buffer(buffer), _streamBuf.data());
 
 	auto packet = TCPConnection::Packet::Create(PacketSource::Client, shared_from_this(), buffer);
 
 	if (!packet->IsValid()) {
-		std::cout << std::format("[TCPConnection] Client ({}) sent packet with invalid signature!", _endpoint) << std::endl;
+		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		asyncRead();
 	} else if (!packet->GetLength()) {
-		std::cout << std::format("[TCPConnection] Client ({}) sent packet with size 0!", _endpoint) << std::endl;
+		cout << format("[TCPConnection] Client ({}) sent packet with size 0!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		asyncRead();
 	} else {
@@ -85,20 +85,20 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 				return;
 			}
 
-			std::vector<unsigned char> buffer(4 + bytesTransferred);
+			vector<unsigned char> buffer(4 + bytesTransferred);
 			buffer_copy(io::buffer(buffer), self->_streamBuf.data());
 			self->_streamBuf.consume(4 + bytesTransferred);
 
 			packet->SetBuffer(buffer);
 
-			std::cout << std::format("[TCPConnection] Received packet from {}:", self->GetEndPoint());
+			cout << format("[TCPConnection] Received packet from {}:", self->GetEndPoint());
 
 			for (auto c : buffer)
 			{
-				std::cout << std::format(" {}", c & 0xFF);
+				cout << format(" {}", c & 0xFF);
 			}
 
-			std::cout << std::endl;
+			cout << endl;
 
 			self->_packetHandler(packet);
 			self->asyncRead();
@@ -121,14 +121,14 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 		return;
 	}
 
-	std::cout << std::format("[TCPConnection] Sent packet to {}:", GetEndPoint());
+	cout << format("[TCPConnection] Sent packet to {}:", GetEndPoint());
 
 	for (auto c : _outgoingPackets.front())
 	{
-		std::cout << std::format(" {}", c & 0xFF);
+		cout << format(" {}", c & 0xFF);
 	}
 
-	std::cout << std::endl;
+	cout << endl;
 
 	_outgoingPackets.pop();
 

@@ -13,9 +13,9 @@ enum class IPV {
 };
 
 class TCPServer {
-	using OnConnectHandler = std::function<void(TCPConnection::pointer)>;
-	using OnDisconnectHandler = std::function<void(TCPConnection::pointer)>;
-	using OnClientPacketHandler = std::function<void(TCPConnection::Packet::pointer)>;
+	using OnConnectHandler = function<void(TCPConnection::pointer)>;
+	using OnDisconnectHandler = function<void(TCPConnection::pointer)>;
+	using OnClientPacketHandler = function<void(TCPConnection::Packet::pointer)>;
 
 public:
 	TCPServer(IPV ipv, int port);
@@ -37,9 +37,9 @@ private:
 	IPV _ipVersion;
 	int _port;
 
-	std::thread _serverThread;
+	thread _serverThread;
 	io::io_context _ioContext;
 	io::ip::tcp::acceptor _acceptor;
-	std::optional<io::ip::tcp::socket> _socket;
-	std::unordered_set<TCPConnection::pointer> _connections {};
+	optional<io::ip::tcp::socket> _socket;
+	unordered_set<TCPConnection::pointer> _connections {};
 };

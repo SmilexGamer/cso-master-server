@@ -3,6 +3,7 @@
 #include <queue>
 #include <vector>
 
+using namespace std;
 using boost::asio::ip::tcp;
 namespace io = boost::asio;
 
@@ -11,17 +12,17 @@ enum class PacketSource {
 	Server
 };
 
-class TCPConnection : public std::enable_shared_from_this<TCPConnection> {
+class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
-	using pointer = std::shared_ptr<TCPConnection>;
+	using pointer = shared_ptr<TCPConnection>;
 
-	class Packet : public std::enable_shared_from_this<TCPConnection::Packet> {
+	class Packet : public enable_shared_from_this<TCPConnection::Packet> {
 	public:
 		~Packet();
 
-		using pointer = std::shared_ptr<TCPConnection::Packet>;
+		using pointer = shared_ptr<TCPConnection::Packet>;
 
-		static pointer Create(PacketSource source, TCPConnection::pointer connection, std::vector<unsigned char> buffer = {}) {
+		static pointer Create(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer = {}) {
 			return pointer(new TCPConnection::Packet(source, connection, buffer));
 		}
 
@@ -53,25 +54,25 @@ public:
 			return _length;
 		}
 
-		void SetBuffer(std::vector<unsigned char> buffer) noexcept {
+		void SetBuffer(vector<unsigned char> buffer) noexcept {
 			_buffer = buffer;
 		}
-		const std::vector<unsigned char> GetBuffer() const noexcept {
+		const vector<unsigned char> GetBuffer() const noexcept {
 			return _buffer;
 		}
 
-		std::string ByteStr(bool LE) const noexcept {
-			std::stringstream byteStr;
-			byteStr << std::hex << std::setfill('0');
+		string ByteStr(bool LE) const noexcept {
+			stringstream byteStr;
+			byteStr << hex << setfill('0');
 
 			if (LE == true) {
 				for (unsigned long long i = 0; i < _buffer.size(); ++i)
-					byteStr << std::setw(2) << (unsigned short)_buffer[i] << " ";
+					byteStr << setw(2) << (unsigned short)_buffer[i] << " ";
 			}
 			else {
 				unsigned long long size = _buffer.size();
 				for (unsigned long long i = 0; i < size; ++i)
-					byteStr << std::setw(2) << (unsigned short)_buffer[size - i - 1] << " ";
+					byteStr << setw(2) << (unsigned short)_buffer[size - i - 1] << " ";
 			}
 
 			return byteStr.str();
@@ -100,7 +101,7 @@ public:
 		void WriteBool(bool val) noexcept {
 			WriteBytes<bool>(val);
 		}
-		void WriteString(const std::string& str) noexcept {
+		void WriteString(const string& str) noexcept {
 			for (const unsigned char& s : str) WriteInt8(s);
 		}
 		void WriteInt8(char val) noexcept {
@@ -170,10 +171,10 @@ public:
 			WriteUInt64_BE(u.inum);
 		}
 
-		void WriteArray_Int8(const std::vector<char>& vec) noexcept {
+		void WriteArray_Int8(const vector<char>& vec) noexcept {
 			for (const char& v : vec) WriteInt8(v);
 		}
-		void WriteArray_UInt8(const std::vector<unsigned char>& vec) noexcept {
+		void WriteArray_UInt8(const vector<unsigned char>& vec) noexcept {
 			for (const unsigned char& v : vec) WriteUInt8(v);
 		}
 
@@ -209,8 +210,8 @@ public:
 		bool ReadBool() noexcept {
 			return ReadBytes<bool>();
 		}
-		std::string ReadString() noexcept {
-			std::string result;
+		string ReadString() noexcept {
+			string result;
 
 			char curChar = ReadInt8();
 			while(curChar != '\0') {
@@ -279,8 +280,8 @@ public:
 			return ReadBytes<double>(false);
 		}
 
-		std::vector<char> ReadArray_Int8(int len) noexcept {
-			std::vector<char> result;
+		vector<char> ReadArray_Int8(int len) noexcept {
+			vector<char> result;
 
 			while (len) {
 				result.push_back(ReadInt8());
@@ -289,8 +290,8 @@ public:
 
 			return result;
 		}
-		std::vector<unsigned char> ReadArray_UInt8(int len) noexcept {
-			std::vector<unsigned char> result;
+		vector<unsigned char> ReadArray_UInt8(int len) noexcept {
+			vector<unsigned char> result;
 
 			while (len) {
 				result.push_back(ReadUInt8());
@@ -306,12 +307,12 @@ public:
 		}
 
 	private:
-		explicit Packet(PacketSource source, TCPConnection::pointer connection, std::vector<unsigned char> buffer);
+		explicit Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer);
 
 	private:
 		PacketSource _source;
 		TCPConnection::pointer _connection;
-		std::vector<unsigned char> _buffer;
+		vector<unsigned char> _buffer;
 
 		unsigned char _signature;
 		unsigned char _number;
@@ -321,25 +322,25 @@ public:
 		int _writeOffset;
 	};
 
-	using PacketHandler = std::function<void(TCPConnection::Packet::pointer)>;
-	using ErrorHandler = std::function<void()>;
+	using PacketHandler = function<void(TCPConnection::Packet::pointer)>;
+	using ErrorHandler = function<void()>;
 
 	static pointer Create(io::ip::tcp::socket&& socket) {
-		return pointer(new TCPConnection(std::move(socket)));
+		return pointer(new TCPConnection(move(socket)));
 	}
 
 	tcp::socket& Socket() {
 		return _socket;
 	}
 
-	const std::string& GetEndPoint() const {
+	const string& GetEndPoint() const {
 		return _endpoint;
 	}
 
-	const std::string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
+	const string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
-	void WritePacket(const std::vector<unsigned char>& buffer);
+	void WritePacket(const vector<unsigned char>& buffer);
 
 private:
 	explicit TCPConnection(io::ip::tcp::socket&& socket);
@@ -352,9 +353,9 @@ private:
 
 private:
 	tcp::socket _socket;
-	std::string _endpoint;
+	string _endpoint;
 
-	std::queue<std::vector<unsigned char>> _outgoingPackets;
+	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingPacketNumber = 1;
 	io::streambuf _streamBuf {4 + 65536};
 

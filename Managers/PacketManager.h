@@ -82,7 +82,7 @@ public:
 	Packet_UMsgManager packet_UMsgManager;
 
 private:
-	std::thread _packetThread;
-	std::deque<TCPConnection::Packet::pointer> _packetQueue{};
+	thread _packetThread;
+	deque<TCPConnection::Packet::pointer> _packetQueue{};
 	bool _running{ false };
 };

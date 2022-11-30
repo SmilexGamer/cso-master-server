@@ -18,7 +18,7 @@ private:
 	void parsePacket_Login(TCPConnection::Packet::pointer);
 
 private:
-	std::thread _packet_LoginThread;
-	std::deque<TCPConnection::Packet::pointer> _packet_LoginQueue{};
+	thread _packet_LoginThread;
+	deque<TCPConnection::Packet::pointer> _packet_LoginQueue{};
 	bool _running{ false };
 };

@@ -7,19 +7,19 @@ Packet_VersionManager::~Packet_VersionManager() {
 
 void Packet_VersionManager::Start() {
 	if (_packet_VersionThread.joinable()) {
-		std::cout << "[Packet_VersionManager] Thread is already running!" << std::endl;
+		cout << "[Packet_VersionManager] Thread is already running!\n";
 		return;
 	}
 
-	std::cout << "[Packet_VersionManager] Starting!" << std::endl;
+	cout << "[Packet_VersionManager] Starting!\n";
 
 	_packet_VersionQueue.clear();
-	_packet_VersionThread = std::thread(&Packet_VersionManager::run, this);
+	_packet_VersionThread = thread(&Packet_VersionManager::run, this);
 }
 
 void Packet_VersionManager::Stop() {
 	if (!_packet_VersionThread.joinable()) {
-		std::cout << "[Packet_VersionManager] Thread is already shut down!" << std::endl;
+		cout << "[Packet_VersionManager] Thread is already shut down!\n";
 		return;
 	}
 
@@ -28,32 +28,35 @@ void Packet_VersionManager::Stop() {
 
 void Packet_VersionManager::QueuePacket_Version(TCPConnection::Packet::pointer packet) {
 	if (!_running) {
-		std::cout << "[Packet_VersionManager] Thread is shut down! Please call Start() again to begin queueing!" << std::endl;
+		cout << "[Packet_VersionManager] Thread is shut down! Please call Start() again to begin queueing!\n";
 		return;
 	}
 
-	std::cout << std::format("[Packet_VersionManager] Queueing Packet_Version from {}", packet->GetConnection()->GetEndPoint()) << std::endl;
+	cout << format("[Packet_VersionManager] Queueing Packet_Version from {}\n", packet->GetConnection()->GetEndPoint());
 
 	_packet_VersionQueue.push_back(packet);
 }
 
 void Packet_VersionManager::run() {
-	std::cout << "[Packet_VersionManager] Thread starting!" << std::endl;
+	cout << "[Packet_VersionManager] Thread starting!\n";
 
 	_running = true;
 	while (_running) {
-		if (_packet_VersionQueue.size() == 0) continue;
+		if (_packet_VersionQueue.size() == 0) {
+			Sleep(1);
+			continue;
+		}
 
 		parsePacket_Version(_packet_VersionQueue.front());
 		_packet_VersionQueue.pop_front();
 	}
 
-	std::cout << "[Packet_VersionManager] Thread shutting down!" << std::endl;
+	cout << "[Packet_VersionManager] Thread shutting down!\n";
 }
 
 void Packet_VersionManager::shutdown() {
 	if (_packet_VersionThread.joinable()) {
-		std::cout << "[Packet_VersionManager] Shutting down!" << std::endl;
+		cout << "[Packet_VersionManager] Shutting down!\n";
 
 		_running = false;
 		_packet_VersionThread.detach();
@@ -66,14 +69,14 @@ void Packet_VersionManager::parsePacket_Version(TCPConnection::Packet::pointer p
 	unsigned long clientCRC = packet->ReadUInt32_LE();
 	unsigned long clientNARCRC = packet->ReadUInt32_LE();
 
-	std::cout << std::format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientCRC: {}, clientNARCRC: {}", packet->GetConnection()->GetEndPoint(), launcherVersion & 0xFF, clientVersion, clientCRC, clientNARCRC) << std::endl;
+	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientCRC: {}, clientNARCRC: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion & 0xFF, clientVersion, clientCRC, clientNARCRC);
 
 	sendPacket_Version(packet->GetConnection());
 }
 
 void Packet_VersionManager::sendPacket_Version(TCPConnection::pointer connection) {
 	if (!_running) {
-		std::cout << "[Packet_VersionManager] Thread is shut down! Please call Start() again to send Packet_Version!" << std::endl;
+		cout << "[Packet_VersionManager] Thread is shut down! Please call Start() again to send Packet_Version!\n";
 		return;
 	}
 
