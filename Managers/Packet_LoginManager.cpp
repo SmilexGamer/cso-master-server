@@ -1,5 +1,8 @@
 #include "Packet_LoginManager.h"
+#include "PacketManager.h"
 #include <iostream>
+
+PacketManager packetManager;
 
 Packet_LoginManager::~Packet_LoginManager() {
 	shutdown();
@@ -73,8 +76,7 @@ void Packet_LoginManager::parsePacket_Login(TCPConnection::Packet::pointer packe
 
 	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login - username: {}, passwordSize: {}, password: {}, hardwareID:", packet->GetConnection()->GetEndPoint(), username.c_str(), passwordSize, password.c_str());
 
-	for (auto c : hardwareID)
-	{
+	for (auto c : hardwareID) {
 		cout << format(" {}", c & 0xFF);
 	}
 

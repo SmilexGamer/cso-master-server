@@ -1,4 +1,5 @@
 #include "Packet_UMsgManager.h"
+#include "PacketManager.h"
 #include <iostream>
 
 Packet_UMsgManager::~Packet_UMsgManager() {
@@ -66,12 +67,10 @@ void Packet_UMsgManager::shutdown() {
 void Packet_UMsgManager::parsePacket_UMsg(TCPConnection::Packet::pointer packet) {
 	unsigned char subID = packet->ReadUInt8();
 
-	switch (subID)
-	{
-	default:
-	{
-		cout << format("[Packet_UMsgManager] Client ({}) has sent unregistered Packet_UMsg subID {}!\n", packet->GetConnection()->GetEndPoint(), subID & 0xFF);
-		break;
-	}
+	switch (subID) {
+		default: {
+			cout << format("[Packet_UMsgManager] Client ({}) has sent unregistered Packet_UMsg subID {}!\n", packet->GetConnection()->GetEndPoint(), subID & 0xFF);
+			break;
+		}
 	}
 }

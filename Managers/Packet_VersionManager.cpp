@@ -1,4 +1,5 @@
 #include "Packet_VersionManager.h"
+#include "PacketManager.h"
 #include <iostream>
 
 Packet_VersionManager::~Packet_VersionManager() {
@@ -75,11 +76,6 @@ void Packet_VersionManager::parsePacket_Version(TCPConnection::Packet::pointer p
 }
 
 void Packet_VersionManager::sendPacket_Version(TCPConnection::pointer connection) {
-	if (!_running) {
-		cout << "[Packet_VersionManager] Thread is shut down! Please call Start() again to send Packet_Version!\n";
-		return;
-	}
-
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { 0 });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Version });
 	packet->Send();
 }

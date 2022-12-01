@@ -1,8 +1,5 @@
 #pragma once
 #include "tcp_connection.h"
-#include "Packet_VersionManager.h"
-#include "Packet_LoginManager.h"
-#include "Packet_UMsgManager.h"
 #include <thread>
 #include <deque>
 
@@ -75,11 +72,6 @@ private:
 	void run();
 	void shutdown();
 	void parsePacket(TCPConnection::Packet::pointer);
-
-public:
-	Packet_VersionManager packet_VersionManager;
-	Packet_LoginManager packet_LoginManager;
-	Packet_UMsgManager packet_UMsgManager;
 
 private:
 	thread _packetThread;

@@ -20,10 +20,19 @@ int main() {
 
 	server.Start();
 	packetManager.Start();
-	packetManager.packet_VersionManager.Start();
-	packetManager.packet_LoginManager.Start();
-	packetManager.packet_UMsgManager.Start();
 	
-	cin.get();
+	string command;
+	while (getline(cin >> ws, command)) {
+		if (command == "stop") {
+			packetManager.Stop();
+			server.Stop();
+			break;
+		}
+		else {
+			cout << "Available commands: stop\n";
+			continue;
+		}
+	}
+
 	return 0;
 }

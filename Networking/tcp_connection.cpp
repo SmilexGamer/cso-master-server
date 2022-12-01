@@ -6,17 +6,24 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 	_writeOffset = 0;
 
 	_signature = source == PacketSource::Client ? ReadUInt8() : PacketSignature;
-	_number = source == PacketSource::Client ? ReadUInt8() : _connection->_outgoingPacketNumber++;
+	_number = source == PacketSource::Client ? ReadUInt8() : _connection->_outgoingPacketNumber;
 	_length = source == PacketSource::Client ? ReadUInt16_LE() : (unsigned short)_buffer.size();
+
+	if (source == PacketSource::Server) {
+		if (_connection->_outgoingPacketNumber == 255) {
+			_connection->_outgoingPacketNumber = 1;
+		}
+		else {
+			_connection->_outgoingPacketNumber++;
+		}
+	}
 }
 
 TCPConnection::Packet::~Packet() {
-	if (_source == PacketSource::Client && _readOffset < _length + 4)
-	{
+	if (_source == PacketSource::Client && _readOffset < _length + 4) {
 		cout << format("[TCPConnection::Packet] Packet from {} has unread data (_readOffset: {}, _length: {}):", _connection->GetEndPoint(), _readOffset, _length);
 
-		for (auto c : ReadArray_UInt8(_length + 4 - _readOffset))
-		{
+		for (auto c : ReadArray_UInt8(_length + 4 - _readOffset)) {
 			cout << format(" {}", c & 0xFF);
 		}
 
@@ -71,11 +78,13 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		asyncRead();
-	} else if (!packet->GetLength()) {
+	}
+	else if (!packet->GetLength()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with size 0!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		asyncRead();
-	} else {
+	}
+	else {
 		io::async_read(_socket, _streamBuf, io::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 		(boost::system::error_code ec, size_t bytesTransferred) {
 			if (ec) {
@@ -93,8 +102,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 			cout << format("[TCPConnection] Received packet from {}:", self->GetEndPoint());
 
-			for (auto c : buffer)
-			{
+			for (auto c : buffer) {
 				cout << format(" {}", c & 0xFF);
 			}
 
@@ -123,8 +131,7 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 
 	cout << format("[TCPConnection] Sent packet to {}:", GetEndPoint());
 
-	for (auto c : _outgoingPackets.front())
-	{
+	for (auto c : _outgoingPackets.front()) {
 		cout << format(" {}", c & 0xFF);
 	}
 

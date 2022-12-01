@@ -1,6 +1,8 @@
 #include "tcp_server.h"
 #include <iostream>
 
+const string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
+
 using boost::asio::ip::tcp;
 TCPServer::TCPServer(IPV ipv, int port) : _ipVersion(ipv), _port(port), 
 	_acceptor(_ioContext, tcp::endpoint(_ipVersion == IPV::V4 ? tcp::v4() : tcp::v6(), _port)) {}
@@ -59,6 +61,7 @@ int TCPServer::shutdown() {
 		cerr << e.what() << endl;
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -74,7 +77,7 @@ void TCPServer::startAccept() {
 
 			connection->Start(
 				[this](TCPConnection::Packet::pointer packet) { if (OnClientPacket) OnClientPacket(packet); },
-				[&, weak = weak_ptr(connection)]{
+				[&, weak = weak_ptr(connection)] {
 					if (auto shared = weak.lock(); shared && _connections.erase(shared)) {
 						if (OnDisconnect) OnDisconnect(shared);
 					}
@@ -82,7 +85,7 @@ void TCPServer::startAccept() {
 			);
 
 			// Tell the client that it has successfully connected to the server
-			connection->WritePacket(vector<unsigned char>(connection->WelcomeMessage.begin(), connection->WelcomeMessage.end()));
+			connection->WritePacket(vector<unsigned char>(WelcomeMessage.begin(), WelcomeMessage.end()));
 
 			if (OnConnect) {
 				OnConnect(connection);

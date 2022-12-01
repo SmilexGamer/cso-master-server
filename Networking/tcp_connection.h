@@ -32,25 +32,22 @@ public:
 			return _connection;
 		}
 
-		void WriteHeader() {
+		void WriteHeader() noexcept {
 			_buffer.insert(_buffer.begin(), _length << 8);
 			_buffer.insert(_buffer.begin(), _length);
 			_buffer.insert(_buffer.begin(), _number);
 			_buffer.insert(_buffer.begin(), _signature);
-
-			if (_connection->_outgoingPacketNumber > 255)
-				_connection->_outgoingPacketNumber = 1;
 		}
 
-		bool IsValid() {
+		bool IsValid() const noexcept {
 			return _signature == PacketSignature;
 		}
 
-		unsigned char GetNumber() {
+		unsigned char GetNumber() noexcept {
 			return _number;
 		}
 
-		unsigned short GetLength() {
+		unsigned short GetLength() noexcept {
 			return _length;
 		}
 
@@ -329,15 +326,13 @@ public:
 		return pointer(new TCPConnection(move(socket)));
 	}
 
-	tcp::socket& Socket() {
+	tcp::socket& GetSocket() {
 		return _socket;
 	}
 
 	const string& GetEndPoint() const {
 		return _endpoint;
 	}
-
-	const string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer);
