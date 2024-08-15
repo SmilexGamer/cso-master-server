@@ -5,30 +5,47 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 	_readOffset = 0;
 	_writeOffset = 0;
 
-	_signature = source == PacketSource::Client ? ReadUInt8() : PacketSignature;
-	_number = source == PacketSource::Client ? ReadUInt8() : _connection->_outgoingPacketNumber;
-	_length = source == PacketSource::Client ? ReadUInt16_LE() : (unsigned short)_buffer.size();
-
-	if (source == PacketSource::Server) {
-		if (_connection->_outgoingPacketNumber == 255) {
-			_connection->_outgoingPacketNumber = 1;
+	if (source == PacketSource::Client) {
+		unsigned char incomingSequence = _connection->GetIncomingSequence();
+		if (incomingSequence == UINT8_MAX) {
+			_connection->SetIncomingSequence(0);
 		}
 		else {
-			_connection->_outgoingPacketNumber++;
+			_connection->SetIncomingSequence(++incomingSequence);
 		}
+
+		_signature = ReadUInt8();
+		_sequence = ReadUInt8();
+		_length = ReadUInt16_LE();
+	}
+	else {
+		unsigned char outgoingSequence = _connection->GetOutgoingSequence();
+		if (outgoingSequence == UINT8_MAX) {
+			_connection->SetOutgoingSequence(0);
+		}
+		else {
+			_connection->SetOutgoingSequence(++outgoingSequence);
+		}
+
+		_signature = PacketSignature;
+		_sequence = outgoingSequence;
+		_length = (unsigned short)_buffer.size();
 	}
 }
 
 TCPConnection::Packet::~Packet() {
+#ifdef _DEBUG
 	if (_source == PacketSource::Client && _readOffset < _length + 4) {
-		cout << format("[TCPConnection::Packet] Packet from {} has unread data (_readOffset: {}, _length: {}):", _connection->GetEndPoint(), _readOffset, _length);
+		int readOffset = _readOffset;
 
+		string unreadData;
 		for (auto c : ReadArray_UInt8(_length + 4 - _readOffset)) {
-			cout << format(" {}", c & 0xFF);
+			unreadData += format(" {:#x}", c & 0xFF);
 		}
 
-		cout << endl;
+		cout << format("[TCPConnection::Packet] Packet from {} has unread data (_readOffset: {}, _length: {}):{}\n", _connection->GetEndPoint(), readOffset, _length, unreadData.c_str());
 	}
+#endif
 }
 
 TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(move(socket)) {
@@ -36,6 +53,10 @@ TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(move(socket
 	endpoint << _socket.remote_endpoint();
 
 	_endpoint = endpoint.str();
+}
+
+TCPConnection::~TCPConnection() {
+	_socket.close();
 }
 
 void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler) {
@@ -77,12 +98,17 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	if (!packet->IsValid()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
-		asyncRead();
+		_socket.close();
+	}
+	else if (packet->GetSequence() != _incomingSequence) {
+		cout << format("[TCPConnection] Client ({}) sent packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
+		_streamBuf.consume(bytesTransferred);
+		_socket.close();
 	}
 	else if (!packet->GetLength()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with size 0!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
-		asyncRead();
+		_socket.close();
 	}
 	else {
 		io::async_read(_socket, _streamBuf, io::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
@@ -100,13 +126,14 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 			packet->SetBuffer(buffer);
 
-			cout << format("[TCPConnection] Received packet from {}:", self->GetEndPoint());
-
+#ifdef _DEBUG
+			string bufferStr;
 			for (auto c : buffer) {
-				cout << format(" {}", c & 0xFF);
+				bufferStr += format(" {:#x}", c & 0xFF);
 			}
 
-			cout << endl;
+			cout << format("[TCPConnection] Received packet from {}:{}\n", self->GetEndPoint(), bufferStr.c_str());
+#endif
 
 			self->_packetHandler(packet);
 			self->asyncRead();
@@ -129,13 +156,14 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 		return;
 	}
 
-	cout << format("[TCPConnection] Sent packet to {}:", GetEndPoint());
-
+#ifdef _DEBUG
+	string buffer;
 	for (auto c : _outgoingPackets.front()) {
-		cout << format(" {}", c & 0xFF);
+		buffer += format(" {:#x}", c & 0xFF);
 	}
 
-	cout << endl;
+	cout << format("[TCPConnection] Sent packet to {}:{}\n", GetEndPoint(), buffer.c_str());
+#endif
 
 	_outgoingPackets.pop();
 

@@ -7,7 +7,7 @@
 
 ## Building
 
-1. Drag and drop the `boost` folder into the `Thirdparty` folder
+1. Drag and drop the `boost` folder into the `thirdparty` folder
 2. Open `cso-master-server.sln` with Microsoft Visual Studio 2022 (v143) and click `Build`
 
 ## License

@@ -1,7 +1,7 @@
 #include "PacketManager.h"
-#include "Packet_VersionManager.h"
-#include "Packet_LoginManager.h"
-#include "Packet_UMsgManager.h"
+#include "packet_versionmanager.h"
+#include "packet_loginmanager.h"
+#include "packet_umsgmanager.h"
 #include <iostream>
 
 Packet_VersionManager packet_VersionManager;
@@ -22,10 +22,6 @@ void PacketManager::Start() {
 
 	_packetQueue.clear();
 	_packetThread = thread(&PacketManager::run, this);
-
-	packet_VersionManager.Start();
-	packet_LoginManager.Start();
-	packet_UMsgManager.Start();
 }
 
 void PacketManager::Stop() {
@@ -33,10 +29,6 @@ void PacketManager::Stop() {
 		cout << "[PacketManager] Thread is already shut down!\n";
 		return;
 	}
-
-	packet_VersionManager.Stop();
-	packet_LoginManager.Stop();
-	packet_UMsgManager.Stop();
 
 	shutdown();
 }
@@ -83,15 +75,15 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 
 	switch (ID) {
 		case PacketID::Version: {
-			packet_VersionManager.QueuePacket_Version(packet);
+			packet_VersionManager.ParsePacket_Version(packet);
 			break;
 		}
 		case PacketID::Login: {
-			packet_LoginManager.QueuePacket_Login(packet);
+			packet_LoginManager.ParsePacket_Login(packet);
 			break;
 		}
 		case PacketID::UMsg: {
-			packet_UMsgManager.QueuePacket_UMsg(packet);
+			packet_UMsgManager.ParsePacket_UMsg(packet);
 			break;
 		}
 		default: {

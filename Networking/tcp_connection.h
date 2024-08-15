@@ -14,6 +14,8 @@ enum class PacketSource {
 
 class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
+	~TCPConnection();
+
 	using pointer = shared_ptr<TCPConnection>;
 
 	class Packet : public enable_shared_from_this<TCPConnection::Packet> {
@@ -35,7 +37,7 @@ public:
 		void WriteHeader() noexcept {
 			_buffer.insert(_buffer.begin(), _length << 8);
 			_buffer.insert(_buffer.begin(), _length);
-			_buffer.insert(_buffer.begin(), _number);
+			_buffer.insert(_buffer.begin(), _sequence);
 			_buffer.insert(_buffer.begin(), _signature);
 		}
 
@@ -43,11 +45,11 @@ public:
 			return _signature == PacketSignature;
 		}
 
-		unsigned char GetNumber() noexcept {
-			return _number;
+		unsigned char GetSequence() const noexcept {
+			return _sequence;
 		}
 
-		unsigned short GetLength() noexcept {
+		unsigned short GetLength() const noexcept {
 			return _length;
 		}
 
@@ -312,7 +314,7 @@ public:
 		vector<unsigned char> _buffer;
 
 		unsigned char _signature;
-		unsigned char _number;
+		unsigned char _sequence;
 		unsigned short _length;
 
 		int _readOffset;
@@ -334,6 +336,22 @@ public:
 		return _endpoint;
 	}
 
+	unsigned char GetOutgoingSequence() const noexcept {
+		return _outgoingSequence;
+	}
+
+	void SetOutgoingSequence(unsigned char outgoingSequence) noexcept {
+		_outgoingSequence = outgoingSequence;
+	}
+
+	unsigned char GetIncomingSequence() const noexcept {
+		return _incomingSequence;
+	}
+
+	void SetIncomingSequence(unsigned char incomingSequence) noexcept {
+		_incomingSequence = incomingSequence;
+	}
+
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer);
 
@@ -351,8 +369,9 @@ private:
 	string _endpoint;
 
 	queue<vector<unsigned char>> _outgoingPackets;
-	unsigned char _outgoingPacketNumber = 1;
-	io::streambuf _streamBuf {4 + 65536};
+	unsigned char _outgoingSequence = 0;
+	io::streambuf _streamBuf { UINT16_MAX };
+	unsigned char _incomingSequence = 0;
 
 	PacketHandler _packetHandler;
 	ErrorHandler _errorHandler;

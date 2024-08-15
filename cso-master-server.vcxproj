@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>./Managers;./Networking;./Thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -94,7 +94,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>./Managers;./Networking;./Thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -111,7 +111,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>./Managers;./Networking;./Thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -128,7 +128,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>./Managers;./Networking;./Thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -140,20 +140,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Managers\PacketManager.cpp" />
-    <ClCompile Include="Managers\Packet_LoginManager.cpp" />
-    <ClCompile Include="Managers\Packet_UMsgManager.cpp" />
-    <ClCompile Include="Managers\Packet_VersionManager.cpp" />
-    <ClCompile Include="Networking\tcp_connection.cpp" />
-    <ClCompile Include="Networking\tcp_server.cpp" />
+    <ClCompile Include="managers\packetmanager.cpp" />
+    <ClCompile Include="managers\packet_loginmanager.cpp" />
+    <ClCompile Include="managers\packet_umsgmanager.cpp" />
+    <ClCompile Include="managers\packet_versionmanager.cpp" />
+    <ClCompile Include="networking\tcp_connection.cpp" />
+    <ClCompile Include="networking\tcp_server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Managers\PacketManager.h" />
-    <ClInclude Include="Managers\Packet_LoginManager.h" />
-    <ClInclude Include="Managers\Packet_UMsgManager.h" />
-    <ClInclude Include="Managers\Packet_VersionManager.h" />
-    <ClInclude Include="Networking\tcp_connection.h" />
-    <ClInclude Include="Networking\tcp_server.h" />
+    <ClInclude Include="definitions.h" />
+    <ClInclude Include="managers\packetmanager.h" />
+    <ClInclude Include="managers\packet_loginmanager.h" />
+    <ClInclude Include="managers\packet_umsgmanager.h" />
+    <ClInclude Include="managers\packet_versionmanager.h" />
+    <ClInclude Include="networking\tcp_connection.h" />
+    <ClInclude Include="networking\tcp_server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
