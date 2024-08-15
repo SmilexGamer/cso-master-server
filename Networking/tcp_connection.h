@@ -14,8 +14,6 @@ enum class PacketSource {
 
 class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
-	~TCPConnection();
-
 	using pointer = shared_ptr<TCPConnection>;
 
 	class Packet : public enable_shared_from_this<TCPConnection::Packet> {

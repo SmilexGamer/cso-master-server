@@ -55,10 +55,6 @@ TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(move(socket
 	_endpoint = endpoint.str();
 }
 
-TCPConnection::~TCPConnection() {
-	_socket.close();
-}
-
 void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler) {
 	_packetHandler = move(packetHandler);
 	_errorHandler = move(errorHandler);
@@ -99,16 +95,19 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		_socket.close();
+		_errorHandler();
 	}
 	else if (packet->GetSequence() != _incomingSequence) {
 		cout << format("[TCPConnection] Client ({}) sent packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
 		_streamBuf.consume(bytesTransferred);
 		_socket.close();
+		_errorHandler();
 	}
 	else if (!packet->GetLength()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with size 0!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
 		_socket.close();
+		_errorHandler();
 	}
 	else {
 		io::async_read(_socket, _streamBuf, io::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
