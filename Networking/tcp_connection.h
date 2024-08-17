@@ -1,11 +1,12 @@
 #pragma once
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <queue>
 #include <vector>
 
+//#define NO_SSL
+
 using namespace std;
-using boost::asio::ip::tcp;
-namespace io = boost::asio;
 
 enum class PacketSource {
 	Client,
@@ -300,7 +301,11 @@ public:
 
 		void Send() {
 			WriteHeader();
+#ifdef NO_SSL
+			_connection->WritePacket(_buffer, true);
+#else
 			_connection->WritePacket(_buffer);
+#endif
 		}
 
 	private:
@@ -322,12 +327,12 @@ public:
 	using PacketHandler = function<void(TCPConnection::Packet::pointer)>;
 	using ErrorHandler = function<void()>;
 
-	static pointer Create(io::ip::tcp::socket&& socket) {
-		return pointer(new TCPConnection(move(socket)));
+	static pointer Create(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context) {
+		return pointer(new TCPConnection(move(socket), context));
 	}
 
-	tcp::socket& GetSocket() {
-		return _socket;
+	boost::asio::ip::tcp::socket& GetSocket() {
+		return _sslStream.next_layer();
 	}
 
 	const string& GetEndPoint() const {
@@ -351,24 +356,24 @@ public:
 	}
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
-	void WritePacket(const vector<unsigned char>& buffer);
+	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
 
 private:
-	explicit TCPConnection(io::ip::tcp::socket&& socket);
+	explicit TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context);
 
 	void asyncRead();
 	void onRead(boost::system::error_code ec, size_t bytesTransferred);
 
-	void asyncWrite();
+	void asyncWrite(bool noSSL = false);
 	void onWrite(boost::system::error_code ec, size_t bytesTransferred);
 
 private:
-	tcp::socket _socket;
+	boost::asio::ssl::stream<boost::asio::ip::tcp::socket> _sslStream;
 	string _endpoint;
 
 	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingSequence = 0;
-	io::streambuf _streamBuf { UINT16_MAX };
+	boost::asio::streambuf _streamBuf { UINT16_MAX };
 	unsigned char _incomingSequence = 0;
 
 	PacketHandler _packetHandler;

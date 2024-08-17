@@ -5,8 +5,6 @@
 #include <unordered_set>
 #include <thread>
 
-namespace io = boost::asio;
-
 enum class IPV {
 	V4,
 	V6
@@ -34,12 +32,18 @@ public:
 	OnClientPacketHandler OnClientPacket;
 
 private:
+	std::string get_password() const
+	{
+		return "-?H2byVtl";
+	}
+
 	IPV _ipVersion;
 	int _port;
 
 	thread _serverThread;
-	io::io_context _ioContext;
-	io::ip::tcp::acceptor _acceptor;
-	optional<io::ip::tcp::socket> _socket;
+	boost::asio::io_context _ioContext;
+	boost::asio::ssl::context _sslContext;
+	boost::asio::ip::tcp::acceptor _acceptor;
+	optional<boost::asio::ip::tcp::socket> _socket;
 	unordered_set<TCPConnection::pointer> _connections {};
 };

@@ -1,6 +1,8 @@
 #include "tcp_connection.h"
 #include <iostream>
 
+const string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
+
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
 	_readOffset = 0;
 	_writeOffset = 0;
@@ -48,9 +50,9 @@ TCPConnection::Packet::~Packet() {
 #endif
 }
 
-TCPConnection::TCPConnection(io::ip::tcp::socket&& socket) : _socket(move(socket)) {
+TCPConnection::TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context) : _sslStream(move(socket), context) {
 	stringstream endpoint;
-	endpoint << _socket.remote_endpoint();
+	endpoint << _sslStream.next_layer().remote_endpoint();
 
 	_endpoint = endpoint.str();
 }
@@ -59,68 +61,98 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	_packetHandler = move(packetHandler);
 	_errorHandler = move(errorHandler);
 
+	// Tell the client that it has successfully connected to the server
+	WritePacket(vector<unsigned char>(WelcomeMessage.begin(), WelcomeMessage.end()), true);
+
+#ifdef NO_SSL
 	asyncRead();
+#else
+	_sslStream.async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()]
+	(boost::system::error_code ec) {
+		if (!ec) {
+			self->asyncRead();
+		}
+	});
+#endif
 }
 
-void TCPConnection::WritePacket(const vector<unsigned char>& buffer) {
+void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL) {
 	bool queueIdle = _outgoingPackets.empty();
 	_outgoingPackets.push(buffer);
 
 	if (queueIdle) {
-		asyncWrite();
+		asyncWrite(noSSL);
 	}
 }
 
 void TCPConnection::asyncRead() {
-	io::async_read(_socket, _streamBuf, io::transfer_exactly(4), [self = shared_from_this()]
+#ifdef NO_SSL
+	boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(4), [self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
-		self->onRead(ec, bytesTransferred);
-	});
+			self->onRead(ec, bytesTransferred);
+		});
+#else
+	boost::asio::async_read(_sslStream, _streamBuf, boost::asio::transfer_exactly(4), [self = shared_from_this()]
+	(boost::system::error_code ec, size_t bytesTransferred) {
+			self->onRead(ec, bytesTransferred);
+		});
+#endif
 }
 
 void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		_socket.close(ec);
+		_sslStream.next_layer().close(ec);
 
 		_errorHandler();
 		return;
 	}
 
 	vector<unsigned char> buffer(bytesTransferred);
-	buffer_copy(io::buffer(buffer), _streamBuf.data());
+	buffer_copy(boost::asio::buffer(buffer), _streamBuf.data());
 
 	auto packet = TCPConnection::Packet::Create(PacketSource::Client, shared_from_this(), buffer);
 
 	if (!packet->IsValid()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
-		_socket.close();
+		_sslStream.next_layer().close();
 		_errorHandler();
 	}
 	else if (packet->GetSequence() != _incomingSequence) {
 		cout << format("[TCPConnection] Client ({}) sent packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
 		_streamBuf.consume(bytesTransferred);
-		_socket.close();
+		_sslStream.next_layer().close();
 		_errorHandler();
 	}
 	else if (!packet->GetLength()) {
 		cout << format("[TCPConnection] Client ({}) sent packet with size 0!\n", _endpoint);
 		_streamBuf.consume(bytesTransferred);
-		_socket.close();
+		_sslStream.next_layer().close();
 		_errorHandler();
 	}
 	else {
-		io::async_read(_socket, _streamBuf, io::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
+#ifdef NO_SSL
+		boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 		(boost::system::error_code ec, size_t bytesTransferred) {
 			if (ec) {
-				self->_socket.close(ec);
+				self->_sslStream.next_layer().close(ec);
 
 				self->_errorHandler();
 				return;
 			}
+#else
+		boost::asio::async_read(_sslStream, _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
+		(boost::system::error_code ec, size_t bytesTransferred) {
+			if (ec) {
+				self->_sslStream.next_layer().close(ec);
+
+				self->_errorHandler();
+				return;
+			}
+#endif
 
 			vector<unsigned char> buffer(4 + bytesTransferred);
-			buffer_copy(io::buffer(buffer), self->_streamBuf.data());
+			buffer_copy(boost::asio::buffer(buffer), self->_streamBuf.data());
 			self->_streamBuf.consume(4 + bytesTransferred);
 
 			packet->SetBuffer(buffer);
@@ -140,16 +172,24 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	}
 }
 
-void TCPConnection::asyncWrite() {
-	io::async_write(_socket, io::buffer(_outgoingPackets.front()), [self = shared_from_this()]
-	(boost::system::error_code ec, size_t bytesTransferred) {
-		self->onWrite(ec, bytesTransferred);
-	});
+void TCPConnection::asyncWrite(bool noSSL) {
+	if (noSSL) {
+		boost::asio::async_write(_sslStream.next_layer(), boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this()]
+		(boost::system::error_code ec, size_t bytesTransferred) {
+				self->onWrite(ec, bytesTransferred);
+			});
+	}
+	else {
+		boost::asio::async_write(_sslStream, boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this()]
+		(boost::system::error_code ec, size_t bytesTransferred) {
+				self->onWrite(ec, bytesTransferred);
+			});
+	}
 }
 
 void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		_socket.close(ec);
+		_sslStream.next_layer().close(ec);
 
 		_errorHandler();
 		return;
@@ -167,6 +207,10 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 	_outgoingPackets.pop();
 
 	if (!_outgoingPackets.empty()) {
+#ifdef NO_SSL
+		asyncWrite(true);
+#else
 		asyncWrite();
+#endif
 	}
 }
