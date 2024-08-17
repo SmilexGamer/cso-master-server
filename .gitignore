@@ -1,6 +1,6 @@
 .git/
 .vs/
-thirdparty/boost/
+thirdparty/
 [Dd]ebug/
 [Rr]elease/
 x64/
