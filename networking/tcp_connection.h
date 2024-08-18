@@ -1,10 +1,9 @@
 #pragma once
+#include "definitions.h"
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <queue>
 #include <vector>
-
-//#define NO_SSL
 
 using namespace std;
 
@@ -27,8 +26,6 @@ public:
 			return pointer(new TCPConnection::Packet(source, connection, buffer));
 		}
 
-		const unsigned char& PacketSignature = 'U';
-
 		TCPConnection::pointer GetConnection() {
 			return _connection;
 		}
@@ -41,7 +38,7 @@ public:
 		}
 
 		bool IsValid() const noexcept {
-			return _signature == PacketSignature;
+			return _signature == PACKET_SIGNATURE;
 		}
 
 		unsigned char GetSequence() const noexcept {
@@ -358,6 +355,7 @@ public:
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
+	void DisconnectClient();
 
 private:
 	explicit TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context);

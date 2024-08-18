@@ -4,7 +4,6 @@
 
 int main() {
 	TCPServer server{IPV::V4, 30002};
-	PacketManager packetManager;
 
 	server.OnConnect = [](TCPConnection::pointer connection) {
 		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetEndPoint());
@@ -14,7 +13,7 @@ int main() {
 		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetEndPoint());
 	};
 
-	server.OnClientPacket = [&packetManager](TCPConnection::Packet::pointer packet) {
+	server.OnClientPacket = [](TCPConnection::Packet::pointer packet) {
 		packetManager.QueuePacket(packet);
 	};
 

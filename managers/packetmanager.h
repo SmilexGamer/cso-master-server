@@ -1,5 +1,4 @@
 #pragma once
-#include "definitions.h"
 #include "tcp_connection.h"
 #include <thread>
 #include <deque>
@@ -11,6 +10,7 @@ public:
 	void Start();
 	void Stop();
 	void QueuePacket(TCPConnection::Packet::pointer);
+	void SendPacket_Reply(TCPConnection::pointer, unsigned char type, vector<string> additionalText = {});
 
 private:
 	void run();
@@ -22,3 +22,5 @@ private:
 	deque<TCPConnection::Packet::pointer> _packetQueue{};
 	bool _running{ false };
 };
+
+extern PacketManager packetManager;

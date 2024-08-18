@@ -1,6 +1,7 @@
 #include "packet_umsgmanager.h"
-#include "definitions.h"
 #include <iostream>
+
+Packet_UMsgManager packet_UMsgManager;
 
 void Packet_UMsgManager::ParsePacket_UMsg(TCPConnection::Packet::pointer packet) {
 	cout << format("[Packet_UMsgManager] Parsing Packet_UMsg from {}\n", packet->GetConnection()->GetEndPoint());

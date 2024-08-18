@@ -4,9 +4,7 @@
 #include "packet_umsgmanager.h"
 #include <iostream>
 
-Packet_VersionManager packet_VersionManager;
-Packet_LoginManager packet_LoginManager;
-Packet_UMsgManager packet_UMsgManager;
+PacketManager packetManager;
 
 PacketManager::~PacketManager() {
 	shutdown();
@@ -42,6 +40,18 @@ void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 	cout << format("[PacketManager] Queueing packet from {}\n", packet->GetConnection()->GetEndPoint());
 
 	_packetQueue.push_back(packet);
+}
+
+void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, vector<string> additionalText) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Reply });
+
+	packet->WriteUInt8(type);
+	packet->WriteString("");
+	packet->WriteUInt8(additionalText.size());
+	for (auto& text : additionalText)
+		packet->WriteString(text);
+
+	packet->Send();
 }
 
 void PacketManager::run() {

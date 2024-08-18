@@ -1,8 +1,6 @@
 #include "tcp_connection.h"
 #include <iostream>
 
-const string& WelcomeMessage{ "~SERVERCONNECTED\n\0" };
-
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
 	_readOffset = 0;
 	_writeOffset = 0;
@@ -29,7 +27,7 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 			_connection->SetOutgoingSequence(++outgoingSequence);
 		}
 
-		_signature = PacketSignature;
+		_signature = PACKET_SIGNATURE;
 		_sequence = outgoingSequence;
 		_length = (unsigned short)_buffer.size();
 	}
@@ -62,16 +60,22 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	_errorHandler = move(errorHandler);
 
 	// Tell the client that it has successfully connected to the server
-	WritePacket(vector<unsigned char>(WelcomeMessage.begin(), WelcomeMessage.end()), true);
+	static const string serverConnected = SERVERCONNECTED;
+	WritePacket(vector<unsigned char>(serverConnected.begin(), serverConnected.end()), true);
 
 #ifdef NO_SSL
 	asyncRead();
 #else
 	_sslStream.async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()]
 	(boost::system::error_code ec) {
-		if (!ec) {
-			self->asyncRead();
+		if (ec) {
+			self->_sslStream.next_layer().close(ec);
+
+			self->_errorHandler();
+			return;
 		}
+
+		self->asyncRead();
 	});
 #endif
 }
@@ -83,6 +87,12 @@ void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL)
 	if (queueIdle) {
 		asyncWrite(noSSL);
 	}
+}
+
+void TCPConnection::DisconnectClient() {
+	_sslStream.next_layer().close();
+
+	_errorHandler();
 }
 
 void TCPConnection::asyncRead() {

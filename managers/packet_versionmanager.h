@@ -6,3 +6,5 @@ public:
 	void ParsePacket_Version(TCPConnection::Packet::pointer);
 	void SendPacket_Version(TCPConnection::pointer);
 };
+
+extern Packet_VersionManager packet_VersionManager;
