@@ -10,7 +10,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 	unsigned char launcherVersion = packet->ReadUInt8();
 	unsigned short clientVersion = packet->ReadUInt16_LE();
 	unsigned long clientBuildTimestamp = packet->ReadUInt32_LE();
-	unsigned long clientNARCRC = packet->ReadUInt32_LE();
+	unsigned long clientNARChecksum = packet->ReadUInt32_LE();
 
 	struct tm date;
 	time_t t = clientBuildTimestamp;
@@ -18,7 +18,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 	static char dateStr[10];
 	strftime(dateStr, sizeof(dateStr), "%d.%m.%y", &date);
 
-	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARCRC: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion & 0xFF, clientVersion, dateStr, clientNARCRC);
+	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion & 0xFF, clientVersion, dateStr, clientNARChecksum);
 
 	if (launcherVersion != LAUNCHER_VERSION) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::INVALID_CLIENT_VERSION);
@@ -35,7 +35,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 		return;
 	}
 
-	if (clientNARCRC != CLIENT_NAR_CRC) {
+	if (clientNARChecksum != CLIENT_NAR_CHECKSUM) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::INVALID_CLIENT_VERSION);
 		return;
 	}

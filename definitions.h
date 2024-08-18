@@ -11,7 +11,7 @@
 
 #define CLIENT_BUILD_TIMESTAMP "11.06.08"
 
-#define CLIENT_NAR_CRC 1860010506
+#define CLIENT_NAR_CHECKSUM 1860010506
 
 enum PacketID {
 	Version = 0,
