@@ -101,6 +101,7 @@ public:
 		}
 		void WriteString(const string& str) noexcept {
 			for (const unsigned char& s : str) WriteInt8(s);
+			WriteInt8('\0');
 		}
 		void WriteInt8(char val) noexcept {
 			WriteBytes<char>(val);
