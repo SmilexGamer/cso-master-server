@@ -3,7 +3,7 @@
 
 TCPServer::TCPServer(IPV ipv, int port) : _ipVersion(ipv), _port(port), 
 	_acceptor(_ioContext, boost::asio::ip::tcp::endpoint(_ipVersion == IPV::V4 ? boost::asio::ip::tcp::v4() : boost::asio::ip::tcp::v6(), _port)),
-	_sslContext(boost::asio::ssl::context::tlsv1) {
+	_sslContext(boost::asio::ssl::context::sslv23) {
 #ifndef NO_SSL
 	_sslContext.set_options(
 		boost::asio::ssl::context::default_workarounds
