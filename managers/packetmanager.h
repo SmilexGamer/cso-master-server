@@ -9,13 +9,13 @@ public:
 
 	void Start();
 	void Stop();
-	void QueuePacket(TCPConnection::Packet::pointer);
-	void SendPacket_Reply(TCPConnection::pointer, unsigned char type, vector<string> additionalText = {});
+	void QueuePacket(TCPConnection::Packet::pointer packet);
+	void SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, vector<string> additionalText = {});
 
 private:
 	void run();
 	void shutdown();
-	void parsePacket(TCPConnection::Packet::pointer);
+	void parsePacket(TCPConnection::Packet::pointer packet);
 
 private:
 	thread _packetThread;

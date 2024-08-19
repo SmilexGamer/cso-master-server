@@ -1,5 +1,7 @@
 #include "packet_loginmanager.h"
 #include "packetmanager.h"
+#include "packet_updateinfomanager.h"
+#include "packet_userstartmanager.h"
 #include <iostream>
 
 Packet_LoginManager packet_LoginManager;
@@ -20,4 +22,6 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login - username: {}, password: {}, hardwareID:{}, pcBang: {}\n", packet->GetConnection()->GetEndPoint(), username.c_str(), password.c_str(), hardwareIDStr.c_str(), pcBang);
 
 	packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::LoginSuccess);
+	packet_UserStartManager.SendPacket_UserStart(packet->GetConnection());
+	packet_UpdateInfoManager.SendPacket_UpdateInfo(packet->GetConnection(), UserInfoFlag::All);
 }

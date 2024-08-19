@@ -145,18 +145,22 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="managers\packetmanager.cpp" />
+    <ClCompile Include="managers\packet_versionmanager.cpp" />
     <ClCompile Include="managers\packet_loginmanager.cpp" />
     <ClCompile Include="managers\packet_umsgmanager.cpp" />
-    <ClCompile Include="managers\packet_versionmanager.cpp" />
+    <ClCompile Include="managers\packet_updateinfomanager.cpp" />
+    <ClCompile Include="managers\packet_userstartmanager.cpp" />
     <ClCompile Include="networking\tcp_connection.cpp" />
     <ClCompile Include="networking\tcp_server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h" />
     <ClInclude Include="managers\packetmanager.h" />
+    <ClInclude Include="managers\packet_versionmanager.h" />
     <ClInclude Include="managers\packet_loginmanager.h" />
     <ClInclude Include="managers\packet_umsgmanager.h" />
-    <ClInclude Include="managers\packet_versionmanager.h" />
+    <ClInclude Include="managers\packet_updateinfomanager.h" />
+    <ClInclude Include="managers\packet_userstartmanager.h" />
     <ClInclude Include="networking\tcp_connection.h" />
     <ClInclude Include="networking\tcp_server.h" />
   </ItemGroup>

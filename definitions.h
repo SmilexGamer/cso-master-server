@@ -82,3 +82,20 @@ enum Packet_UMsgType {
 	FamilyChat = 3,
 	PartyChat = 5
 };
+
+enum UserInfoFlag {
+	Unk1 = 0x1,
+	NickName = 0x2,
+	Unk4 = 0x4,
+	Level = 0x8,
+	Unk10 = 0x10,
+	Exp = 0x20,
+	Cash = 0x40,
+	Point = 0x80,
+	BattleStats = 0x100,
+	Location = 0x200,
+	Unk400 = 0x400,
+	Unk800 = 0x800,
+	Unk1000 = 0x1000,
+	All = 0xFFFF
+};

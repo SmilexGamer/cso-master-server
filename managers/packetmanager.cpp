@@ -2,6 +2,8 @@
 #include "packet_versionmanager.h"
 #include "packet_loginmanager.h"
 #include "packet_umsgmanager.h"
+#include "packet_updateinfomanager.h"
+#include "packet_userstartmanager.h"
 #include <iostream>
 
 PacketManager packetManager;
@@ -47,7 +49,7 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned
 
 	packet->WriteUInt8(type);
 	packet->WriteString("");
-	packet->WriteUInt8(additionalText.size());
+	packet->WriteUInt8((unsigned char)additionalText.size());
 	for (auto& text : additionalText)
 		packet->WriteString(text);
 
@@ -94,6 +96,14 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::UMsg: {
 			packet_UMsgManager.ParsePacket_UMsg(packet);
+			break;
+		}
+		case PacketID::UpdateInfo: {
+			packet_UpdateInfoManager.ParsePacket_UpdateInfo(packet);
+			break;
+		}
+		case PacketID::UserStart: {
+			packet_UserStartManager.ParsePacket_UserStart(packet);
 			break;
 		}
 		default: {

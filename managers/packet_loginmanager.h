@@ -3,7 +3,7 @@
 
 class Packet_LoginManager {
 public:
-	void ParsePacket_Login(TCPConnection::Packet::pointer);
+	void ParsePacket_Login(TCPConnection::Packet::pointer packet);
 };
 
 extern Packet_LoginManager packet_LoginManager;

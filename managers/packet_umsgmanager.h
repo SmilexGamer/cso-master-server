@@ -3,7 +3,7 @@
 
 class Packet_UMsgManager {
 public:
-	void ParsePacket_UMsg(TCPConnection::Packet::pointer);
+	void ParsePacket_UMsg(TCPConnection::Packet::pointer packet);
 };
 
 extern Packet_UMsgManager packet_UMsgManager;
