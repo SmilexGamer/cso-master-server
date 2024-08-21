@@ -31,7 +31,7 @@ public:
 		}
 
 		void WriteHeader() noexcept {
-			_buffer.insert(_buffer.begin(), _length << 8);
+			_buffer.insert(_buffer.begin(), _length >> 8);
 			_buffer.insert(_buffer.begin(), _length);
 			_buffer.insert(_buffer.begin(), _sequence);
 			_buffer.insert(_buffer.begin(), _signature);
