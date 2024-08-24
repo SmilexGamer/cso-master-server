@@ -1,6 +1,7 @@
 #include "packetmanager.h"
 #include "packet_versionmanager.h"
 #include "packet_loginmanager.h"
+#include "packet_serverlistmanager.h"
 #include "packet_umsgmanager.h"
 #include "packet_updateinfomanager.h"
 #include "packet_userstartmanager.h"
@@ -92,6 +93,14 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::Login: {
 			packet_LoginManager.ParsePacket_Login(packet);
+			break;
+		}
+		case PacketID::ServerList: {
+			packet_ServerListManager.ParsePacket_ServerList(packet);
+			break;
+		}
+		case PacketID::ServerChannel: {
+			packet_ServerListManager.SendPacket_ServerList(packet->GetConnection());
 			break;
 		}
 		case PacketID::UMsg: {

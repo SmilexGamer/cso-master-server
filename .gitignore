@@ -3,4 +3,4 @@
 thirdparty/boost
 [Dd]ebug/
 [Rr]elease/
-*.vcxproj.*
+*.vcxproj.user

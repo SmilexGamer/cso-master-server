@@ -1,5 +1,6 @@
 #include "packet_loginmanager.h"
 #include "packetmanager.h"
+#include "packet_serverlistmanager.h"
 #include "packet_updateinfomanager.h"
 #include "packet_userstartmanager.h"
 #include <iostream>
@@ -24,4 +25,5 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::LoginSuccess);
 	packet_UserStartManager.SendPacket_UserStart(packet->GetConnection());
 	packet_UpdateInfoManager.SendPacket_UpdateInfo(packet->GetConnection(), UserInfoFlag::All);
+	packet_ServerListManager.SendPacket_ServerList(packet->GetConnection());
 }

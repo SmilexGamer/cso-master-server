@@ -147,6 +147,7 @@
     <ClCompile Include="managers\packetmanager.cpp" />
     <ClCompile Include="managers\packet_versionmanager.cpp" />
     <ClCompile Include="managers\packet_loginmanager.cpp" />
+    <ClCompile Include="managers\packet_serverlistmanager.cpp" />
     <ClCompile Include="managers\packet_umsgmanager.cpp" />
     <ClCompile Include="managers\packet_updateinfomanager.cpp" />
     <ClCompile Include="managers\packet_userstartmanager.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="managers\packetmanager.h" />
     <ClInclude Include="managers\packet_versionmanager.h" />
     <ClInclude Include="managers\packet_loginmanager.h" />
+    <ClInclude Include="managers\packet_serverlistmanager.h" />
     <ClInclude Include="managers\packet_umsgmanager.h" />
     <ClInclude Include="managers\packet_updateinfomanager.h" />
     <ClInclude Include="managers\packet_userstartmanager.h" />
