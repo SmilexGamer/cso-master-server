@@ -4,7 +4,7 @@
 Packet_UserStartManager packet_UserStartManager;
 
 void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_UserStartManager] Parsing Packet_UserStart from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_UserStartManager] Parsing Packet_UserStart from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 	unsigned long unk1 = packet->ReadUInt32_LE();

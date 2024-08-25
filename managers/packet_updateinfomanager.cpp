@@ -4,7 +4,7 @@
 Packet_UpdateInfoManager packet_UpdateInfoManager;
 
 void Packet_UpdateInfoManager::ParsePacket_UpdateInfo(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_UpdateInfoManager] Parsing Packet_UpdateInfo from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_UpdateInfoManager] Parsing Packet_UpdateInfo from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 	

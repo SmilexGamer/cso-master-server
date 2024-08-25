@@ -5,7 +5,7 @@
 Packet_VersionManager packet_VersionManager;
 
 void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_VersionManager] Parsing Packet_Version from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_VersionManager] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char launcherVersion = packet->ReadUInt8();
 	unsigned short clientVersion = packet->ReadUInt16_LE();

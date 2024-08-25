@@ -372,7 +372,7 @@ private:
 
 	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingSequence = 0;
-	boost::asio::streambuf _streamBuf { UINT16_MAX };
+	boost::asio::streambuf _streamBuf { PACKET_MAX_SIZE };
 	unsigned char _incomingSequence = 0;
 
 	PacketHandler _packetHandler;

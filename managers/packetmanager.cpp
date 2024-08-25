@@ -40,7 +40,7 @@ void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 		return;
 	}
 
-	cout << format("[PacketManager] Queueing packet from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[PacketManager] Queueing packet from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	_packetQueue.push_back(packet);
 }

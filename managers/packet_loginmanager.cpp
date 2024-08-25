@@ -8,7 +8,7 @@
 Packet_LoginManager packet_LoginManager;
 
 void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_LoginManager] Parsing Packet_Login from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_LoginManager] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	string username = packet->ReadString();
 	string password = packet->ReadString();

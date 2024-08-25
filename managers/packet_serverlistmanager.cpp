@@ -4,7 +4,7 @@
 Packet_ServerListManager packet_ServerListManager;
 
 void Packet_ServerListManager::ParsePacket_ServerList(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_ServerListManager] Parsing Packet_ServerList from {}\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_ServerListManager] Parsing Packet_ServerList from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	string unk1 = packet->ReadString();
 	vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
