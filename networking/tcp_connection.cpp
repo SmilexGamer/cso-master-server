@@ -3,7 +3,7 @@
 
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
 	_readOffset = 0;
-	_writeOffset = 0;
+	_writeOffset = (int)_buffer.size();
 
 	if (source == PacketSource::Client) {
 		unsigned char incomingSequence = _connection->GetIncomingSequence();
@@ -35,15 +35,15 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 
 TCPConnection::Packet::~Packet() {
 #ifdef _DEBUG
-	if (_source == PacketSource::Client && _readOffset < _length + 4) {
+	if (_source == PacketSource::Client && _readOffset < _buffer.size()) {
 		int readOffset = _readOffset;
 
 		string unreadData;
-		for (auto c : ReadArray_UInt8(_length + 4 - _readOffset)) {
-			unreadData += format(" {:#x}", c & 0xFF);
+		for (auto c : ReadArray_UInt8((int)_buffer.size() - _readOffset)) {
+			unreadData += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
-		cout << format("[TCPConnection] Packet from client ({}) has unread data (_readOffset: {}, _length: {}):{}\n", _connection->GetEndPoint(), readOffset, _length, unreadData.c_str());
+		cout << format("[TCPConnection] Packet from client ({}) has unread data (_readOffset: {}, _buffer.size(): {}):{}\n", _connection->GetEndPoint(), readOffset, _buffer.size(), unreadData.c_str());
 	}
 #endif
 }
@@ -182,7 +182,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 #ifdef _DEBUG
 		string bufferStr;
 		for (auto c : buffer) {
-			bufferStr += format(" {:#x}", c & 0xFF);
+			bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
 		cout << format("[TCPConnection] Received packet from client ({}):{}\n", self->GetEndPoint(), bufferStr.c_str());
@@ -219,7 +219,7 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 #ifdef _DEBUG
 	string buffer;
 	for (auto c : _outgoingPackets.front()) {
-		buffer += format(" {:#x}", c & 0xFF);
+		buffer += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
 	cout << format("[TCPConnection] Sent packet to client ({}):{}\n", GetEndPoint(), buffer.c_str());

@@ -13,7 +13,7 @@ void Packet_ServerListManager::ParsePacket_ServerList(TCPConnection::Packet::poi
 
 	string hardwareIDStr;
 	for (auto c : hardwareID) {
-		hardwareIDStr += format(" {:#x}", c & 0xFF);
+		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
 	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_ServerList - unk1: {}, hardwareID:{}, pcBang: {}, unk2: {}\n", packet->GetConnection()->GetEndPoint(), unk1.c_str(), hardwareIDStr.c_str(), pcBang, unk2 & 0xFF);

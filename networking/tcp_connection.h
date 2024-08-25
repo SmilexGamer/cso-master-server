@@ -32,7 +32,7 @@ public:
 
 		void WriteHeader() noexcept {
 			_buffer.insert(_buffer.begin(), _length >> 8);
-			_buffer.insert(_buffer.begin(), _length);
+			_buffer.insert(_buffer.begin(), (unsigned char)_length);
 			_buffer.insert(_buffer.begin(), _sequence);
 			_buffer.insert(_buffer.begin(), _signature);
 		}
@@ -78,17 +78,19 @@ public:
 
 			if (LE == true) {
 				for (unsigned int i = 0, mask = 0; i < size; ++i, mask += 8)
-					_buffer.push_back(val >> mask);
+					_buffer.insert(_buffer.begin() + _writeOffset++, (unsigned char)(val >> mask));
 			}
 			else {
 				unsigned const char* array = reinterpret_cast<unsigned const char*>(&val);
 				for (unsigned int i = 0; i < size; ++i)
-					_buffer.push_back(array[size - i - 1]);
+					_buffer.insert(_buffer.begin() + _writeOffset++, array[size - i - 1]);
 			}
-			_writeOffset += size;
 			_length += size;
 		}
 
+		void SetWriteOffset(int newOffset) noexcept {
+			_writeOffset = newOffset;
+		}
 		int GetWriteOffset() const noexcept {
 			return _writeOffset;
 		}
@@ -372,7 +374,7 @@ private:
 
 	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingSequence = 0;
-	boost::asio::streambuf _streamBuf { PACKET_MAX_SIZE };
+	boost::asio::streambuf _streamBuf { PACKET_HEADER_SIZE + UINT16_MAX };
 	unsigned char _incomingSequence = 0;
 
 	PacketHandler _packetHandler;
