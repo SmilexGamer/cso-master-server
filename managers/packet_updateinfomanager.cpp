@@ -33,26 +33,33 @@ void Packet_UpdateInfoManager::SendPacket_UpdateInfo(TCPConnection::pointer conn
 	packet->WriteUInt32_LE(1); // userID
 	packet->WriteUInt16_LE(flag); // flag
 
-	if (flag & UserInfoFlag::Unk1)
+	if (flag & UserInfoFlag::Unk1) {
 		packet->WriteUInt8(0); // unk
-	if (flag & UserInfoFlag::NickName)
+	}
+	if (flag & UserInfoFlag::NickName) {
 		packet->WriteString("nickName"); // nickName
+	}
 	if (flag & UserInfoFlag::Unk4) {
 		packet->WriteString(""); // unk
 		packet->WriteUInt8(0); // unk
 		packet->WriteUInt8(0); // unk
 		packet->WriteUInt8(0); // unk
 	}
-	if (flag & UserInfoFlag::Level)
+	if (flag & UserInfoFlag::Level) {
 		packet->WriteUInt8(72); // level
-	if (flag & UserInfoFlag::Unk10)
+	}
+	if (flag & UserInfoFlag::Unk10) {
 		packet->WriteUInt8(0); // unk
-	if (flag & UserInfoFlag::Exp)
+	}
+	if (flag & UserInfoFlag::Exp) {
 		packet->WriteUInt64_LE(6937150764); // exp
-	if (flag & UserInfoFlag::Cash)
+	}
+	if (flag & UserInfoFlag::Cash) {
 		packet->WriteUInt64_LE(1000); // cash
-	if (flag & UserInfoFlag::Point)
+	}
+	if (flag & UserInfoFlag::Point) {
 		packet->WriteUInt64_LE(2000); // points
+	}
 	if (flag & UserInfoFlag::BattleStats) {
 		packet->WriteUInt32_LE(3); // battles
 		packet->WriteUInt32_LE(2); // wins
@@ -66,10 +73,12 @@ void Packet_UpdateInfoManager::SendPacket_UpdateInfo(TCPConnection::pointer conn
 		packet->WriteUInt16_LE(1); // neighborhood (동) index
 		packet->WriteString(""); // unk
 	}
-	if (flag & UserInfoFlag::Unk400)
+	if (flag & UserInfoFlag::Unk400) {
 		packet->WriteUInt32_LE(0); // unk
-	if (flag & UserInfoFlag::Unk800)
+	}
+	if (flag & UserInfoFlag::Unk800) {
 		packet->WriteUInt8(0); // unk
+	}
 	if (flag & UserInfoFlag::Unk1000) {
 		packet->WriteUInt32_LE(0); // unk
 		packet->WriteUInt32_LE(0); // unk

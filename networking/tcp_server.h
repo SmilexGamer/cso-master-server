@@ -38,7 +38,7 @@ private:
 	}
 
 	IPV _ipVersion;
-	int _port;
+	unsigned short _port;
 
 	thread _serverThread;
 	boost::asio::io_context _ioContext;

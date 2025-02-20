@@ -25,7 +25,8 @@ enum PacketID {
 	ServerList = 5,
 	Character = 6,
 	Crypt = 7,
-	ServerChannel = 10,
+	RequestTransfer = 7,
+	RequestServerList = 10,
 	RecvCrypt = 12,
 	Room = 65,
 	ClientCheck = 66,
@@ -80,11 +81,28 @@ enum Packet_ReplyType {
 	INVALID_CLIENT_VERSION = 38
 };
 
+enum Packet_RoomType {
+	RequestCreate = 0,
+	ReplyCreateAndJoin = 0,
+	RequestJoin = 1,
+	RequestStartGame = 4
+};
+
 enum Packet_UMsgType {
 	WhisperChat = 0,
 	LobbyChat = 1,
 	FamilyChat = 3,
 	PartyChat = 5
+};
+
+enum Packet_HostType {
+	StartGame = 0,
+	JoinGame = 1,
+	HostRestart = 2
+};
+
+enum Packet_ShopType {
+	Unk0 = 0
 };
 
 enum UserInfoFlag {

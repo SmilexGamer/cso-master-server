@@ -9,9 +9,9 @@ void Packet_UMsgManager::ParsePacket_UMsg(TCPConnection::Packet::pointer packet)
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
-	default: {
-		cout << format("[Packet_UMsgManager] Client ({}) has sent unregistered Packet_UMsg type {}!\n", packet->GetConnection()->GetEndPoint(), type & 0xFF);
-		break;
-	}
+		default: {
+			cout << format("[Packet_UMsgManager] Client ({}) has sent unregistered Packet_UMsg type {}!\n", packet->GetConnection()->GetEndPoint(), type & 0xFF);
+			break;
+		}
 	}
 }

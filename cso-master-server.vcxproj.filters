@@ -14,10 +14,19 @@
     <ClCompile Include="managers\packet_serverlistmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_roommanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_umsgmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_hostmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_updateinfomanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\packet_shopmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\packet_userstartmanager.cpp">
@@ -28,6 +37,9 @@
     </ClCompile>
     <ClCompile Include="networking\tcp_server.cpp">
       <Filter>networking</Filter>
+    </ClCompile>
+    <ClCompile Include="room\roomsettings.cpp">
+      <Filter>room</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44,10 +56,19 @@
     <ClInclude Include="managers\packet_serverlistmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\packet_roommanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packet_umsgmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\packet_hostmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packet_updateinfomanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_shopmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_userstartmanager.h">
@@ -59,6 +80,9 @@
     <ClInclude Include="networking\tcp_server.h">
       <Filter>networking</Filter>
     </ClInclude>
+    <ClInclude Include="room\roomsettings.h">
+      <Filter>room</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="managers">
@@ -66,6 +90,9 @@
     </Filter>
     <Filter Include="networking">
       <UniqueIdentifier>{a329b9af-31df-44db-9162-378faf2d7469}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="room">
+      <UniqueIdentifier>{3a218c5f-d34c-4e36-93e7-995184a07a33}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

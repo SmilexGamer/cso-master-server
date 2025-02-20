@@ -2,8 +2,11 @@
 #include "packet_versionmanager.h"
 #include "packet_loginmanager.h"
 #include "packet_serverlistmanager.h"
+#include "packet_roommanager.h"
 #include "packet_umsgmanager.h"
+#include "packet_hostmanager.h"
 #include "packet_updateinfomanager.h"
+#include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
 #include <iostream>
 
@@ -51,8 +54,9 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned
 	packet->WriteUInt8(type);
 	packet->WriteString("");
 	packet->WriteUInt8((unsigned char)additionalText.size());
-	for (auto& text : additionalText)
+	for (auto& text : additionalText) {
 		packet->WriteString(text);
+	}
 
 	packet->Send();
 }
@@ -99,16 +103,32 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			packet_ServerListManager.ParsePacket_ServerList(packet);
 			break;
 		}
-		case PacketID::ServerChannel: {
+		case PacketID::RequestTransfer: {
+			packet_ServerListManager.ParsePacket_RequestTransfer(packet);
+			break;
+		}
+		case PacketID::RequestServerList: {
 			packet_ServerListManager.SendPacket_ServerList(packet->GetConnection());
+			break;
+		}
+		case PacketID::Room: {
+			packet_RoomManager.ParsePacket_Room(packet);
 			break;
 		}
 		case PacketID::UMsg: {
 			packet_UMsgManager.ParsePacket_UMsg(packet);
 			break;
 		}
+		case PacketID::Host: {
+			packet_HostManager.ParsePacket_Host(packet);
+			break;
+		}
 		case PacketID::UpdateInfo: {
 			packet_UpdateInfoManager.ParsePacket_UpdateInfo(packet);
+			break;
+		}
+		case PacketID::Shop: {
+			packet_ShopManager.ParsePacket_Shop(packet);
 			break;
 		}
 		case PacketID::UserStart: {
