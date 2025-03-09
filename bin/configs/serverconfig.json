@@ -1,0 +1,26 @@
+{
+	"TCPPort": 30002,
+	"UDPPort": 30002,
+	"MaxPlayers": 600,
+	"ServerID": 1,
+	"ChannelID": 1,
+	"ServerList": [
+		{
+			"Type": 0,
+			"Name": "Server 1",
+			"Channels": [
+				{
+					"Name": "Channel 1-1",
+					"IP": "127.0.0.1",
+					"Port": 30002
+				}
+			]
+		}
+	],
+	"SQL": {
+		"Server": "localhost",
+		"User": "root",
+		"Password": "",
+		"Database": "csodatabase"
+	}
+}

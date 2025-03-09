@@ -77,14 +77,18 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room;./user;./configs</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x86/libcrypto.lib;thirdparty/openssl/lib/x86/libssl.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x86/libcrypto.lib;thirdparty/openssl/lib/x86/libssl.lib;thirdparty/mysql/lib/mariadbclient.lib;thirdparty/mysql/lib/libmariadb.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)bin\$(ProjectName).exe"
+copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -95,7 +99,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room;./user;./configs</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -103,8 +107,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x86/libcrypto.lib;thirdparty/openssl/lib/x86/libssl.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x86/libcrypto.lib;thirdparty/openssl/lib/x86/libssl.lib;thirdparty/mysql/lib/mariadbclient.lib;thirdparty/mysql/lib/libmariadb.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)bin\$(ProjectName).exe"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -113,14 +120,18 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room;./user;./configs</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x64/libcrypto.lib;thirdparty/openssl/lib/x64/libssl.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x64/libcrypto.lib;thirdparty/openssl/lib/x64/libssl.lib;thirdparty/mysql/lib/libmariadb.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)bin\$(ProjectName).exe"
+copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -131,7 +142,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0601;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);./managers;./networking;./thirdparty;./room;./user;./configs</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -139,11 +150,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x64/libcrypto.lib;thirdparty/openssl/lib/x64/libssl.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);thirdparty/openssl/lib/x64/libcrypto.lib;thirdparty/openssl/lib/x64/libssl.lib;thirdparty/mysql/lib/libmariadb.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)bin\$(ProjectName).exe"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="servertick.cpp" />
+    <ClCompile Include="configs\serverconfig.cpp" />
     <ClCompile Include="managers\packetmanager.cpp" />
     <ClCompile Include="managers\packet_versionmanager.cpp" />
     <ClCompile Include="managers\packet_loginmanager.cpp" />
@@ -152,14 +168,22 @@
     <ClCompile Include="managers\packet_umsgmanager.cpp" />
     <ClCompile Include="managers\packet_hostmanager.cpp" />
     <ClCompile Include="managers\packet_updateinfomanager.cpp" />
+    <ClCompile Include="managers\packet_udpmanager.cpp" />
     <ClCompile Include="managers\packet_shopmanager.cpp" />
     <ClCompile Include="managers\packet_userstartmanager.cpp" />
+    <ClCompile Include="managers\usermanager.cpp" />
+    <ClCompile Include="managers\databasemanager.cpp" />
     <ClCompile Include="networking\tcp_connection.cpp" />
     <ClCompile Include="networking\tcp_server.cpp" />
+    <ClCompile Include="networking\udp_server.cpp" />
     <ClCompile Include="room\roomsettings.cpp" />
+    <ClCompile Include="user\gameuser.cpp" />
+    <ClCompile Include="user\user.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h" />
+    <ClInclude Include="servertick.h" />
+    <ClInclude Include="configs\serverconfig.h" />
     <ClInclude Include="managers\packetmanager.h" />
     <ClInclude Include="managers\packet_versionmanager.h" />
     <ClInclude Include="managers\packet_loginmanager.h" />
@@ -168,11 +192,17 @@
     <ClInclude Include="managers\packet_umsgmanager.h" />
     <ClInclude Include="managers\packet_hostmanager.h" />
     <ClInclude Include="managers\packet_updateinfomanager.h" />
+    <ClInclude Include="managers\packet_udpmanager.h" />
     <ClInclude Include="managers\packet_shopmanager.h" />
     <ClInclude Include="managers\packet_userstartmanager.h" />
+    <ClInclude Include="managers\usermanager.h" />
+    <ClInclude Include="managers\databasemanager.h" />
     <ClInclude Include="networking\tcp_connection.h" />
     <ClInclude Include="networking\tcp_server.h" />
+    <ClInclude Include="networking\udp_server.h" />
     <ClInclude Include="room\roomsettings.h" />
+    <ClInclude Include="user\gameuser.h" />
+    <ClInclude Include="user\user.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

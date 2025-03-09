@@ -1,39 +1,67 @@
 #include "tcp_server.h"
+#include "packetmanager.h"
 #include <iostream>
 
-TCPServer::TCPServer(IPV ipv, int port) : _ipVersion(ipv), _port(port), 
-	_acceptor(_ioContext, boost::asio::ip::tcp::endpoint(_ipVersion == IPV::V4 ? boost::asio::ip::tcp::v4() : boost::asio::ip::tcp::v6(), _port)),
-	_sslContext(boost::asio::ssl::context::sslv23) {
-#ifndef NO_SSL
-	_sslContext.set_options(
-		boost::asio::ssl::context::default_workarounds
-		| boost::asio::ssl::context::no_sslv2
-		| boost::asio::ssl::context::single_dh_use);
-	_sslContext.set_password_callback(std::bind(&TCPServer::get_password, this));
-	_sslContext.use_certificate_chain_file("cert.pem");
-	_sslContext.use_private_key_file("key.pem", boost::asio::ssl::context::pem);
-	_sslContext.use_tmp_dh_file("dh2048.pem");
-#endif
+TCPServer tcpServer;
+
+TCPServer::TCPServer() : _sslContext(boost::asio::ssl::context::sslv23), _acceptor(_ioContext, NULL) {
+	_port = 0;
+
+	OnConnect = [](TCPConnection::pointer connection) {
+		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetEndPoint());
+		};
+
+	OnDisconnect = [](TCPConnection::pointer connection) {
+		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetEndPoint());
+		};
+
+	OnClientPacket = [](TCPConnection::Packet::pointer packet) {
+		packetManager.QueuePacket(packet);
+	};
 }
 
 TCPServer::~TCPServer() {
 	shutdown();
 }
 
+bool TCPServer::Init(IPV ipv, unsigned short port) {
+	try {
+		_port = port;
+		_acceptor = boost::asio::ip::tcp::acceptor(_ioContext, boost::asio::ip::tcp::endpoint(ipv == IPV::V4 ? boost::asio::ip::tcp::v4() : boost::asio::ip::tcp::v6(), _port));
+
+#ifndef NO_SSL
+		_sslContext.set_options(
+			boost::asio::ssl::context::default_workarounds
+			| boost::asio::ssl::context::no_sslv2
+			| boost::asio::ssl::context::single_dh_use);
+		_sslContext.set_password_callback(bind(&TCPServer::get_password, this));
+		_sslContext.use_certificate_chain_file("certs\\cert.pem");
+		_sslContext.use_private_key_file("certs\\key.pem", boost::asio::ssl::context::pem);
+		_sslContext.use_tmp_dh_file("certs\\dh2048.pem");
+#endif
+	}
+	catch (exception& e) {
+		cerr << format("[TCPServer] Error on Init: {}\n", e.what());
+		return false;
+	}
+
+	return true;
+}
+
 void TCPServer::Start() {
-	if (_serverThread.joinable()) {
+	if (_tcpServerThread.joinable()) {
 		cout << "[TCPServer] Thread is already running!\n";
 		return;
 	}
 
-	cout << "[TCPServer] Starting!\n";
+	cout << format("[TCPServer] Starting on port {}!\n", _port);
 
 	_connections.clear();
-	_serverThread = thread(&TCPServer::run, this);
+	_tcpServerThread = thread(&TCPServer::run, this);
 }
 
 void TCPServer::Stop() {
-	if (!_serverThread.joinable()) {
+	if (!_tcpServerThread.joinable()) {
 		cout << "[TCPServer] Thread is already shut down!\n";
 		return;
 	}
@@ -49,7 +77,7 @@ int TCPServer::run() {
 		_ioContext.run();
 	}
 	catch (exception& e) {
-		cerr << e.what() << endl;
+		cerr << format("[TCPServer] Error on run: {}\n", e.what());
 		return -1;
 	}
 
@@ -59,15 +87,15 @@ int TCPServer::run() {
 
 int TCPServer::shutdown() {
 	try {
-		if (_serverThread.joinable()) {
+		if (_tcpServerThread.joinable()) {
 			cout << "[TCPServer] Shutting down!\n";
 
 			_ioContext.stop();
-			_serverThread.detach();
+			_tcpServerThread.detach();
 		}
 	}
 	catch (exception& e) {
-		cerr << e.what() << endl;
+		cerr << format("[TCPServer] Error on shutdown: {}\n", e.what());
 		return -1;
 	}
 

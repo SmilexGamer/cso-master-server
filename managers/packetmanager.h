@@ -5,6 +5,7 @@
 
 class PacketManager {
 public:
+	PacketManager();
 	~PacketManager();
 
 	void Start();
@@ -13,14 +14,14 @@ public:
 	void SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, vector<string> additionalText = {});
 
 private:
-	void run();
-	void shutdown();
+	int run();
+	int shutdown();
 	void parsePacket(TCPConnection::Packet::pointer packet);
 
 private:
 	thread _packetThread;
-	deque<TCPConnection::Packet::pointer> _packetQueue{};
-	bool _running{ false };
+	deque<TCPConnection::Packet::pointer> _packetQueue {};
+	bool _running;
 };
 
 extern PacketManager packetManager;

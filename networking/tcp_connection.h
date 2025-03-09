@@ -5,8 +5,6 @@
 #include <queue>
 #include <vector>
 
-using namespace std;
-
 enum class PacketSource {
 	Client,
 	Server
@@ -26,7 +24,7 @@ public:
 			return pointer(new TCPConnection::Packet(source, connection, buffer));
 		}
 
-		TCPConnection::pointer GetConnection() {
+		TCPConnection::pointer GetConnection() const noexcept {
 			return _connection;
 		}
 
@@ -38,7 +36,7 @@ public:
 		}
 
 		bool IsValid() const noexcept {
-			return _signature == PACKET_SIGNATURE;
+			return _signature == TCP_PACKET_SIGNATURE;
 		}
 
 		unsigned char GetSequence() const noexcept {
@@ -358,6 +356,7 @@ public:
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
 	void DisconnectClient();
+	void DisconnectClient(boost::system::error_code ec);
 
 private:
 	explicit TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context);

@@ -1,13 +1,27 @@
 #pragma once
+#include <string>
+#include <vector>
+
+using namespace std;
+
 //#define NO_SSL
+
+enum class IPV {
+	V4,
+	V6
+};
 
 #define SERVERCONNECTED "~SERVERCONNECTED\n\0"
 
-#define PACKET_SIGNATURE 'U'
+#define TCP_PACKET_SIGNATURE 'U'
+
+#define UDP_PACKET_SIGNATURE 'W'
 
 #define PACKET_HEADER_SIZE 4
 
-#define PACKET_MAX_SIZE 0x10000
+#define TCP_PACKET_MAX_SIZE 0x10000
+
+#define UDP_PACKET_MAX_SIZE 4010
 
 #define LAUNCHER_VERSION 67
 
@@ -113,11 +127,32 @@ enum UserInfoFlag {
 	Unk10 = 0x10,
 	Exp = 0x20,
 	Cash = 0x40,
-	Point = 0x80,
+	Points = 0x80,
 	BattleStats = 0x100,
 	Location = 0x200,
 	Unk400 = 0x400,
 	Unk800 = 0x800,
 	Unk1000 = 0x1000,
 	All = 0xFFFF
+};
+
+struct Channel {
+	unsigned char id;
+	string name;
+	unsigned short numPlayers;
+	string ip;
+	unsigned short port;
+};
+
+struct Server {
+	unsigned char id;
+	bool status;
+	unsigned char type;
+	string name;
+	vector<Channel> channels;
+};
+
+enum ServerStatus {
+	NotReady = 0,
+	Ready = 1
 };

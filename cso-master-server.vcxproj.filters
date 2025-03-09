@@ -2,6 +2,10 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="servertick.cpp" />
+    <ClCompile Include="configs\serverconfig.cpp">
+      <Filter>configs</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packetmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
@@ -26,10 +30,19 @@
     <ClCompile Include="managers\packet_updateinfomanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_udpmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_shopmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\packet_userstartmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\usermanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\databasemanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="networking\tcp_connection.cpp">
@@ -38,12 +51,25 @@
     <ClCompile Include="networking\tcp_server.cpp">
       <Filter>networking</Filter>
     </ClCompile>
+    <ClCompile Include="networking\udp_server.cpp">
+      <Filter>networking</Filter>
+    </ClCompile>
     <ClCompile Include="room\roomsettings.cpp">
       <Filter>room</Filter>
+    </ClCompile>
+    <ClCompile Include="user\user.cpp">
+      <Filter>user</Filter>
+    </ClCompile>
+    <ClCompile Include="user\gameuser.cpp">
+      <Filter>user</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h" />
+    <ClInclude Include="servertick.h" />
+    <ClInclude Include="configs\serverconfig.h">
+      <Filter>configs</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packetmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
@@ -68,10 +94,19 @@
     <ClInclude Include="managers\packet_updateinfomanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\packet_udpmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packet_shopmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_userstartmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\usermanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\databasemanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="networking\tcp_connection.h">
@@ -80,11 +115,23 @@
     <ClInclude Include="networking\tcp_server.h">
       <Filter>networking</Filter>
     </ClInclude>
+    <ClInclude Include="networking\udp_server.h">
+      <Filter>networking</Filter>
+    </ClInclude>
     <ClInclude Include="room\roomsettings.h">
       <Filter>room</Filter>
     </ClInclude>
+    <ClInclude Include="user\user.h">
+      <Filter>user</Filter>
+    </ClInclude>
+    <ClInclude Include="user\gameuser.h">
+      <Filter>user</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="configs">
+      <UniqueIdentifier>{dfd0851f-38fb-46e0-882c-a2bda01c37c9}</UniqueIdentifier>
+    </Filter>
     <Filter Include="managers">
       <UniqueIdentifier>{c7f64b36-f5d9-4c48-bdd9-6d7f661d4423}</UniqueIdentifier>
     </Filter>
@@ -93,6 +140,9 @@
     </Filter>
     <Filter Include="room">
       <UniqueIdentifier>{3a218c5f-d34c-4e36-93e7-995184a07a33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user">
+      <UniqueIdentifier>{e513bd9d-ad24-4ce4-8c6d-2998d63e223a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

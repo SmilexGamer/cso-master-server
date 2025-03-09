@@ -6,11 +6,17 @@
 #include "packet_umsgmanager.h"
 #include "packet_hostmanager.h"
 #include "packet_updateinfomanager.h"
+#include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
+#include "serverconfig.h"
 #include <iostream>
 
 PacketManager packetManager;
+
+PacketManager::PacketManager() {
+	_running = false;
+}
 
 PacketManager::~PacketManager() {
 	shutdown();
@@ -61,30 +67,45 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned
 	packet->Send();
 }
 
-void PacketManager::run() {
+int PacketManager::run() {
 	cout << "[PacketManager] Thread starting!\n";
 
-	_running = true;
-	while (_running) {
-		if (_packetQueue.size() == 0) {
-			Sleep(1);
-			continue;
-		}
+	try {
+		_running = true;
+		while (_running) {
+			if (_packetQueue.empty()) {
+				this_thread::yield();
+				continue;
+			}
 
-		parsePacket(_packetQueue.front());
-		_packetQueue.pop_front();
+			parsePacket(_packetQueue.front());
+			_packetQueue.pop_front();
+		}
+	}
+	catch (exception& e) {
+		cerr << format("[PacketManager] Error on run: {}\n", e.what());
+		return -1;
 	}
 
 	cout << "[PacketManager] Thread shutting down!\n";
+	return 0;
 }
 
-void PacketManager::shutdown() {
-	if (_packetThread.joinable()) {
-		cout << "[PacketManager] Shutting down!\n";
+int PacketManager::shutdown() {
+	try {
+		if (_packetThread.joinable()) {
+			cout << "[PacketManager] Shutting down!\n";
 
-		_running = false;
-		_packetThread.detach();
+			_running = false;
+			_packetThread.detach();
+		}
 	}
+	catch (exception& e) {
+		cerr << format("[PacketManager] Error on shutdown: {}\n", e.what());
+		return -1;
+	}
+
+	return 0;
 }
 
 void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
@@ -108,7 +129,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		case PacketID::RequestServerList: {
-			packet_ServerListManager.SendPacket_ServerList(packet->GetConnection());
+			packet_ServerListManager.SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
 			break;
 		}
 		case PacketID::Room: {
@@ -127,6 +148,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			packet_UpdateInfoManager.ParsePacket_UpdateInfo(packet);
 			break;
 		}
+		case PacketID::Udp: {
+			packet_UdpManager.ParsePacket_Udp(packet);
+			break;
+		}
 		case PacketID::Shop: {
 			packet_ShopManager.ParsePacket_Shop(packet);
 			break;
@@ -136,7 +161,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetEndPoint(), ID & 0xFF);
+			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetEndPoint(), ID);
 			break;
 		}
 	}

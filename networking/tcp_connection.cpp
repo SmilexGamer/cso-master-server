@@ -1,4 +1,5 @@
 #include "tcp_connection.h"
+#include "usermanager.h"
 #include <iostream>
 
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
@@ -27,7 +28,7 @@ TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connec
 			_connection->SetOutgoingSequence(++outgoingSequence);
 		}
 
-		_signature = PACKET_SIGNATURE;
+		_signature = TCP_PACKET_SIGNATURE;
 		_sequence = outgoingSequence;
 		_length = (unsigned short)_buffer.size();
 	}
@@ -39,7 +40,7 @@ TCPConnection::Packet::~Packet() {
 		int readOffset = _readOffset;
 
 		string unreadData;
-		for (auto c : ReadArray_UInt8((int)_buffer.size() - _readOffset)) {
+		for (auto& c : ReadArray_UInt8((int)_buffer.size() - _readOffset)) {
 			unreadData += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
@@ -69,8 +70,7 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	_sslStream.async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()]
 	(boost::system::error_code ec) {
 		if (ec) {
-			self->_sslStream.next_layer().close(ec);
-			self->_errorHandler();
+			self->DisconnectClient(ec);
 			return;
 		}
 
@@ -80,9 +80,9 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 }
 
 void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL) {
-	if (buffer.size() > PACKET_MAX_SIZE) {
+	if (buffer.size() > TCP_PACKET_MAX_SIZE) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Packet not sent to client ({}) because buffer size ({}) > PACKET_MAX_SIZE ({})!\n", _endpoint, buffer.size(), PACKET_MAX_SIZE);
+		cout << format("[TCPConnection] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _endpoint, buffer.size(), TCP_PACKET_MAX_SIZE);
 #endif
 		return;
 	}
@@ -97,7 +97,11 @@ void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL)
 
 void TCPConnection::DisconnectClient() {
 	_sslStream.next_layer().close();
+	_errorHandler();
+}
 
+void TCPConnection::DisconnectClient(boost::system::error_code ec) {
+	_sslStream.next_layer().close(ec);
 	_errorHandler();
 }
 
@@ -117,8 +121,7 @@ void TCPConnection::asyncRead() {
 
 void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		_sslStream.next_layer().close(ec);
-		_errorHandler();
+		userManager.DisconnectUserByConnection(shared_from_this(), ec);
 		return;
 	}
 
@@ -129,29 +132,26 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 	if (!packet->IsValid()) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent packet with invalid signature!\n", _endpoint);
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with invalid signature!\n", _endpoint);
 #endif
 
-		_sslStream.next_layer().close();
-		_errorHandler();
+		userManager.DisconnectUserByConnection(shared_from_this());
 		return;
 	}
 	if (packet->GetSequence() != _incomingSequence) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
 #endif
 
-		_sslStream.next_layer().close();
-		_errorHandler();
+		userManager.DisconnectUserByConnection(shared_from_this());
 		return;
 	}
 	if (!packet->GetLength()) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent packet with length 0!\n", _endpoint);
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with length 0!\n", _endpoint);
 #endif
 
-		_sslStream.next_layer().close();
-		_errorHandler();
+		userManager.DisconnectUserByConnection(shared_from_this());
 		return;
 	}
 
@@ -159,16 +159,14 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
 		if (ec) {
-			self->_sslStream.next_layer().close(ec);
-			self->_errorHandler();
+			self->DisconnectClient(ec);
 			return;
 		}
 #else
 	boost::asio::async_read(_sslStream, _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
 		if (ec) {
-			self->_sslStream.next_layer().close(ec);
-			self->_errorHandler();
+			userManager.DisconnectUserByConnection(self, ec);
 			return;
 		}
 #endif
@@ -181,7 +179,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 #ifdef _DEBUG
 		string bufferStr;
-		for (auto c : buffer) {
+		for (auto& c : buffer) {
 			bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
@@ -210,19 +208,17 @@ void TCPConnection::asyncWrite(bool noSSL) {
 
 void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		_sslStream.next_layer().close(ec);
-
-		_errorHandler();
+		userManager.DisconnectUserByConnection(shared_from_this(), ec);
 		return;
 	}
 
 #ifdef _DEBUG
 	string buffer;
-	for (auto c : _outgoingPackets.front()) {
+	for (auto& c : _outgoingPackets.front()) {
 		buffer += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
-	cout << format("[TCPConnection] Sent packet to client ({}):{}\n", GetEndPoint(), buffer.c_str());
+	cout << format("[TCPConnection] Sent TCP Packet to client ({}):{}\n", GetEndPoint(), buffer.c_str());
 #endif
 
 	_outgoingPackets.pop();

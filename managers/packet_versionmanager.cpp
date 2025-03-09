@@ -18,7 +18,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 	static char dateStr[10];
 	strftime(dateStr, sizeof(dateStr), "%d.%m.%y", &date);
 
-	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion & 0xFF, clientVersion, dateStr, clientNARChecksum);
+	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion, clientVersion, dateStr, clientNARChecksum);
 
 	if (launcherVersion != LAUNCHER_VERSION) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::INVALID_CLIENT_VERSION);

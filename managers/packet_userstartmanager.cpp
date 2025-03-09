@@ -10,7 +10,7 @@ void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::point
 	unsigned long unk1 = packet->ReadUInt32_LE();
 	string unk2 = packet->ReadString();
 
-	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", packet->GetConnection()->GetEndPoint(), type & 0xFF, unk1, unk2.c_str());
+	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", packet->GetConnection()->GetEndPoint(), type, unk1, unk2.c_str());
 }
 
 void Packet_UserStartManager::SendPacket_UserStart(TCPConnection::pointer connection) {

@@ -19,7 +19,7 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", packet->GetConnection()->GetEndPoint(), type & 0xFF);
+			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", packet->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}
@@ -28,7 +28,7 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 void Packet_RoomManager::parsePacket_Room_RequestCreate(TCPConnection::Packet::pointer packet) {
 	RoomSettings roomSettings = RoomSettings(packet);
 
-	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", packet->GetConnection()->GetEndPoint(), roomSettings.roomName.c_str(), roomSettings.unk2 & 0xFF, roomSettings.maxPlayers & 0xFF, roomSettings.gameModeID & 0xFF, roomSettings.mapID & 0xFF, roomSettings.winLimit & 0xFF, roomSettings.killLimit, roomSettings.timeLimit & 0xFF, roomSettings.roundTime & 0xFF, roomSettings.password.c_str(), roomSettings.unk11 & 0xFF, roomSettings.unk12 & 0xFF, roomSettings.quickStart & 0xFF, roomSettings.unk14 & 0xFF, roomSettings.unk15 & 0xFF, roomSettings.unk16);
+	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", packet->GetConnection()->GetEndPoint(), roomSettings.roomName.c_str(), roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password.c_str(), roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
 
 	sendPacket_Room_ReplyCreateAndJoin(packet->GetConnection(), roomSettings);
 }
@@ -206,7 +206,7 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 		if (UserInfoFlag::All & UserInfoFlag::Cash) {
 			packet->WriteUInt64_LE(1000); // cash
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Point) {
+		if (UserInfoFlag::All & UserInfoFlag::Points) {
 			packet->WriteUInt64_LE(2000); // points
 		}
 		if (UserInfoFlag::All & UserInfoFlag::BattleStats) {

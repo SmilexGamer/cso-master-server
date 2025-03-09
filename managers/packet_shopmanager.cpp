@@ -15,7 +15,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", packet->GetConnection()->GetEndPoint(), type & 0xFF);
+			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", packet->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}
