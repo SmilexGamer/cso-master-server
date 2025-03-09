@@ -14,6 +14,10 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 			parsePacket_Room_RequestCreate(packet);
 			break;
 		}
+		case Packet_RoomType::RequestLeave: {
+			parsePacket_Room_RequestLeave(packet);
+			break;
+		}
 		case Packet_RoomType::RequestStartGame: {
 			parsePacket_Room_RequestStartGame(packet);
 			break;
@@ -35,6 +39,11 @@ void Packet_RoomManager::parsePacket_Room_RequestCreate(TCPConnection::Packet::p
 
 void Packet_RoomManager::parsePacket_Room_RequestStartGame(TCPConnection::Packet::pointer packet) {
 	packet_HostManager.SendPacket_Host_StartGame(packet->GetConnection(), 1);
+}
+
+void Packet_RoomManager::parsePacket_Room_RequestLeave(TCPConnection::Packet::pointer packet) {
+	sendPacket_Room_ReplyLeaveRoomInGame(packet->GetConnection());
+	sendPacket_Room_ReplyLeaveRoom(packet->GetConnection(), 1);
 }
 
 void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, RoomSettings roomSettings) {
@@ -238,5 +247,20 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 		}
 	}
 
+	packet->Send();
+}
+
+void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoom(TCPConnection::pointer connection, int userID) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Room });
+
+	packet->WriteUInt8(Packet_RoomType::ReplyLevaeRoom);
+	packet->WriteUInt32_LE(userID);
+	packet->Send();
+}
+
+void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::pointer connection) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Room });
+
+	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoomInGame);
 	packet->Send();
 }

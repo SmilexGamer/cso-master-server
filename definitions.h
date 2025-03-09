@@ -99,7 +99,10 @@ enum Packet_RoomType {
 	RequestCreate = 0,
 	ReplyCreateAndJoin = 0,
 	RequestJoin = 1,
-	RequestStartGame = 4
+	RequestLeave = 2,
+	RequestStartGame = 4,
+	ReplyLevaeRoom = 4,
+	ReplyLeaveRoomInGame = 10
 };
 
 enum Packet_UMsgType {
