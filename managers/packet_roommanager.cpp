@@ -253,7 +253,7 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoom(TCPConnection::pointer connection, int userID) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Room });
 
-	packet->WriteUInt8(Packet_RoomType::ReplyLevaeRoom);
+	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoom);
 	packet->WriteUInt32_LE(userID);
 	packet->Send();
 }

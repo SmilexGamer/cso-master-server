@@ -101,7 +101,7 @@ enum Packet_RoomType {
 	RequestJoin = 1,
 	RequestLeave = 2,
 	RequestStartGame = 4,
-	ReplyLevaeRoom = 4,
+	ReplyLeaveRoom = 4,
 	ReplyLeaveRoomInGame = 10
 };
 
