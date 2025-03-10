@@ -9,6 +9,7 @@
 #include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
+#include "packet_transfermanager.h"
 #include "serverconfig.h"
 #include <iostream>
 
@@ -114,6 +115,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 	switch (ID) {
 		case PacketID::Version: {
 			packet_VersionManager.ParsePacket_Version(packet);
+			break;
+		}
+		case PacketID::Transfer: {
+			packet_transferManager.ParsePacket_Transfer(packet);
 			break;
 		}
 		case PacketID::Login: {

@@ -63,6 +63,9 @@
     <ClCompile Include="user\gameuser.cpp">
       <Filter>user</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_transfermanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h" />
@@ -126,6 +129,9 @@
     </ClInclude>
     <ClInclude Include="user\gameuser.h">
       <Filter>user</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_transfermanager.h">
+      <Filter>managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

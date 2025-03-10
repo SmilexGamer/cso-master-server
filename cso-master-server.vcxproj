@@ -158,6 +158,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="managers\packet_transfermanager.cpp" />
     <ClCompile Include="servertick.cpp" />
     <ClCompile Include="configs\serverconfig.cpp" />
     <ClCompile Include="managers\packetmanager.cpp" />
@@ -182,6 +183,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h" />
+    <ClInclude Include="managers\packet_transfermanager.h" />
     <ClInclude Include="servertick.h" />
     <ClInclude Include="configs\serverconfig.h" />
     <ClInclude Include="managers\packetmanager.h" />

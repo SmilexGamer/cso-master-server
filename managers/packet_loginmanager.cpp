@@ -52,3 +52,8 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	packet_UpdateInfoManager.SendPacket_UpdateInfo(packet->GetConnection(), gameUser);
 	packet_ServerListManager.SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
 }
+
+void Packet_LoginManager::sendPacket_Character_Reply_CreateNicknameDlg(TCPConnection::pointer connection) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Character });
+	packet->Send();
+}
