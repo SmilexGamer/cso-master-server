@@ -39,13 +39,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die("connect error: " . $mysqli->connect_error);
         }
         //Check if the user is registered
-        $sql = "SELECT userID FROM Users WHERE userName = ?";
+        $sql = "SELECT 1 FROM Users WHERE userName = ?";
         if ($stmt = $mysqli->prepare(query: $sql)) {
             $stmt->bind_param("s", $param_username);
             $param_username = trim($_POST["username"]);
             if ($stmt->execute()) {
                 $stmt->store_result();
-                if ($stmt->num_rows == 1) {
+                if ($stmt->num_rows > 0) {
                     $username_err = "This account is already in use";
                 } else {
                     $username = trim($_POST["username"]);
@@ -56,8 +56,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->close();
         }
         $mysqli->close();
-        // Set the username to the InputBox
-        $username = trim($_POST["username"]);
     }
     
     // Check password
