@@ -29,9 +29,13 @@ $dbname = "csodatabase";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty(trim($_POST["username"]))) {
-        $username_err = "Please enter your account";
+        $username_err = "Please enter your username";
+    } elseif (strlen(trim($_POST["username"])) < 4) {
+        $username_err = "Username must contain at least 4 characters";
+    } elseif (strlen(trim($_POST["username"])) > 16) {
+        $username_err = "Username can only contain up to 16 characters";
     } elseif (!preg_match('/^[a-zA-Z0-9]+$/', trim($_POST["username"]))) {
-        $username_err = "Account can only contain letters, numbers";
+        $username_err = "Username can only contain letters and numbers";
     } else 
     {
         $mysqli = new mysqli($servername, $db_username, $db_password, $dbname);
@@ -46,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->execute()) {
                 $stmt->store_result();
                 if ($stmt->num_rows > 0) {
-                    $username_err = "This account is already in use";
+                    $username_err = "This username is already in use";
                 } else {
                     $username = trim($_POST["username"]);
                 }
@@ -201,7 +205,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h2>Register Account</h2>
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
                 <div class="form-group">
-                    <label>Account</label>
+                    <label>Username</label>
                     <input type="text" name="username" value="<?php echo $username; ?>">
                     <span class="alert"><?php echo $username_err; ?></span>
                 </div>
