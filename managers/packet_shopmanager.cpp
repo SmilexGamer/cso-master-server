@@ -11,7 +11,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 
 	switch (type) {
 		case Packet_ShopType::Unk0: {
-			SendPacket_Shop_Unk0(packet->GetConnection());
+			sendPacket_Shop_Unk0(packet->GetConnection());
 			break;
 		}
 		default: {
@@ -21,7 +21,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 	}
 }
 
-void Packet_ShopManager::SendPacket_Shop_Unk0(TCPConnection::pointer connection) {
+void Packet_ShopManager::sendPacket_Shop_Unk0(TCPConnection::pointer connection) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Shop });
 
 	packet->WriteUInt8(Packet_ShopType::Unk0);

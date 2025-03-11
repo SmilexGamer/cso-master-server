@@ -15,7 +15,6 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType)
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
-		databaseManager.RemoveServerChannel();
 		return TRUE;
 	default:
 		break;
@@ -63,7 +62,6 @@ int main() {
 	string command;
 	while (getline(cin >> ws, command)) {
 		if (command == "stop") {
-			databaseManager.RemoveServerChannel();
 			break;
 		}
 		else if (command == "status") {

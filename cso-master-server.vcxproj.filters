@@ -12,10 +12,16 @@
     <ClCompile Include="managers\packet_versionmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_transfermanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_loginmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\packet_serverlistmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\packet_charactermanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\packet_roommanager.cpp">
@@ -63,8 +69,17 @@
     <ClCompile Include="user\gameuser.cpp">
       <Filter>user</Filter>
     </ClCompile>
-    <ClCompile Include="managers\packet_transfermanager.cpp">
-      <Filter>managers</Filter>
+    <ClCompile Include="thirdparty\libbcrypt\bcrypt.c">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\libbcrypt\crypt_blowfish.c">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\libbcrypt\crypt_gensalt.c">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\libbcrypt\wrapper.c">
+      <Filter>thirdparty\libbcrypt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,10 +94,16 @@
     <ClInclude Include="managers\packet_versionmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\packet_transfermanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packet_loginmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_serverlistmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_charactermanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_roommanager.h">
@@ -130,8 +151,26 @@
     <ClInclude Include="user\gameuser.h">
       <Filter>user</Filter>
     </ClInclude>
-    <ClInclude Include="managers\packet_transfermanager.h">
-      <Filter>managers</Filter>
+    <ClInclude Include="thirdparty\libbcrypt\bcrypt.h">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\BCrypt.hpp">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\crypt.h">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\crypt_blowfish.h">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\crypt_gensalt.h">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\ow-crypt.h">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\libbcrypt\winbcrypt.h">
+      <Filter>thirdparty\libbcrypt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -150,5 +189,16 @@
     <Filter Include="user">
       <UniqueIdentifier>{e513bd9d-ad24-4ce4-8c6d-2998d63e223a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thirdparty">
+      <UniqueIdentifier>{3c0a1ca0-8064-464f-9021-71cb002a6dcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thirdparty\libbcrypt">
+      <UniqueIdentifier>{87453a0d-4ab4-46cc-9c5a-db1b949229ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="thirdparty\libbcrypt\x86.S">
+      <Filter>thirdparty\libbcrypt</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #include "packetmanager.h"
 #include "packet_versionmanager.h"
+#include "packet_charactermanager.h"
 #include "packet_loginmanager.h"
 #include "packet_serverlistmanager.h"
 #include "packet_roommanager.h"
@@ -117,24 +118,24 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			packet_VersionManager.ParsePacket_Version(packet);
 			break;
 		}
-		case PacketID::Transfer: {
-			packet_transferManager.ParsePacket_Transfer(packet);
+		case PacketID::RecvCharacter: {
+			packet_CharacterManager.ParsePacket_RecvCharacter(packet);
 			break;
 		}
 		case PacketID::Login: {
 			packet_LoginManager.ParsePacket_Login(packet);
 			break;
 		}
-		case PacketID::ServerList: {
-			packet_ServerListManager.ParsePacket_ServerList(packet);
+		case PacketID::TransferLogin: {
+			packet_TransferManager.ParsePacket_TransferLogin(packet);
 			break;
 		}
 		case PacketID::RequestTransfer: {
-			packet_ServerListManager.ParsePacket_RequestTransfer(packet);
+			packet_TransferManager.ParsePacket_RequestTransfer(packet);
 			break;
 		}
 		case PacketID::RequestServerList: {
-			packet_ServerListManager.SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
+			packet_ServerListManager.ParsePacket_RequestServerList(packet);
 			break;
 		}
 		case PacketID::Room: {

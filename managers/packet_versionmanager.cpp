@@ -40,10 +40,10 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 		return;
 	}
 
-	SendPacket_Version(packet->GetConnection());
+	sendPacket_Version(packet->GetConnection());
 }
 
-void Packet_VersionManager::SendPacket_Version(TCPConnection::pointer connection) {
+void Packet_VersionManager::sendPacket_Version(TCPConnection::pointer connection) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Version });
 
 	packet->Send();

@@ -3,7 +3,8 @@
 
 class Packet_TransferManager {
 public:
-	void ParsePacket_Transfer(TCPConnection::Packet::pointer packet);
+	void ParsePacket_TransferLogin(TCPConnection::Packet::pointer packet);
+	void ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet);
 };
 
-extern Packet_TransferManager packet_transferManager;
+extern Packet_TransferManager packet_TransferManager;

@@ -1,4 +1,5 @@
 #pragma once
+#include "definitions.h"
 #include "mysql/mysql.h"
 #include <string>
 
@@ -14,10 +15,11 @@ public:
 	void RemoveServerChannel();
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
 	void GetChannelsNumPlayers();
-	bool Login(string userName, string password);
+	Packet_ReplyType Login(string userName, string password);
 
 private:
 	MYSQL* _connection;
+	bool _addedServerChannel;
 };
 
 extern DatabaseManager databaseManager;

@@ -4,8 +4,7 @@
 
 class Packet_ServerListManager {
 public:
-	void ParsePacket_ServerList(TCPConnection::Packet::pointer packet);
-	void ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet);
+	void ParsePacket_RequestServerList(TCPConnection::Packet::pointer packet);
 	void SendPacket_ServerList(TCPConnection::pointer connection, vector<Server> servers);
 	void SendPacket_Lobby(TCPConnection::pointer connection, vector<User*> users);
 	void SendPacket_RoomList(TCPConnection::pointer connection);

@@ -35,8 +35,10 @@ enum PacketID {
 	Version = 0,
 	Reply = 1,
 	Transfer = 2,
+	RecvCharacter = 2,
 	Login = 3, // or Auth, whatever you want to name it
 	ServerList = 5,
+	TransferLogin = 5,
 	Character = 6,
 	Crypt = 7,
 	RequestTransfer = 7,
