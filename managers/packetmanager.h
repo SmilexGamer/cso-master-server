@@ -1,5 +1,6 @@
 #pragma once
 #include "tcp_connection.h"
+#include "user.h"
 #include <thread>
 #include <deque>
 
@@ -12,6 +13,7 @@ public:
 	void Stop();
 	void QueuePacket(TCPConnection::Packet::pointer packet);
 	void SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, vector<string> additionalText = {});
+	void BuildUserInfo(TCPConnection::Packet::pointer& packet, UserCharacter userCharacter);
 
 private:
 	int run();

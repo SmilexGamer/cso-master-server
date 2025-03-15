@@ -1,4 +1,8 @@
 #include "packet_charactermanager.h"
+#include "usermanager.h"
+#include "packetmanager.h"
+#include "serverconfig.h"
+#include "databasemanager.h"
 #include <iostream>
 
 Packet_CharacterManager packet_CharacterManager;
@@ -9,6 +13,72 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 	string nickName = packet->ReadString();
 
 	cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", packet->GetConnection()->GetEndPoint(), nickName);
+
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL)
+		return;
+
+	if (nickName.size() < 4) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_TOO_SHORT);
+		return;
+	}
+
+	if (nickName.size() > 16) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_TOO_LONG);
+		return;
+	}
+
+	if (nickName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") != string::npos) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::INVALID_CHAR);
+		return;
+	}
+
+	size_t first_number_pos = nickName.find_first_of("0123456789");
+	size_t last_char_pos = nickName.find_last_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	if (first_number_pos != string::npos && last_char_pos > first_number_pos) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_DIGIT_BEFORE_CHAR);
+		return;
+	}
+
+	for (auto& c : nickName) {
+		if (count(nickName.begin(), nickName.end(), c) > 3) {
+			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_EXCEED_CHAR_COUNT);
+			return;
+		}
+	}
+
+	string nickNameLower = nickName;
+	transform(nickNameLower.begin(), nickNameLower.end(), nickNameLower.begin(),
+		[](unsigned char c) { return tolower(c); });
+
+	for (auto& name : serverConfig.prohibitedNames) {
+		if (nickNameLower.find(name) != string::npos) {
+			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_PROHIBITED);
+			return;
+		}
+	}
+
+	int result = databaseManager.CreateCharacter(user->GetUserID(), nickName);
+	if (result <= 0) {
+		if (result < 0) {
+			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+			return;
+		}
+
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ALREADY_EXIST);
+		return;
+	}
+
+	UserCharacter userCharacter;
+	userCharacter.flag = UserInfoFlag::All;
+	if (!user->GetCharacter(userCharacter)) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+
+	packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::CreateCharacterSuccess);
+	userManager.SendLoginPackets(user, userCharacter);
 }
 
 void Packet_CharacterManager::SendPacket_Character(TCPConnection::pointer connection) {

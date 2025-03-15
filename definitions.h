@@ -69,7 +69,7 @@ enum PacketID {
 
 enum Packet_ReplyType {
 	LoginSuccess = 0,
-	CreateCharacter = 1,
+	CreateCharacterSuccess = 1,
 	InvalidName = 3,
 	Playing = 4,
 	NotExist = 5,
@@ -142,18 +142,18 @@ enum UserInfoFlag {
 };
 
 struct Channel {
-	unsigned char id;
-	string name;
-	unsigned short numPlayers;
-	string ip;
-	unsigned short port;
+	unsigned char id = 0;
+	string name = "";
+	unsigned short numPlayers = 0;
+	string ip = "";
+	unsigned short port = 0;
 };
 
 struct Server {
-	unsigned char id;
-	bool status;
-	unsigned char type;
-	string name;
+	unsigned char id = 0;
+	bool status = false;
+	unsigned char type = 0;
+	string name = "";
 	vector<Channel> channels;
 };
 

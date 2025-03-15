@@ -13,12 +13,12 @@ void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::point
 	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", packet->GetConnection()->GetEndPoint(), type, unk1, unk2.c_str());
 }
 
-void Packet_UserStartManager::SendPacket_UserStart(TCPConnection::pointer connection) {
+void Packet_UserStartManager::SendPacket_UserStart(TCPConnection::pointer connection, User* user, UserCharacter userCharacter) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::UserStart });
 
-	packet->WriteUInt32_LE(1); // userID
-	packet->WriteString("userName"); // userName
-	packet->WriteString("nickName"); // nickName
+	packet->WriteUInt32_LE(user->GetUserID()); // userID
+	packet->WriteString(user->GetUserName()); // userName
+	packet->WriteString(userCharacter.nickName); // nickName
 
 	packet->Send();
 }

@@ -1,8 +1,5 @@
 #include "packet_loginmanager.h"
 #include "packetmanager.h"
-#include "packet_serverlistmanager.h"
-#include "packet_updateinfomanager.h"
-#include "packet_userstartmanager.h"
 #include "packet_charactermanager.h"
 #include "usermanager.h"
 #include "serverconfig.h"
@@ -31,28 +28,38 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
-	Packet_ReplyType result = databaseManager.Login(userName, password);
+	LoginResult result = databaseManager.Login(userName, password);
 
-	if (result > Packet_ReplyType::CreateCharacter) {
-		packetManager.SendPacket_Reply(packet->GetConnection(), result);
+	if (result.reply > Packet_ReplyType::LoginSuccess) {
+		packetManager.SendPacket_Reply(packet->GetConnection(), result.reply);
 		return;
 	}
 
-	User* user = new User(packet->GetConnection(), 1);
-	userManager.AddUser(user);
-
-	if (result == Packet_ReplyType::CreateCharacter) {
-		packet_CharacterManager.SendPacket_Character(packet->GetConnection());
+	User* user = new User(packet->GetConnection(), result.userID, userName);
+	if (!userManager.AddUser(user)) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 		return;
 	}
 
-	GameUser gameUser;
-	gameUser.userID = user->GetUserID();
-	gameUser.flag = UserInfoFlag::All;
-	gameUser.nickName = "nickName";
+	int resultCharacter = user->IsCharacterExists();
+	if (resultCharacter <= 0) {
+		if (resultCharacter < 0) {
+			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+			return;
+		}
 
-	packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::LoginSuccess);
-	packet_UserStartManager.SendPacket_UserStart(packet->GetConnection());
-	packet_UpdateInfoManager.SendPacket_UpdateInfo(packet->GetConnection(), gameUser);
-	packet_ServerListManager.SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::LoginSuccess);
+		packet_CharacterManager.SendPacket_Character(user->GetConnection());
+		return;
+	}
+
+	UserCharacter userCharacter;
+	userCharacter.flag = UserInfoFlag::All;
+	if (!user->GetCharacter(userCharacter)) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+
+	packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::LoginSuccess);
+	userManager.SendLoginPackets(user, userCharacter);
 }

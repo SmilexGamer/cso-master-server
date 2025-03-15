@@ -35,8 +35,7 @@ bool DatabaseManager::Init(string server, string user, string password, string d
 }
 
 bool DatabaseManager::AddServerChannel() {
-    string query;
-    query = format("SELECT 1 FROM server_channels WHERE channelID = {} AND serverID = {};", serverConfig.channelID, serverConfig.serverID);
+    string query = format("SELECT 1 FROM server_channels WHERE channelID = {} AND serverID = {};", serverConfig.channelID, serverConfig.serverID);
 
     if (mysql_query(_connection, query.c_str())) {
         cout << format("[DatabaseManager] Query error on AddServerChannel: {}\n", mysql_error(_connection));
@@ -68,8 +67,7 @@ bool DatabaseManager::AddServerChannel() {
 
 void DatabaseManager::RemoveServerChannel() {
     if (_addedServerChannel) {
-        string query;
-        query = format("DELETE FROM server_channels WHERE channelID = {} AND serverID = {};", serverConfig.channelID, serverConfig.serverID);
+        string query = format("DELETE FROM server_channels WHERE channelID = {} AND serverID = {};", serverConfig.channelID, serverConfig.serverID);
 
         if (mysql_query(_connection, query.c_str())) {
             cout << format("[DatabaseManager] Query error on RemoveServerChannel: {}\n", mysql_error(_connection));
@@ -81,8 +79,7 @@ void DatabaseManager::RemoveServerChannel() {
 }
 
 void DatabaseManager::UpdateChannelNumPlayers(unsigned short numPlayers) {
-    string query;
-    query = format("UPDATE server_channels SET numPlayers = {} WHERE channelID = {} and serverID = {};", numPlayers, serverConfig.channelID, serverConfig.serverID);
+    string query = format("UPDATE server_channels SET numPlayers = {} WHERE channelID = {} and serverID = {};", numPlayers, serverConfig.channelID, serverConfig.serverID);
 
     if (mysql_query(_connection, query.c_str())) {
         cout << format("[DatabaseManager] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection));
@@ -108,13 +105,13 @@ void DatabaseManager::GetChannelsNumPlayers() {
 
             while ((row = mysql_fetch_row(res)) != NULL)
             {
-                unsigned char channelID = (unsigned char)atoi(row[0]);
+                unsigned char channelID = atoi(row[0]);
 
                 if (channelID == serverConfig.channelID) {
                     continue;
                 }
 
-                serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = (unsigned short)atoi(row[1]);
+                serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = atoi(row[1]);
             }
 
             mysql_free_result(res);
@@ -150,9 +147,9 @@ void DatabaseManager::GetChannelsNumPlayers() {
 
                 while ((row = mysql_fetch_row(res)) != NULL)
                 {
-                    unsigned char channelID = (unsigned char)atoi(row[0]);
+                    unsigned char channelID = atoi(row[0]);
 
-                    serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = (unsigned short)atoi(row[1]);
+                    serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = atoi(row[1]);
                 }
 
                 mysql_free_result(res);
@@ -161,58 +158,189 @@ void DatabaseManager::GetChannelsNumPlayers() {
     }
 }
 
-Packet_ReplyType DatabaseManager::Login(string userName, string password) {
+LoginResult DatabaseManager::Login(string userName, string password) {
     if (userName.empty()) {
-        return Packet_ReplyType::InvalidName;
+        return { 0, Packet_ReplyType::InvalidName };
     }
 
     if (password.empty()) {
-        return Packet_ReplyType::InvalidPassword;
+        return { 0, Packet_ReplyType::InvalidPassword };
     }
 
-    string query;
-    query = format("SELECT userID, password FROM users WHERE userName = '{}';", userName);
+    string query = format("SELECT userID, password FROM users WHERE userName = '{}';", userName);
 
     if (mysql_query(_connection, query.c_str())) {
         cout << format("[DatabaseManager] Query error on Login: {}\n", mysql_error(_connection));
-        return Packet_ReplyType::SysError;
+        return { 0, Packet_ReplyType::SysError };
     }
 
     MYSQL_RES* res = mysql_use_result(_connection);
     MYSQL_ROW row = mysql_fetch_row(res);
 
-    Packet_ReplyType result = Packet_ReplyType::LoginSuccess;
+    unsigned long userID = 0;
+    Packet_ReplyType reply = Packet_ReplyType::LoginSuccess;
 
     if (row != NULL) {
-        cout << format("password: {}, hash: {}\n", password.c_str(), row[1]);
-
         if (!BCrypt::validatePassword(password, row[1])) {
             mysql_free_result(res);
 
-            return Packet_ReplyType::WrongPassword;
+            return { 0, Packet_ReplyType::WrongPassword };
         }
 
-        query = format("SELECT 1 FROM game_users WHERE userID = {};", row[0]);
-
-        mysql_free_result(res);
-
-        if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on Login: {}\n", mysql_error(_connection));
-            return Packet_ReplyType::SysError;
-        }
-
-        res = mysql_use_result(_connection);
-        row = mysql_fetch_row(res);
-
-        if (row == NULL) {
-            result = Packet_ReplyType::CreateCharacter;
-        }
+        userID = atoi(row[0]);
     }
     else {
-        result = Packet_ReplyType::NotExist;
+        reply = Packet_ReplyType::NotExist;
     }
 
     mysql_free_result(res);
 
-    return result;
+    return { userID, reply };
+}
+
+int DatabaseManager::CreateCharacter(unsigned long userID, string nickName) {
+    string query = format("SELECT 1 FROM user_characters WHERE nickName = '{}';", nickName);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on CreateCharacter: {}\n", mysql_error(_connection));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if (row != NULL) {
+        mysql_free_result(res);
+        return 0;
+    }
+
+    mysql_free_result(res);
+
+    query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on CreateCharacter: {}\n", mysql_error(_connection));
+        return -1;
+    }
+
+    return 1;
+}
+
+int DatabaseManager::GetUserCharacter(unsigned long userID, UserCharacter& userCharacter) {
+    string info;
+
+    if (userCharacter.flag & UserInfoFlag::Unk1) {
+        info += " unk1,";
+    }
+    if (userCharacter.flag & UserInfoFlag::NickName) {
+        info += " nickName,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk4) {
+        info += " unk4_1, unk4_2, unk4_3, unk4_4,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Level) {
+        info += " level,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk10) {
+        info += " unk10,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Exp) {
+        info += " exp,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Cash) {
+        info += " cash,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Points) {
+        info += " points,";
+    }
+    if (userCharacter.flag & UserInfoFlag::BattleStats) {
+        info += " battles, wins, frags, deaths,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Location) {
+        info += " city, county, neighborhood, unk200_5,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk400) {
+        info += " unk400,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk800) {
+        info += " unk800,";
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk1000) {
+        info += " unk1000_1, unk1000_2, unk1000_3, unk1000_4, unk1000_5, unk1000_6,";
+    }
+    info[info.size() - 1] = ' ';
+
+    string query = format("SELECT{} FROM user_characters WHERE userID = {};", info, userID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on GetUserCharacter: {}\n", mysql_error(_connection));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if (row == NULL) {
+        mysql_free_result(res);
+        return 0;
+    }
+
+    char index = 0;
+    if (userCharacter.flag & UserInfoFlag::Unk1) {
+        userCharacter.unk1 = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::NickName) {
+        userCharacter.nickName = row[index++];
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk4) {
+        userCharacter.unk4_1 = row[index++];
+        userCharacter.unk4_2 = atoi(row[index++]);
+        userCharacter.unk4_3 = atoi(row[index++]);
+        userCharacter.unk4_4 = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Level) {
+        userCharacter.level = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk10) {
+        userCharacter.unk10 = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Exp) {
+        userCharacter.exp = atoll(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Cash) {
+        userCharacter.cash = atoll(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Points) {
+        userCharacter.points = atoll(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::BattleStats) {
+        userCharacter.battles = atoi(row[index++]);
+        userCharacter.wins = atoi(row[index++]);
+        userCharacter.frags = atoi(row[index++]);
+        userCharacter.deaths = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Location) {
+        userCharacter.city = atoi(row[index++]);
+        userCharacter.county = atoi(row[index++]);
+        userCharacter.neighborhood = atoi(row[index++]);
+        userCharacter.unk200_5 = row[index++];
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk400) {
+        userCharacter.unk400 = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk800) {
+        userCharacter.unk800 = atoi(row[index++]);
+    }
+    if (userCharacter.flag & UserInfoFlag::Unk1000) {
+        userCharacter.unk1000_1 = atoi(row[index++]);
+        userCharacter.unk1000_2 = atoi(row[index++]);
+        userCharacter.unk1000_3 = row[index++];
+        userCharacter.unk1000_4 = atoi(row[index++]);
+        userCharacter.unk1000_5 = atoi(row[index++]);
+        userCharacter.unk1000_6 = atoi(row[index++]);
+    }
+
+    mysql_free_result(res);
+
+    return 1;
 }

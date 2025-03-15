@@ -17,6 +17,7 @@ public:
 	string sqlUser;
 	string sqlPassword;
 	string sqlDatabase;
+	vector<string> prohibitedNames;
 };
 
 extern ServerConfig serverConfig;

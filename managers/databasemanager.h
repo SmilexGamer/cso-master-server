@@ -1,9 +1,15 @@
 #pragma once
 #include "definitions.h"
 #include "mysql/mysql.h"
+#include "user.h"
 #include <string>
 
 using namespace std;
+
+struct LoginResult {
+	unsigned long userID;
+	Packet_ReplyType reply;
+};
 
 class DatabaseManager {
 public:
@@ -15,7 +21,9 @@ public:
 	void RemoveServerChannel();
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
 	void GetChannelsNumPlayers();
-	Packet_ReplyType Login(string userName, string password);
+	LoginResult Login(string userName, string password);
+	int CreateCharacter(unsigned long userID, string nickName);
+	int GetUserCharacter(unsigned long userID, UserCharacter& userCharacter);
 
 private:
 	MYSQL* _connection;

@@ -66,9 +66,6 @@
     <ClCompile Include="user\user.cpp">
       <Filter>user</Filter>
     </ClCompile>
-    <ClCompile Include="user\gameuser.cpp">
-      <Filter>user</Filter>
-    </ClCompile>
     <ClCompile Include="thirdparty\libbcrypt\bcrypt.c">
       <Filter>thirdparty\libbcrypt</Filter>
     </ClCompile>
@@ -146,9 +143,6 @@
       <Filter>room</Filter>
     </ClInclude>
     <ClInclude Include="user\user.h">
-      <Filter>user</Filter>
-    </ClInclude>
-    <ClInclude Include="user\gameuser.h">
       <Filter>user</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\libbcrypt\bcrypt.h">

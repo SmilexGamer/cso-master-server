@@ -29,6 +29,27 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 
 	cout << format("[Packet_TransferManager] Client ({}) has sent Packet_RequestTransfer - serverID: {}, channelID: {}\n", packet->GetConnection()->GetEndPoint(), serverID, channelID);
 
-	packet_ServerListManager.SendPacket_Lobby(packet->GetConnection(), userManager.GetUsers());
+	vector<User*> users = userManager.GetUsers();
+	vector<UserCharacter> userCharacters;
+	users.erase(
+		remove_if(
+			users.begin(),
+			users.end(),
+			[&userCharacters](User* user) -> bool {
+				UserCharacter userCharacter;
+				userCharacter.flag = UserInfoFlag::All;
+
+				if (!user->GetCharacter(userCharacter)) {
+					return true;
+				}
+
+				userCharacters.push_back(userCharacter);
+				return false;
+			}
+		),
+		users.end()
+	);
+
+	packet_ServerListManager.SendPacket_Lobby(packet->GetConnection(), users, userCharacters);
 	packet_ServerListManager.SendPacket_RoomList(packet->GetConnection());
 }

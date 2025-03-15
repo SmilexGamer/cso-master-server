@@ -10,11 +10,12 @@ public:
 		return _users;
 	}
 
-	void AddUser(User* user);
+	bool AddUser(User* user);
 	void RemoveUser(User* user);
 	void DisconnectUserByConnection(TCPConnection::pointer connection);
 	void DisconnectUserByConnection(TCPConnection::pointer connection, boost::system::error_code ec);
 	User* GetUserByConnection(TCPConnection::pointer connection);
+	void SendLoginPackets(User* user, UserCharacter userCharacter);
 	void OnMinuteTick();
 
 private:

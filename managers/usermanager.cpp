@@ -1,6 +1,10 @@
 #include "usermanager.h"
 #include "databasemanager.h"
 #include "serverconfig.h"
+#include "packetmanager.h"
+#include "packet_userstartmanager.h"
+#include "packet_updateinfomanager.h"
+#include "packet_serverlistmanager.h"
 
 UserManager userManager;
 
@@ -18,10 +22,13 @@ UserManager::~UserManager() {
 	_users.clear();
 }
 
-void UserManager::AddUser(User* user) {
-	if (user != NULL) {
-		_users.push_back(user);
+bool UserManager::AddUser(User* user) {
+	if (user == NULL) {
+		return false;
 	}
+
+	_users.push_back(user);
+	return true;
 }
 
 void UserManager::RemoveUser(User* user) {
@@ -66,6 +73,12 @@ User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
 	}
 
 	return NULL;
+}
+
+void UserManager::SendLoginPackets(User* user, UserCharacter userCharacter) {
+	packet_UserStartManager.SendPacket_UserStart(user->GetConnection(), user, userCharacter);
+	packet_UpdateInfoManager.SendPacket_UpdateInfo(user->GetConnection(), user->GetUserID(), userCharacter);
+	packet_ServerListManager.SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
 
 void UserManager::OnMinuteTick() {

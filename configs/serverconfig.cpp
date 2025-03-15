@@ -43,7 +43,8 @@ string defaultServerConfig = R"({
 		"User": "root",
 		"Password": "",
 		"Database": "csodatabase"
-	}
+	},
+	"ProhibitedNames": []
 })";
 
 bool ServerConfig::Load() {
@@ -113,6 +114,9 @@ bool ServerConfig::Load() {
 			sqlUser = sql.value("User", "root");
 			sqlPassword = sql.value("Password", "");
 			sqlDatabase = sql.value("Database", "csodatabase");
+		}
+		if (config.contains("ProhibitedNames")) {
+			prohibitedNames = config["ProhibitedNames"].get<vector<string>>();
 		}
 
 		cout << "[ServerConfig] Loaded server configs!\n";
