@@ -323,7 +323,7 @@ public:
 	};
 
 	using PacketHandler = function<void(TCPConnection::Packet::pointer)>;
-	using ErrorHandler = function<void()>;
+	using ErrorHandler = function<void(bool eraseConnection)>;
 
 	static pointer Create(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context) {
 		return pointer(new TCPConnection(move(socket), context));
@@ -355,7 +355,7 @@ public:
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
-	void DisconnectClient();
+	void DisconnectClient(bool eraseConnection = true);
 	void DisconnectClient(boost::system::error_code ec);
 
 private:

@@ -28,22 +28,28 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
-	LoginResult result = databaseManager.Login(userName, password);
+	LoginResult loginResult = databaseManager.Login(userName, password);
 
-	if (result.reply > Packet_ReplyType::LoginSuccess) {
-		packetManager.SendPacket_Reply(packet->GetConnection(), result.reply);
+	if (loginResult.reply > Packet_ReplyType::LoginSuccess) {
+		packetManager.SendPacket_Reply(packet->GetConnection(), loginResult.reply);
 		return;
 	}
 
-	User* user = new User(packet->GetConnection(), result.userID, userName);
-	if (!userManager.AddUser(user)) {
-		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+	User* user = new User(packet->GetConnection(), loginResult.userID, userName);
+	char userResult = userManager.AddUser(user);
+	if (!userResult) {
+		if (userResult < 0) {
+			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+			return;
+		}
+
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::Playing);
 		return;
 	}
 
-	int resultCharacter = user->IsCharacterExists();
-	if (resultCharacter <= 0) {
-		if (resultCharacter < 0) {
+	char userCharacterExistsResult = user->IsUserCharacterExists();
+	if (!userCharacterExistsResult) {
+		if (userCharacterExistsResult < 0) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
@@ -53,13 +59,5 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
-	UserCharacter userCharacter;
-	userCharacter.flag = UserInfoFlag::All;
-	if (!user->GetCharacter(userCharacter)) {
-		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
-		return;
-	}
-
-	packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::LoginSuccess);
-	userManager.SendLoginPackets(user, userCharacter);
+	userManager.SendLoginPackets(user, Packet_ReplyType::LoginSuccess);
 }

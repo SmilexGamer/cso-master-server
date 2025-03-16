@@ -22,8 +22,11 @@ public:
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
 	void GetChannelsNumPlayers();
 	LoginResult Login(string userName, string password);
-	int CreateCharacter(unsigned long userID, string nickName);
-	int GetUserCharacter(unsigned long userID, UserCharacter& userCharacter);
+	char CreateCharacter(unsigned long userID, string nickName);
+	UserCharacterResult GetUserCharacter(unsigned long userID, unsigned short flag);
+	char AddUserSession(unsigned long userID);
+	void RemoveUserSession(unsigned long userID);
+	void RemoveAllUserSessions();
 
 private:
 	MYSQL* _connection;

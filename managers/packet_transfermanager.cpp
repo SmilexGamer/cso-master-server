@@ -36,15 +36,12 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 			users.begin(),
 			users.end(),
 			[&userCharacters](User* user) -> bool {
-				UserCharacter userCharacter;
-				userCharacter.flag = UserInfoFlag::All;
-
-				if (!user->GetCharacter(userCharacter)) {
-					return true;
+				UserCharacterResult result = user->GetUserCharacter(UserInfoFlag::All);
+				if (result.result) {
+					userCharacters.push_back(result.userCharacter);
 				}
 
-				userCharacters.push_back(userCharacter);
-				return false;
+				return result.result;
 			}
 		),
 		users.end()

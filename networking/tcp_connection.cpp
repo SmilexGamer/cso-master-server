@@ -70,6 +70,7 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	_sslStream.async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()]
 	(boost::system::error_code ec) {
 		if (ec) {
+			userManager.RemoveUserByConnection(self);
 			self->DisconnectClient(ec);
 			return;
 		}
@@ -95,14 +96,14 @@ void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL)
 	}
 }
 
-void TCPConnection::DisconnectClient() {
+void TCPConnection::DisconnectClient(bool eraseConnection) {
 	_sslStream.next_layer().close();
-	_errorHandler();
+	_errorHandler(eraseConnection);
 }
 
 void TCPConnection::DisconnectClient(boost::system::error_code ec) {
 	_sslStream.next_layer().close(ec);
-	_errorHandler();
+	_errorHandler(true);
 }
 
 void TCPConnection::asyncRead() {
@@ -121,7 +122,8 @@ void TCPConnection::asyncRead() {
 
 void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		userManager.DisconnectUserByConnection(shared_from_this(), ec);
+		userManager.RemoveUserByConnection(shared_from_this());
+		DisconnectClient(ec);
 		return;
 	}
 
@@ -135,7 +137,8 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		cout << format("[TCPConnection] Client ({}) sent TCP Packet with invalid signature!\n", _endpoint);
 #endif
 
-		userManager.DisconnectUserByConnection(shared_from_this());
+		userManager.RemoveUserByConnection(shared_from_this());
+		DisconnectClient();
 		return;
 	}
 	if (packet->GetSequence() != _incomingSequence) {
@@ -143,7 +146,8 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		cout << format("[TCPConnection] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
 #endif
 
-		userManager.DisconnectUserByConnection(shared_from_this());
+		userManager.RemoveUserByConnection(shared_from_this());
+		DisconnectClient();
 		return;
 	}
 	if (!packet->GetLength()) {
@@ -151,7 +155,8 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		cout << format("[TCPConnection] Client ({}) sent TCP Packet with length 0!\n", _endpoint);
 #endif
 
-		userManager.DisconnectUserByConnection(shared_from_this());
+		userManager.RemoveUserByConnection(shared_from_this());
+		DisconnectClient();
 		return;
 	}
 
@@ -159,6 +164,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
 		if (ec) {
+			userManager.RemoveUserByConnection(self);
 			self->DisconnectClient(ec);
 			return;
 		}
@@ -166,7 +172,8 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	boost::asio::async_read(_sslStream, _streamBuf, boost::asio::transfer_exactly(packet->GetLength()), [packet, self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
 		if (ec) {
-			userManager.DisconnectUserByConnection(self, ec);
+			userManager.RemoveUserByConnection(self);
+			self->DisconnectClient(ec);
 			return;
 		}
 #endif
@@ -208,7 +215,8 @@ void TCPConnection::asyncWrite(bool noSSL) {
 
 void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferred) {
 	if (ec) {
-		userManager.DisconnectUserByConnection(shared_from_this(), ec);
+		userManager.RemoveUserByConnection(shared_from_this());
+		DisconnectClient(ec);
 		return;
 	}
 

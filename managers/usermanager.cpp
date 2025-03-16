@@ -8,13 +8,8 @@
 
 UserManager userManager;
 
-UserManager::UserManager() {
-	
-};
-
 UserManager::~UserManager() {
 	for (auto& user : _users) {
-		user->GetConnection()->DisconnectClient();
 		delete user;
 		user = NULL;
 	}
@@ -22,43 +17,24 @@ UserManager::~UserManager() {
 	_users.clear();
 }
 
-bool UserManager::AddUser(User* user) {
+char UserManager::AddUser(User* user) {
 	if (user == NULL) {
-		return false;
+		return -1;
 	}
 
-	_users.push_back(user);
-	return true;
+	char result = databaseManager.AddUserSession(user->GetUserID());
+	if (result) {
+		_users.push_back(user);
+	}
+
+	return result;
 }
 
 void UserManager::RemoveUser(User* user) {
+	databaseManager.RemoveUserSession(user->GetUserID());
 	_users.erase(find(_users.begin(), _users.end(), user));
-}
-
-void UserManager::DisconnectUserByConnection(TCPConnection::pointer connection) {
-	if (connection != NULL) {
-		User* user = GetUserByConnection(connection);
-		if (user) {
-			RemoveUser(user);
-			delete user;
-			user = NULL;
-		}
-		
-		connection->DisconnectClient();
-	}
-}
-
-void UserManager::DisconnectUserByConnection(TCPConnection::pointer connection, boost::system::error_code ec) {
-	if (connection != NULL) {
-		User* user = GetUserByConnection(connection);
-		if (user) {
-			RemoveUser(user);
-			delete user;
-			user = NULL;
-		}
-
-		connection->DisconnectClient(ec);
-	}
+	delete user;
+	user = NULL;
 }
 
 User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
@@ -67,7 +43,6 @@ User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
 	}
 
 	auto it = find_if(_users.begin(), _users.end(), [&connection](User*& user) { return user->GetConnection() == connection; });
-
 	if (it != _users.end()) {
 		return _users.at(distance(_users.begin(), it));
 	}
@@ -75,9 +50,33 @@ User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
 	return NULL;
 }
 
-void UserManager::SendLoginPackets(User* user, UserCharacter userCharacter) {
-	packet_UserStartManager.SendPacket_UserStart(user->GetConnection(), user, userCharacter);
-	packet_UpdateInfoManager.SendPacket_UpdateInfo(user->GetConnection(), user->GetUserID(), userCharacter);
+void UserManager::RemoveUserByConnection(TCPConnection::pointer connection) {
+	if (connection == NULL) {
+		return;
+	}
+
+	User* user = GetUserByConnection(connection);
+	if (user == NULL) {
+		return;
+	}
+
+	RemoveUser(user);
+}
+
+void UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
+	if (user == NULL) {
+		return;
+	}
+
+	UserCharacterResult result = user->GetUserCharacter(UserInfoFlag::All);
+	if (!result.result) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+
+	packetManager.SendPacket_Reply(user->GetConnection(), reply);
+	packet_UserStartManager.SendPacket_UserStart(user->GetConnection(), user, result.userCharacter);
+	packet_UpdateInfoManager.SendPacket_UpdateInfo(user->GetConnection(), user->GetUserID(), result.userCharacter);
 	packet_ServerListManager.SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
 

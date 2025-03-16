@@ -56,7 +56,6 @@ void TCPServer::Start() {
 
 	cout << format("[TCPServer] Starting on port {}!\n", _port);
 
-	_connections.clear();
 	_tcpServerThread = thread(&TCPServer::run, this);
 }
 
@@ -91,6 +90,12 @@ int TCPServer::shutdown() {
 			cout << "[TCPServer] Shutting down!\n";
 
 			_ioContext.stop();
+
+			for (auto& connection : _connections) {
+				connection->DisconnectClient(false);
+			}
+
+			_connections.clear();
 			_tcpServerThread.detach();
 		}
 	}
@@ -113,10 +118,20 @@ void TCPServer::startAccept() {
 			_connections.insert(connection);
 
 			connection->Start(
-				[this](TCPConnection::Packet::pointer packet) { if (OnClientPacket) OnClientPacket(packet); },
-				[&, weak = weak_ptr(connection)] {
-					if (auto shared = weak.lock(); shared && _connections.erase(shared)) {
-						if (OnDisconnect) OnDisconnect(shared);
+				[this](TCPConnection::Packet::pointer packet) {
+					if (OnClientPacket) {
+						OnClientPacket(packet);
+					}
+				},
+				[&, weak = weak_ptr(connection)](bool eraseConnection) {
+					if (auto shared = weak.lock(); shared) {
+						if (eraseConnection) {
+							_connections.erase(shared);
+						}
+
+						if (OnDisconnect) {
+							OnDisconnect(shared);
+						}
 					}
 				}
 			);

@@ -5,13 +5,12 @@ User::User(TCPConnection::pointer connection, unsigned long userID, string userN
 
 }
 
-int User::GetCharacter(UserCharacter& userCharacter) {
-	return databaseManager.GetUserCharacter(_userID, userCharacter);
+UserCharacterResult User::GetUserCharacter(unsigned short flag) {
+	return databaseManager.GetUserCharacter(_userID, flag);
 }
 
-int User::IsCharacterExists() {
-	UserCharacter userCharacter;
-	userCharacter.flag = UserInfoFlag::Unk1;
+char User::IsUserCharacterExists() {
+	UserCharacterResult result = GetUserCharacter(NULL);
 
-	return GetCharacter(userCharacter);
+	return result.result;
 }

@@ -32,7 +32,6 @@ void PacketManager::Start() {
 
 	cout << "[PacketManager] Starting!\n";
 
-	_packetQueue.clear();
 	_packetThread = thread(&PacketManager::run, this);
 }
 
@@ -158,6 +157,7 @@ int PacketManager::shutdown() {
 			cout << "[PacketManager] Shutting down!\n";
 
 			_running = false;
+			_packetQueue.clear();
 			_packetThread.detach();
 		}
 	}

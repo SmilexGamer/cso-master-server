@@ -18,6 +18,15 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 	if (user == NULL)
 		return;
 
+	char userCharacterExistsResult = user->IsUserCharacterExists();
+	if (userCharacterExistsResult < 0) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+	else if (userCharacterExistsResult) {
+		return;
+	}
+
 	if (nickName.size() < 4) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_TOO_SHORT);
 		return;
@@ -59,9 +68,9 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		}
 	}
 
-	int result = databaseManager.CreateCharacter(user->GetUserID(), nickName);
-	if (result <= 0) {
-		if (result < 0) {
+	char createCharacterResult = databaseManager.CreateCharacter(user->GetUserID(), nickName);
+	if (!createCharacterResult) {
+		if (createCharacterResult < 0) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
@@ -70,15 +79,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	UserCharacter userCharacter;
-	userCharacter.flag = UserInfoFlag::All;
-	if (!user->GetCharacter(userCharacter)) {
-		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
-		return;
-	}
-
-	packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::CreateCharacterSuccess);
-	userManager.SendLoginPackets(user, userCharacter);
+	userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess);
 }
 
 void Packet_CharacterManager::SendPacket_Character(TCPConnection::pointer connection) {

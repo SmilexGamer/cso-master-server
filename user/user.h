@@ -36,11 +36,16 @@ struct UserCharacter {
 	unsigned char unk1000_6 = 0;
 };
 
+struct UserCharacterResult {
+	UserCharacter userCharacter;
+	char result = 0;
+};
+
 class User {
 public:
 	User(TCPConnection::pointer connection, unsigned long userID, string userName);
 
-	TCPConnection::pointer GetConnection() {
+	TCPConnection::pointer GetConnection() const noexcept {
 		return _connection;
 	}
 
@@ -48,12 +53,12 @@ public:
 		return _userID;
 	}
 
-	string GetUserName() const noexcept {
+	const string& GetUserName() const noexcept {
 		return _userName;
 	}
 
-	int GetCharacter(UserCharacter& userCharacter);
-	int IsCharacterExists();
+	UserCharacterResult GetUserCharacter(unsigned short flag);
+	char IsUserCharacterExists();
 
 private:
 	TCPConnection::pointer _connection;

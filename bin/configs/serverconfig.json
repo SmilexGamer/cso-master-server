@@ -22,5 +22,6 @@
 		"User": "root",
 		"Password": "",
 		"Database": "csodatabase"
-	}
+	},
+	"ProhibitedNames": []
 }
