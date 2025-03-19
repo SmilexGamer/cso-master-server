@@ -7,7 +7,13 @@
 Packet_ServerListManager packet_ServerListManager;
 
 void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_ServerList\n", packet->GetConnection()->GetEndPoint());
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
+	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList\n", packet->GetConnection()->GetEndPoint());
 
 	SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
 }

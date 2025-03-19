@@ -1,9 +1,16 @@
 #include "packet_udpmanager.h"
+#include "usermanager.h"
 #include <iostream>
 
 Packet_UdpManager packet_UdpManager;
 
 void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_UdpManager] Parsing Packet_Udp from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();

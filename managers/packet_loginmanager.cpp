@@ -9,6 +9,12 @@
 Packet_LoginManager packet_LoginManager;
 
 void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user != NULL) {
+		cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login, but it's already logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_LoginManager] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	string userName = packet->ReadString();
@@ -35,29 +41,29 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
-	User* user = new User(packet->GetConnection(), loginResult.userID, userName);
-	char userResult = userManager.AddUser(user);
+	User* newUser = new User(packet->GetConnection(), loginResult.userID, userName);
+	char userResult = userManager.AddUser(newUser);
 	if (!userResult) {
 		if (userResult < 0) {
-			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+			packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
 
-		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::Playing);
+		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::Playing);
 		return;
 	}
 
-	char userCharacterExistsResult = user->IsUserCharacterExists();
+	char userCharacterExistsResult = newUser->IsUserCharacterExists();
 	if (!userCharacterExistsResult) {
 		if (userCharacterExistsResult < 0) {
-			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+			packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
 
-		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::LoginSuccess);
-		packet_CharacterManager.SendPacket_Character(user->GetConnection());
+		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::LoginSuccess);
+		packet_CharacterManager.SendPacket_Character(newUser->GetConnection());
 		return;
 	}
 
-	userManager.SendLoginPackets(user, Packet_ReplyType::LoginSuccess);
+	userManager.SendLoginPackets(newUser, Packet_ReplyType::LoginSuccess);
 }

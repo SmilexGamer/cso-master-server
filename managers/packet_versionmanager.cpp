@@ -1,10 +1,17 @@
 #include "packet_versionmanager.h"
 #include "packetmanager.h"
+#include "usermanager.h"
 #include <iostream>
 
 Packet_VersionManager packet_VersionManager;
 
 void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user != NULL) {
+		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_VersionManager] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char launcherVersion = packet->ReadUInt8();

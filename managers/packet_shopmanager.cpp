@@ -1,10 +1,17 @@
 #include "packet_shopmanager.h"
 #include "packetmanager.h"
+#include "usermanager.h"
 #include <iostream>
 
 Packet_ShopManager packet_ShopManager;
 
 void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_ShopManager] Client ({}) has sent Packet_Shop, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_ShopManager] Parsing Packet_Shop from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();

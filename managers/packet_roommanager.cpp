@@ -1,10 +1,17 @@
 ﻿#include "packet_roommanager.h"
 #include "packet_hostmanager.h"
+#include "usermanager.h"
 #include <iostream>
 
 Packet_RoomManager packet_RoomManager;
 
 void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();

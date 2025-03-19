@@ -8,15 +8,17 @@
 Packet_CharacterManager packet_CharacterManager;
 
 void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::pointer packet) {
-	cout << format("[Packet_CharacterManager] Parsing Packet_Character from client ({})\n", packet->GetConnection()->GetEndPoint());
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
+	cout << format("[Packet_CharacterManager] Parsing Packet_RecvCharacter from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	string nickName = packet->ReadString();
 
 	cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", packet->GetConnection()->GetEndPoint(), nickName);
-
-	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user == NULL)
-		return;
 
 	char userCharacterExistsResult = user->IsUserCharacterExists();
 	if (userCharacterExistsResult < 0) {

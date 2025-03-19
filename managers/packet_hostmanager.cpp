@@ -1,9 +1,16 @@
 #include "packet_hostmanager.h"
+#include "usermanager.h"
 #include <iostream>
 
 Packet_HostManager packet_HostManager;
 
 void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet) {
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (user == NULL) {
+		cout << format("[Packet_HostManager] Client ({}) has sent Packet_Host, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		return;
+	}
+
 	cout << format("[Packet_HostManager] Parsing Packet_Host from client ({})\n", packet->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
