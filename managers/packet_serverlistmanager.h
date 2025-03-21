@@ -5,8 +5,8 @@
 class Packet_ServerListManager {
 public:
 	void ParsePacket_RequestServerList(TCPConnection::Packet::pointer packet);
-	void SendPacket_ServerList(TCPConnection::pointer connection, vector<Server> servers);
-	void SendPacket_Lobby(TCPConnection::pointer connection, vector<User*> users, vector<UserCharacter> userCharacters);
+	void SendPacket_ServerList(TCPConnection::pointer connection, const vector<Server>& servers);
+	void SendPacket_Lobby(TCPConnection::pointer connection, const vector<UserFull>& users);
 	void SendPacket_RoomList(TCPConnection::pointer connection);
 };
 

@@ -12,17 +12,17 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 		return;
 	}
 
-	cout << format("[Packet_ShopManager] Parsing Packet_Shop from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_ShopManager] Parsing Packet_Shop from client ({})\n", user->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		case Packet_ShopType::Unk0: {
-			sendPacket_Shop_Unk0(packet->GetConnection());
+			sendPacket_Shop_Unk0(user->GetConnection());
 			break;
 		}
 		default: {
-			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", packet->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", user->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}

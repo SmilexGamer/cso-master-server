@@ -14,11 +14,11 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	cout << format("[Packet_CharacterManager] Parsing Packet_RecvCharacter from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_CharacterManager] Parsing Packet_RecvCharacter from client ({})\n", user->GetConnection()->GetEndPoint());
 
 	string nickName = packet->ReadString();
 
-	cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", packet->GetConnection()->GetEndPoint(), nickName);
+	cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", user->GetConnection()->GetEndPoint(), nickName);
 
 	char userCharacterExistsResult = user->IsUserCharacterExists();
 	if (userCharacterExistsResult < 0) {

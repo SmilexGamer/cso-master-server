@@ -13,12 +13,12 @@ void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Pack
 		return;
 	}
 
-	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList\n", user->GetConnection()->GetEndPoint());
 
-	SendPacket_ServerList(packet->GetConnection(), serverConfig.serverList);
+	SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
 
-void Packet_ServerListManager::SendPacket_ServerList(TCPConnection::pointer connection, vector<Server> servers) {
+void Packet_ServerListManager::SendPacket_ServerList(TCPConnection::pointer connection, const vector<Server>& servers) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::ServerList });
 
 	packet->WriteUInt8((unsigned char)servers.size()); // Num. of Servers
@@ -41,16 +41,16 @@ void Packet_ServerListManager::SendPacket_ServerList(TCPConnection::pointer conn
 	packet->Send();
 }
 
-void Packet_ServerListManager::SendPacket_Lobby(TCPConnection::pointer connection, vector<User*> users, vector<UserCharacter> userCharacters) {
+void Packet_ServerListManager::SendPacket_Lobby(TCPConnection::pointer connection, const vector<UserFull>& users) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Lobby });
 
 	packet->WriteUInt8(0); // Packet_Lobby ID 0
 	packet->WriteUInt16_LE((unsigned short)users.size()); // Num. of Users
 
-	for (unsigned short i = 0; i < users.size(); i++) {
-		packet->WriteUInt32_LE(users[i]->GetUserID()); // userID
-		packet->WriteString(users[i]->GetUserName()); // userName
-		packetManager.BuildUserInfo(packet, userCharacters[i]);
+	for (auto& userFull : users) {
+		packet->WriteUInt32_LE(userFull.user->GetUserID());
+		packet->WriteString(userFull.user->GetUserName());
+		packetManager.BuildUserCharacter(packet, userFull.userCharacter);
 	}
 
 	packet->Send();

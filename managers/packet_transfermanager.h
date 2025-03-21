@@ -1,5 +1,6 @@
 #pragma once
 #include "tcp_connection.h"
+#include "user.h"
 
 class Packet_TransferManager {
 public:
@@ -7,7 +8,7 @@ public:
 	void ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet);
 
 private:
-	void sendPacket_Transfer(TCPConnection::pointer connection, unsigned long ip, unsigned short port);
+	void sendPacket_Transfer(User* user, unsigned long ip, unsigned short port);
 };
 
 extern Packet_TransferManager packet_TransferManager;

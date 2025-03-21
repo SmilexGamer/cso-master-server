@@ -16,13 +16,13 @@ public:
 	DatabaseManager();
 	~DatabaseManager();
 
-	bool Init(string server, string user, string password, string database);
+	bool Init(const string& server, const string& user, const string& password, const string& database);
 	bool AddServerChannel();
 	void RemoveServerChannel();
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
 	void GetChannelsNumPlayers();
-	LoginResult Login(string userName, string password);
-	char CreateCharacter(unsigned long userID, string nickName);
+	LoginResult Login(const string& userName, const string& password);
+	char CreateCharacter(unsigned long userID, const string& nickName);
 	UserCharacterResult GetUserCharacter(unsigned long userID, unsigned short flag);
 	char AddUserSession(unsigned long userID);
 	void RemoveUserSession(unsigned long userID);

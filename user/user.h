@@ -43,7 +43,7 @@ struct UserCharacterResult {
 
 class User {
 public:
-	User(TCPConnection::pointer connection, unsigned long userID, string userName);
+	User(TCPConnection::pointer connection, unsigned long userID, const string& userName);
 
 	TCPConnection::pointer GetConnection() const noexcept {
 		return _connection;
@@ -64,4 +64,9 @@ private:
 	TCPConnection::pointer _connection;
 	unsigned long _userID;
 	string _userName;
+};
+
+struct UserFull {
+	User* user;
+	UserCharacter userCharacter;
 };

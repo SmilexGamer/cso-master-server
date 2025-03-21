@@ -12,48 +12,48 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 		return;
 	}
 
-	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", user->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		case Packet_RoomType::RequestCreate: {
-			parsePacket_Room_RequestCreate(packet);
+			parsePacket_Room_RequestCreate(user, packet);
 			break;
 		}
 		case Packet_RoomType::RequestLeave: {
-			parsePacket_Room_RequestLeave(packet);
+			parsePacket_Room_RequestLeave(user);
 			break;
 		}
 		case Packet_RoomType::RequestStartGame: {
-			parsePacket_Room_RequestStartGame(packet);
+			parsePacket_Room_RequestStartGame(user);
 			break;
 		}
 		default: {
-			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", packet->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}
 }
 
-void Packet_RoomManager::parsePacket_Room_RequestCreate(TCPConnection::Packet::pointer packet) {
+void Packet_RoomManager::parsePacket_Room_RequestCreate(User* user, TCPConnection::Packet::pointer packet) {
 	RoomSettings roomSettings = RoomSettings(packet);
 
-	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", packet->GetConnection()->GetEndPoint(), roomSettings.roomName.c_str(), roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password.c_str(), roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
+	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", user->GetConnection()->GetEndPoint(), roomSettings.roomName.c_str(), roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password.c_str(), roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
 
-	sendPacket_Room_ReplyCreateAndJoin(packet->GetConnection(), roomSettings);
+	sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), roomSettings);
 }
 
-void Packet_RoomManager::parsePacket_Room_RequestStartGame(TCPConnection::Packet::pointer packet) {
-	packet_HostManager.SendPacket_Host_StartGame(packet->GetConnection(), 1);
+void Packet_RoomManager::parsePacket_Room_RequestStartGame(User* user) {
+	packet_HostManager.SendPacket_Host_StartGame(user);
 }
 
-void Packet_RoomManager::parsePacket_Room_RequestLeave(TCPConnection::Packet::pointer packet) {
-	sendPacket_Room_ReplyLeaveRoomInGame(packet->GetConnection());
-	sendPacket_Room_ReplyLeaveRoom(packet->GetConnection(), 1);
+void Packet_RoomManager::parsePacket_Room_RequestLeave(User* user) {
+	sendPacket_Room_ReplyLeaveRoomInGame(user->GetConnection());
+	sendPacket_Room_ReplyLeaveRoom(user);
 }
 
-void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, RoomSettings roomSettings) {
+void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, const RoomSettings& roomSettings) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Room });
 
 	packet->WriteUInt8(Packet_RoomType::ReplyCreateAndJoin);
@@ -196,55 +196,55 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 		packet->WriteUInt32_LE(0); // some ip
 		packet->WriteUInt16_LE(0); // some port
 		packet->WriteUInt16_LE(0); // some port
-		packet->WriteUInt16_LE(UserInfoFlag::All);
+		packet->WriteUInt16_LE(UserCharacterFlag::All);
 
-		if (UserInfoFlag::All & UserInfoFlag::Unk1) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk1) {
 			packet->WriteUInt8(0); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::NickName) {
+		if (UserCharacterFlag::All & UserCharacterFlag::NickName) {
 			packet->WriteString("nickName"); // nickName
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Unk4) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk4) {
 			packet->WriteString(""); // unk
 			packet->WriteUInt8(0); // unk
 			packet->WriteUInt8(0); // unk
 			packet->WriteUInt8(0); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Level) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Level) {
 			packet->WriteUInt8(72); // level
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Unk10) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk10) {
 			packet->WriteUInt8(0); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Exp) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Exp) {
 			packet->WriteUInt64_LE(6937150764); // exp
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Cash) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Cash) {
 			packet->WriteUInt64_LE(1000); // cash
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Points) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Points) {
 			packet->WriteUInt64_LE(2000); // points
 		}
-		if (UserInfoFlag::All & UserInfoFlag::BattleStats) {
+		if (UserCharacterFlag::All & UserCharacterFlag::BattleStats) {
 			packet->WriteUInt32_LE(3); // battles
 			packet->WriteUInt32_LE(2); // wins
 			packet->WriteUInt32_LE(5); // frags
 			packet->WriteUInt32_LE(3); // deaths
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Location) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Location) {
 			packet->WriteString("pcBang"); // pcBang
 			packet->WriteUInt16_LE(1); // province/city (도시) index
 			packet->WriteUInt16_LE(1); // district/county (구군) index
 			packet->WriteUInt16_LE(1); // neighborhood (동) index
 			packet->WriteString(""); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Unk400) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk400) {
 			packet->WriteUInt32_LE(0); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Unk800) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk800) {
 			packet->WriteUInt8(0); // unk
 		}
-		if (UserInfoFlag::All & UserInfoFlag::Unk1000) {
+		if (UserCharacterFlag::All & UserCharacterFlag::Unk1000) {
 			packet->WriteUInt32_LE(0); // unk
 			packet->WriteUInt32_LE(0); // unk
 			packet->WriteString(""); // unk
@@ -257,11 +257,11 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 	packet->Send();
 }
 
-void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoom(TCPConnection::pointer connection, int userID) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Room });
+void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoom(User* user) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { PacketID::Room });
 
 	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoom);
-	packet->WriteUInt32_LE(userID);
+	packet->WriteUInt32_LE(user->GetUserID());
 	packet->Send();
 }
 

@@ -14,7 +14,7 @@ public:
 	TCPServer();
 	~TCPServer();
 
-	unordered_set<TCPConnection::pointer> GetConnections() {
+	const unordered_set<TCPConnection::pointer>& GetConnections() const noexcept {
 		return _connections;
 	}
 
@@ -32,7 +32,7 @@ public:
 	OnClientPacketHandler OnClientPacket;
 
 private:
-	string get_password() const {
+	const string get_password() const noexcept {
 		return "-?H2byVtl";
 	}
 

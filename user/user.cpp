@@ -1,7 +1,7 @@
 #include "user.h"
 #include "databasemanager.h"
 
-User::User(TCPConnection::pointer connection, unsigned long userID, string userName) : _connection(connection), _userID(userID), _userName(userName) {
+User::User(TCPConnection::pointer connection, unsigned long userID, const string& userName) : _connection(connection), _userID(userID), _userName(userName) {
 
 }
 

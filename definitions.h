@@ -124,7 +124,7 @@ enum Packet_ShopType {
 	Unk0 = 0
 };
 
-enum UserInfoFlag {
+enum UserCharacterFlag {
 	Unk1 = 0x1,
 	NickName = 0x2,
 	Unk4 = 0x4,

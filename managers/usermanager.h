@@ -5,7 +5,7 @@ class UserManager {
 public:
 	~UserManager();
 
-	vector<User*> GetUsers() const noexcept {
+	const vector<User*>& GetUsers() const noexcept {
 		return _users;
 	}
 
@@ -14,6 +14,7 @@ public:
 	User* GetUserByConnection(TCPConnection::pointer connection);
 	void RemoveUserByConnection(TCPConnection::pointer connection);
 	void SendLoginPackets(User* user, Packet_ReplyType reply);
+	void UpdateChannelNumPlayers();
 	void OnMinuteTick();
 
 private:

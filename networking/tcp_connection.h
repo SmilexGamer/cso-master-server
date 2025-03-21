@@ -24,7 +24,7 @@ public:
 			return pointer(new TCPConnection::Packet(source, connection, buffer));
 		}
 
-		TCPConnection::pointer GetConnection() const noexcept {
+		const TCPConnection::pointer GetConnection() const noexcept {
 			return _connection;
 		}
 
@@ -47,10 +47,10 @@ public:
 			return _length;
 		}
 
-		void SetBuffer(vector<unsigned char> buffer) noexcept {
+		void SetBuffer(const vector<unsigned char> buffer) noexcept {
 			_buffer = buffer;
 		}
-		const vector<unsigned char> GetBuffer() const noexcept {
+		const vector<unsigned char>& GetBuffer() const noexcept {
 			return _buffer;
 		}
 
@@ -329,11 +329,11 @@ public:
 		return pointer(new TCPConnection(move(socket), context));
 	}
 
-	boost::asio::ip::tcp::socket& GetSocket() {
+	const boost::asio::ip::tcp::socket& GetSocket() noexcept {
 		return _sslStream.next_layer();
 	}
 
-	const string& GetEndPoint() const {
+	const string& GetEndPoint() const noexcept {
 		return _endpoint;
 	}
 

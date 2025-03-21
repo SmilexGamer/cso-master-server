@@ -11,23 +11,23 @@ void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet)
 		return;
 	}
 
-	cout << format("[Packet_HostManager] Parsing Packet_Host from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_HostManager] Parsing Packet_Host from client ({})\n", user->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		default: {
-			cout << format("[Packet_HostManager] Client ({}) has sent unregistered Packet_Host type {}!\n", packet->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_HostManager] Client ({}) has sent unregistered Packet_Host type {}!\n", user->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}
 }
 
-void Packet_HostManager::SendPacket_Host_StartGame(TCPConnection::pointer connection, unsigned long userID) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Host });
+void Packet_HostManager::SendPacket_Host_StartGame(User* user) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { PacketID::Host });
 
 	packet->WriteUInt8(Packet_HostType::StartGame);
-	packet->WriteUInt32_LE(userID);
+	packet->WriteUInt32_LE(user->GetUserID());
 
 	packet->Send();
 }

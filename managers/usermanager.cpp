@@ -25,6 +25,8 @@ char UserManager::AddUser(User* user) {
 	char result = databaseManager.AddUserSession(user->GetUserID());
 	if (result) {
 		_users.push_back(user);
+
+		UpdateChannelNumPlayers();
 	}
 
 	return result;
@@ -35,6 +37,8 @@ void UserManager::RemoveUser(User* user) {
 	_users.erase(find(_users.begin(), _users.end(), user));
 	delete user;
 	user = NULL;
+
+	UpdateChannelNumPlayers();
 }
 
 User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
@@ -68,21 +72,24 @@ void UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		return;
 	}
 
-	UserCharacterResult result = user->GetUserCharacter(UserInfoFlag::All);
+	UserCharacterResult result = user->GetUserCharacter(UserCharacterFlag::All);
 	if (!result.result) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 		return;
 	}
 
 	packetManager.SendPacket_Reply(user->GetConnection(), reply);
-	packet_UserStartManager.SendPacket_UserStart(user->GetConnection(), user, result.userCharacter);
-	packet_UpdateInfoManager.SendPacket_UpdateInfo(user->GetConnection(), user->GetUserID(), result.userCharacter);
+	packet_UserStartManager.SendPacket_UserStart(user, result.userCharacter);
+	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, result.userCharacter });
 	packet_ServerListManager.SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
 
-void UserManager::OnMinuteTick() {
+void UserManager::UpdateChannelNumPlayers() {
 	serverConfig.serverList[serverConfig.serverID - 1].channels[serverConfig.channelID - 1].numPlayers = (unsigned short)_users.size();
 
 	databaseManager.UpdateChannelNumPlayers((unsigned short)_users.size());
+}
+
+void UserManager::OnMinuteTick() {
 	databaseManager.GetChannelsNumPlayers();
 }

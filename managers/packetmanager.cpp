@@ -68,62 +68,62 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned
 	packet->Send();
 }
 
-void PacketManager::BuildUserInfo(TCPConnection::Packet::pointer& packet, UserCharacter userCharacter) {
-	packet->WriteUInt16_LE(userCharacter.flag); // flag
+void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, const UserCharacter& userCharacter) {
+	packet->WriteUInt16_LE(userCharacter.flag);
 
-	if (userCharacter.flag & UserInfoFlag::Unk1) {
-		packet->WriteUInt8(userCharacter.unk1); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk1) {
+		packet->WriteUInt8(userCharacter.unk1);
 	}
-	if (userCharacter.flag & UserInfoFlag::NickName) {
-		packet->WriteString(userCharacter.nickName); // nickName
+	if (userCharacter.flag & UserCharacterFlag::NickName) {
+		packet->WriteString(userCharacter.nickName);
 	}
-	if (userCharacter.flag & UserInfoFlag::Unk4) {
-		packet->WriteString(userCharacter.unk4_1); // unk
-		packet->WriteUInt8(userCharacter.unk4_2); // unk
-		packet->WriteUInt8(userCharacter.unk4_3); // unk
-		packet->WriteUInt8(userCharacter.unk4_4); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk4) {
+		packet->WriteString(userCharacter.unk4_1);
+		packet->WriteUInt8(userCharacter.unk4_2);
+		packet->WriteUInt8(userCharacter.unk4_3);
+		packet->WriteUInt8(userCharacter.unk4_4);
 	}
-	if (userCharacter.flag & UserInfoFlag::Level) {
-		packet->WriteUInt8(userCharacter.level); // level
+	if (userCharacter.flag & UserCharacterFlag::Level) {
+		packet->WriteUInt8(userCharacter.level);
 	}
-	if (userCharacter.flag & UserInfoFlag::Unk10) {
-		packet->WriteUInt8(userCharacter.unk10); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk10) {
+		packet->WriteUInt8(userCharacter.unk10);
 	}
-	if (userCharacter.flag & UserInfoFlag::Exp) {
-		packet->WriteUInt64_LE(userCharacter.exp); // exp
+	if (userCharacter.flag & UserCharacterFlag::Exp) {
+		packet->WriteUInt64_LE(userCharacter.exp);
 	}
-	if (userCharacter.flag & UserInfoFlag::Cash) {
-		packet->WriteUInt64_LE(userCharacter.cash); // cash
+	if (userCharacter.flag & UserCharacterFlag::Cash) {
+		packet->WriteUInt64_LE(userCharacter.cash);
 	}
-	if (userCharacter.flag & UserInfoFlag::Points) {
-		packet->WriteUInt64_LE(userCharacter.points); // points
+	if (userCharacter.flag & UserCharacterFlag::Points) {
+		packet->WriteUInt64_LE(userCharacter.points);
 	}
-	if (userCharacter.flag & UserInfoFlag::BattleStats) {
-		packet->WriteUInt32_LE(userCharacter.battles); // battles
-		packet->WriteUInt32_LE(userCharacter.wins); // wins
-		packet->WriteUInt32_LE(userCharacter.frags); // frags
-		packet->WriteUInt32_LE(userCharacter.deaths); // deaths
+	if (userCharacter.flag & UserCharacterFlag::BattleStats) {
+		packet->WriteUInt32_LE(userCharacter.battles);
+		packet->WriteUInt32_LE(userCharacter.wins);
+		packet->WriteUInt32_LE(userCharacter.frags);
+		packet->WriteUInt32_LE(userCharacter.deaths);
 	}
-	if (userCharacter.flag & UserInfoFlag::Location) {
+	if (userCharacter.flag & UserCharacterFlag::Location) {
 		packet->WriteString(""); // pcBang
 		packet->WriteUInt16_LE(userCharacter.city); // province/city (도시) index
 		packet->WriteUInt16_LE(userCharacter.county); // district/county (구군) index
 		packet->WriteUInt16_LE(userCharacter.neighborhood); // neighborhood (동) index
-		packet->WriteString(userCharacter.unk200_5); // unk
+		packet->WriteString(userCharacter.unk200_5);
 	}
-	if (userCharacter.flag & UserInfoFlag::Unk400) {
-		packet->WriteUInt32_LE(userCharacter.unk400); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk400) {
+		packet->WriteUInt32_LE(userCharacter.unk400);
 	}
-	if (userCharacter.flag & UserInfoFlag::Unk800) {
-		packet->WriteUInt8(userCharacter.unk800); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk800) {
+		packet->WriteUInt8(userCharacter.unk800);
 	}
-	if (userCharacter.flag & UserInfoFlag::Unk1000) {
-		packet->WriteUInt32_LE(userCharacter.unk1000_1); // unk
-		packet->WriteUInt32_LE(userCharacter.unk1000_2); // unk
-		packet->WriteString(userCharacter.unk1000_3); // unk
-		packet->WriteUInt8(userCharacter.unk1000_4); // unk
-		packet->WriteUInt8(userCharacter.unk1000_5); // unk
-		packet->WriteUInt8(userCharacter.unk1000_6); // unk
+	if (userCharacter.flag & UserCharacterFlag::Unk1000) {
+		packet->WriteUInt32_LE(userCharacter.unk1000_1);
+		packet->WriteUInt32_LE(userCharacter.unk1000_2);
+		packet->WriteString(userCharacter.unk1000_3);
+		packet->WriteUInt8(userCharacter.unk1000_4);
+		packet->WriteUInt8(userCharacter.unk1000_5);
+		packet->WriteUInt8(userCharacter.unk1000_6);
 	}
 }
 

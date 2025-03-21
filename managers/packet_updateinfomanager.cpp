@@ -12,7 +12,7 @@ void Packet_UpdateInfoManager::ParsePacket_UpdateInfo(TCPConnection::Packet::poi
 		return;
 	}
 
-	cout << format("[Packet_UpdateInfoManager] Parsing Packet_UpdateInfo from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_UpdateInfoManager] Parsing Packet_UpdateInfo from client ({})\n", user->GetConnection()->GetEndPoint());
 
 	unsigned char type = packet->ReadUInt8();
 	
@@ -20,26 +20,26 @@ void Packet_UpdateInfoManager::ParsePacket_UpdateInfo(TCPConnection::Packet::poi
 		case 0: {
 			string unk1 = packet->ReadString();
 
-			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo - type: {}, unk1: {}\n", packet->GetConnection()->GetEndPoint(), type, unk1.c_str());
+			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo - type: {}, unk1: {}\n", user->GetConnection()->GetEndPoint(), type, unk1.c_str());
 			break;
 		}
 		case 1: {
 			// nothing to read
-			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo - type: {}\n", packet->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo - type: {}\n", user->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 		default: {
-			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent unregistered Packet_UpdateInfo type {}!\n", packet->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_UpdateInfoManager] Client ({}) has sent unregistered Packet_UpdateInfo type {}!\n", user->GetConnection()->GetEndPoint(), type);
 			break;
 		}
 	}
 }
 
-void Packet_UpdateInfoManager::SendPacket_UpdateInfo(TCPConnection::pointer connection, unsigned long userID, UserCharacter& userCharacter) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::UpdateInfo });
+void Packet_UpdateInfoManager::SendPacket_UpdateInfo(const UserFull& userFull) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, userFull.user->GetConnection(), {PacketID::UpdateInfo});
 
-	packet->WriteUInt32_LE(userID); // userID
-	packetManager.BuildUserInfo(packet, userCharacter);
+	packet->WriteUInt32_LE(userFull.user->GetUserID());
+	packetManager.BuildUserCharacter(packet, userFull.userCharacter);
 
 	packet->Send();
 }
