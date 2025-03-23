@@ -1,7 +1,6 @@
 #pragma once
-#include "tcp_connection.h"
-#include "roomsettings.h"
 #include "user.h"
+#include "roomsettings.h"
 
 class Packet_RoomManager {
 public:

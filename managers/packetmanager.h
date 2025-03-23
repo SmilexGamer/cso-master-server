@@ -1,8 +1,5 @@
 #pragma once
-#include "tcp_connection.h"
 #include "user.h"
-#include <thread>
-#include <deque>
 
 class PacketManager {
 public:

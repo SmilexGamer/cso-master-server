@@ -24,6 +24,9 @@
     <ClCompile Include="managers\packet_charactermanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_cryptmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_roommanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
@@ -80,7 +83,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="definitions.h" />
     <ClInclude Include="servertick.h" />
     <ClInclude Include="configs\serverconfig.h">
       <Filter>configs</Filter>
@@ -101,6 +103,9 @@
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_charactermanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_cryptmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_roommanager.h">

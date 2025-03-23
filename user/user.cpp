@@ -1,4 +1,3 @@
-#include "user.h"
 #include "databasemanager.h"
 
 User::User(TCPConnection::pointer connection, unsigned long userID, const string& userName) : _connection(connection), _userID(userID), _userName(userName) {
@@ -24,6 +23,10 @@ void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigne
 			break;
 		}
 	}
+}
+
+char User::CreateCharacter(const string& nickName) {
+	return databaseManager.CreateCharacter(_userID, nickName);
 }
 
 UserCharacterResult User::GetUserCharacter(unsigned short flag) {

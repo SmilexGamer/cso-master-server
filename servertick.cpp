@@ -1,12 +1,12 @@
 #include "servertick.h"
 #include "usermanager.h"
 #include <iostream>
-#include <format>
 
 ServerTick serverTick;
 
 ServerTick::ServerTick() {
 	_running = false;
+	_currentTime = 0;
 	_secondCount = 0;
 }
 

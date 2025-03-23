@@ -1,6 +1,5 @@
 #include "usermanager.h"
 #include "databasemanager.h"
-#include "serverconfig.h"
 #include "packetmanager.h"
 #include "packet_userstartmanager.h"
 #include "packet_updateinfomanager.h"

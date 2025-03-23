@@ -1,9 +1,6 @@
 #pragma once
 #include "tcp_connection.h"
-#include <functional>
-#include <optional>
 #include <unordered_set>
-#include <thread>
 
 class TCPServer {
 	using OnConnectHandler = function<void(TCPConnection::pointer)>;
@@ -18,7 +15,7 @@ public:
 		return _connections;
 	}
 
-	bool Init(IPV ipv, unsigned short port);
+	bool Init(unsigned short port);
 	void Start();
 	void Stop();
 private:

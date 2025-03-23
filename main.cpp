@@ -43,14 +43,14 @@ int main() {
 
 	databaseManager.GetAllChannelsNumPlayers();
 
-	if (!tcpServer.Init(IPV::V4, serverConfig.tcpPort)) {
+	if (!tcpServer.Init(serverConfig.tcpPort)) {
 		cout << "[TCPServer] Failed to initialize TCP server!\n";
 		return -1;
 	}
 
 	tcpServer.Start();
 
-	if (!udpServer.Init(IPV::V4, serverConfig.udpPort)) {
+	if (!udpServer.Init(serverConfig.udpPort)) {
 		cout << "[UDPServer] Failed to initialize UDP server!\n";
 		return -1;
 	}

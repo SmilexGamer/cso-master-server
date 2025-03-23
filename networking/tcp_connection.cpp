@@ -1,5 +1,5 @@
-#include "tcp_connection.h"
 #include "usermanager.h"
+#include "serverconfig.h"
 #include <iostream>
 
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
@@ -53,6 +53,16 @@ TCPConnection::TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::s
 	_ipAddress = _sslStream.next_layer().remote_endpoint().address().to_string();
 }
 
+TCPConnection::~TCPConnection() {
+	if (_decryptCipher.ctx) {
+		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
+	}
+
+	if (_encryptCipher.ctx) {
+		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
+	}
+}
+
 void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler) {
 	_packetHandler = move(packetHandler);
 	_errorHandler = move(errorHandler);
@@ -67,7 +77,6 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	_sslStream.async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()]
 	(boost::system::error_code ec) {
 		if (ec) {
-			userManager.RemoveUserByConnection(self);
 			self->DisconnectClient(ec);
 			return;
 		}
@@ -103,6 +112,70 @@ void TCPConnection::DisconnectClient(boost::system::error_code ec) {
 	_errorHandler(true);
 }
 
+bool TCPConnection::SetupCrypt() {
+	_decryptCipher.ctx = EVP_CIPHER_CTX_new();
+	if (_decryptCipher.ctx == NULL) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed\n", _ipAddress);
+		return false;
+	}
+
+	int rc = RAND_bytes(_decryptCipher.key, KEY_SIZE);
+	if (rc != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.key failed\n", _ipAddress);
+		return false;
+	}
+
+	rc = RAND_bytes(_decryptCipher.iv, BLOCK_SIZE);
+	if (rc != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.iv failed\n", _ipAddress);
+		return false;
+	}
+
+	_decryptCipher.method = serverConfig.decryptCipherMethod;
+
+	if (EVP_DecryptInit(_decryptCipher.ctx, _decryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_decryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _decryptCipher.key, _decryptCipher.iv) != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_DecryptInit() != 1\n", _ipAddress);
+		return false;
+	}
+
+	_encryptCipher.ctx = EVP_CIPHER_CTX_new();
+	if (_encryptCipher.ctx == NULL) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed\n", _ipAddress);
+		return false;
+	}
+
+	rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
+	if (rc != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.key failed\n", _ipAddress);
+		return false;
+	}
+
+	rc = RAND_bytes(_encryptCipher.iv, BLOCK_SIZE);
+	if (rc != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.iv failed\n", _ipAddress);
+		return false;
+	}
+
+	_encryptCipher.method = serverConfig.encryptCipherMethod;
+
+	if (EVP_EncryptInit(_encryptCipher.ctx, _encryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_encryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _encryptCipher.key, _encryptCipher.iv) != 1) {
+		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_EncryptInit() != 1\n", _ipAddress);
+		return false;
+	}
+	
+	return true;
+}
+
+bool TCPConnection::decrypt(vector<unsigned char>& buffer) {
+	int outLen = 0;
+	if (EVP_DecryptUpdate(_decryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
+		cout << format("[TCPConnection] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1\n", _ipAddress);
+		return false;
+	}
+
+	return true;
+}
+
 void TCPConnection::asyncRead() {
 #ifdef NO_SSL
 	boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(PACKET_HEADER_SIZE), [self = shared_from_this()]
@@ -126,6 +199,15 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 	vector<unsigned char> buffer(bytesTransferred);
 	buffer_copy(boost::asio::buffer(buffer), _streamBuf.data());
+	_streamBuf.consume(bytesTransferred);
+
+	if (_decrypt) {
+		if (!decrypt(buffer)) {
+			userManager.RemoveUserByConnection(shared_from_this());
+			DisconnectClient();
+			return;
+		}
+	}
 
 	auto packet = TCPConnection::Packet::Create(PacketSource::Client, shared_from_this(), buffer);
 
@@ -175,10 +257,23 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 		}
 #endif
 
-		vector<unsigned char> buffer(PACKET_HEADER_SIZE + bytesTransferred);
+		vector<unsigned char> buffer(bytesTransferred);
 		buffer_copy(boost::asio::buffer(buffer), self->_streamBuf.data());
-		self->_streamBuf.consume(PACKET_HEADER_SIZE + bytesTransferred);
+		self->_streamBuf.consume(bytesTransferred);
 
+		if (self->_decrypt) {
+			if (!self->decrypt(buffer)) {
+				userManager.RemoveUserByConnection(self);
+				self->DisconnectClient();
+				return;
+			}
+		}
+		else if (buffer[0] == PacketID::RecvCrypt) {
+			self->_decrypt = true;
+		}
+
+		vector<unsigned char> header = packet->GetBuffer();
+		buffer.insert(buffer.begin(), header.begin(), header.end());
 		packet->SetBuffer(buffer);
 
 #ifdef _DEBUG
@@ -195,22 +290,44 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	});
 }
 
+bool TCPConnection::encrypt(vector<unsigned char>& buffer) {
+	int outLen = 0;
+	if (EVP_EncryptUpdate(_encryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
+		cout << format("[TCPConnection] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1\n", _ipAddress);
+		return false;
+	}
+
+	return true;
+}
+
 void TCPConnection::asyncWrite(bool noSSL) {
+	vector<unsigned char> buffer(_outgoingPackets.front());
+	if (_encrypt) {
+		if (!encrypt(_outgoingPackets.front())) {
+			userManager.RemoveUserByConnection(shared_from_this());
+			DisconnectClient();
+			return;
+		}
+	}
+	else if (buffer[4] == PacketID::Crypt) {
+		_encrypt = true;
+	}
+
 	if (noSSL) {
-		boost::asio::async_write(_sslStream.next_layer(), boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this()]
+		boost::asio::async_write(_sslStream.next_layer(), boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this(), buffer]
 		(boost::system::error_code ec, size_t bytesTransferred) {
-				self->onWrite(ec, bytesTransferred);
+				self->onWrite(ec, bytesTransferred, buffer);
 			});
 	}
 	else {
-		boost::asio::async_write(_sslStream, boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this()]
+		boost::asio::async_write(_sslStream, boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this(), buffer]
 		(boost::system::error_code ec, size_t bytesTransferred) {
-				self->onWrite(ec, bytesTransferred);
+				self->onWrite(ec, bytesTransferred, buffer);
 			});
 	}
 }
 
-void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferred) {
+void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferred, vector<unsigned char> rawBuffer) {
 	if (ec) {
 		userManager.RemoveUserByConnection(shared_from_this());
 		DisconnectClient(ec);
@@ -219,7 +336,7 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 
 #ifdef _DEBUG
 	string buffer;
-	for (auto& c : _outgoingPackets.front()) {
+	for (auto& c : rawBuffer) {
 		buffer += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 

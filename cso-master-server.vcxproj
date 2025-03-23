@@ -166,6 +166,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="managers\packet_loginmanager.cpp" />
     <ClCompile Include="managers\packet_serverlistmanager.cpp" />
     <ClCompile Include="managers\packet_charactermanager.cpp" />
+    <ClCompile Include="managers\packet_cryptmanager.cpp" />
     <ClCompile Include="managers\packet_roommanager.cpp" />
     <ClCompile Include="managers\packet_umsgmanager.cpp" />
     <ClCompile Include="managers\packet_hostmanager.cpp" />
@@ -186,7 +187,6 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="thirdparty\libbcrypt\wrapper.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="definitions.h" />
     <ClInclude Include="servertick.h" />
     <ClInclude Include="configs\serverconfig.h" />
     <ClInclude Include="managers\packetmanager.h" />
@@ -195,6 +195,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="managers\packet_loginmanager.h" />
     <ClInclude Include="managers\packet_serverlistmanager.h" />
     <ClInclude Include="managers\packet_charactermanager.h" />
+    <ClInclude Include="managers\packet_cryptmanager.h" />
     <ClInclude Include="managers\packet_roommanager.h" />
     <ClInclude Include="managers\packet_umsgmanager.h" />
     <ClInclude Include="managers\packet_hostmanager.h" />

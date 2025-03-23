@@ -2,7 +2,6 @@
 #include "usermanager.h"
 #include "packetmanager.h"
 #include "serverconfig.h"
-#include "databasemanager.h"
 #include <iostream>
 
 Packet_CharacterManager packet_CharacterManager;
@@ -70,7 +69,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		}
 	}
 
-	char createCharacterResult = databaseManager.CreateCharacter(user->GetUserID(), nickName);
+	char createCharacterResult = user->CreateCharacter(nickName);
 	if (!createCharacterResult) {
 		if (createCharacterResult < 0) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);

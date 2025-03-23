@@ -24,10 +24,10 @@ TCPServer::~TCPServer() {
 	shutdown();
 }
 
-bool TCPServer::Init(IPV ipv, unsigned short port) {
+bool TCPServer::Init(unsigned short port) {
 	try {
 		_port = port;
-		_acceptor = boost::asio::ip::tcp::acceptor(_ioContext, boost::asio::ip::tcp::endpoint(ipv == IPV::V4 ? boost::asio::ip::tcp::v4() : boost::asio::ip::tcp::v6(), _port));
+		_acceptor = boost::asio::ip::tcp::acceptor(_ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), _port));
 
 #ifndef NO_SSL
 		_sslContext.set_options(

@@ -1,11 +1,10 @@
 #include "databasemanager.h"
-#include <tuple>
-#include "mysql/mysqld_error.h"
-#include <iostream>
-#include <format>
 #include "serverconfig.h"
 #include "servertick.h"
+#include "mysql/mysqld_error.h"
 #include "libbcrypt/BCrypt.hpp"
+#include <tuple>
+#include <iostream>
 
 DatabaseManager databaseManager;
 
@@ -15,12 +14,18 @@ DatabaseManager::DatabaseManager() {
 }
 
 DatabaseManager::~DatabaseManager() {
-    RemoveAllUserSessions();
-    RemoveAllUserTransfers();
-    RemoveServerChannel();
+    if (_addedServerChannel) {
+        _addedServerChannel = false;
 
-    mysql_close(_connection);
-    _connection = NULL;
+        RemoveAllUserSessions();
+        RemoveAllUserTransfers();
+        RemoveServerChannel();
+    }
+
+    if (_connection) {
+        mysql_close(_connection);
+        _connection = NULL;
+    }
 }
 
 bool DatabaseManager::Init(const string& server, const string& user, const string& password, const string& database) {
@@ -69,15 +74,11 @@ bool DatabaseManager::AddServerChannel() {
 }
 
 void DatabaseManager::RemoveServerChannel() {
-    if (_addedServerChannel) {
-        string query = format("DELETE FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+    string query = format("DELETE FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
-        if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on RemoveServerChannel: {}\n", mysql_error(_connection));
-            return;
-        }
-
-        _addedServerChannel = false;
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on RemoveServerChannel: {}\n", mysql_error(_connection));
+        return;
     }
 }
 
@@ -421,13 +422,11 @@ void DatabaseManager::RemoveUserSession(unsigned long userID) {
 }
 
 void DatabaseManager::RemoveAllUserSessions() {
-    if (_addedServerChannel) {
-        string query = format("DELETE FROM user_sessions WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+    string query = format("DELETE FROM user_sessions WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
-        if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection));
-            return;
-        }
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection));
+        return;
     }
 }
 
@@ -530,12 +529,10 @@ void DatabaseManager::RemoveOldUserTransfers() {
 }
 
 void DatabaseManager::RemoveAllUserTransfers() {
-    if (_addedServerChannel) {
-        string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+    string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
-        if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection));
-            return;
-        }
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection));
+        return;
     }
 }

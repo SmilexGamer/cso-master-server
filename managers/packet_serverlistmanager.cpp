@@ -1,7 +1,6 @@
 ﻿#include "packet_serverlistmanager.h"
 #include "packetmanager.h"
 #include "usermanager.h"
-#include "serverconfig.h"
 #include <iostream>
 
 Packet_ServerListManager packet_ServerListManager;

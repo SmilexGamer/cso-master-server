@@ -1,5 +1,4 @@
 #pragma once
-#include "tcp_connection.h"
 #include "user.h"
 
 class Packet_UpdateInfoManager {

@@ -1,8 +1,10 @@
 ﻿#include "packetmanager.h"
 #include "packet_versionmanager.h"
-#include "packet_charactermanager.h"
+#include "packet_transfermanager.h"
 #include "packet_loginmanager.h"
 #include "packet_serverlistmanager.h"
+#include "packet_charactermanager.h"
+#include "packet_cryptmanager.h"
 #include "packet_roommanager.h"
 #include "packet_umsgmanager.h"
 #include "packet_hostmanager.h"
@@ -10,8 +12,6 @@
 #include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
-#include "packet_transfermanager.h"
-#include "serverconfig.h"
 #include <iostream>
 
 PacketManager packetManager;
@@ -195,6 +195,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::RequestServerList: {
 			packet_ServerListManager.ParsePacket_RequestServerList(packet);
+			break;
+		}
+		case PacketID::RecvCrypt: {
+			packet_CryptManager.ParsePacket_RecvCrypt(packet);
 			break;
 		}
 		case PacketID::Room: {

@@ -14,10 +14,10 @@ UDPServer::~UDPServer() {
 	shutdown();
 }
 
-bool UDPServer::Init(IPV ipv, unsigned short port) {
+bool UDPServer::Init(unsigned short port) {
 	try {
 		_port = port;
-		_socket = boost::asio::ip::udp::socket(_ioService, boost::asio::ip::udp::endpoint(ipv == IPV::V4 ? boost::asio::ip::udp::v4() : boost::asio::ip::udp::v6(), _port));
+		_socket = boost::asio::ip::udp::socket(_ioService, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), _port));
 	}
 	catch (exception& e) {
 		cerr << format("[UDPServer] Error on Init: {}\n", e.what());

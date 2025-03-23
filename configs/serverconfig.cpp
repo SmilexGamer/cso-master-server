@@ -17,6 +17,8 @@ ServerConfig::ServerConfig() {
 	sqlUser = "";
 	sqlPassword = "";
 	sqlDatabase = "";
+	decryptCipherMethod = CipherMethod::CleanUp;
+	encryptCipherMethod = CipherMethod::CleanUp;
 }
 
 string defaultServerConfig = R"({
@@ -42,7 +44,9 @@ string defaultServerConfig = R"({
 		"Password": "",
 		"Database": "csodatabase"
 	},
-	"ProhibitedNames": []
+	"ProhibitedNames": [],
+	"DecryptCipherMethod": 1,
+	"EncryptCipherMethod": 1
 })";
 
 bool ServerConfig::Load() {
@@ -119,6 +123,26 @@ bool ServerConfig::Load() {
 		}
 		if (config.contains("ProhibitedNames")) {
 			prohibitedNames = config["ProhibitedNames"].get<vector<string>>();
+		}
+		if (config.contains("DecryptCipherMethod")) {
+			unsigned char decryptCipherMethod = config.value("DecryptCipherMethod", 1);
+
+			if (decryptCipherMethod == 1 || decryptCipherMethod == 2) {
+				this->decryptCipherMethod = (CipherMethod)(decryptCipherMethod + 1);
+			}
+			else {
+				this->decryptCipherMethod = CipherMethod::Null;
+			}
+		}
+		if (config.contains("EncryptCipherMethod")) {
+			unsigned char encryptCipherMethod = config.value("EncryptCipherMethod", 1);
+
+			if (encryptCipherMethod == 1 || encryptCipherMethod == 2) {
+				this->encryptCipherMethod = (CipherMethod)(encryptCipherMethod + 1);
+			}
+			else {
+				this->encryptCipherMethod = CipherMethod::Null;
+			}
 		}
 
 		cout << "[ServerConfig] Loaded server configs!\n";

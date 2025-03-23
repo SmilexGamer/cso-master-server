@@ -1,10 +1,6 @@
 #pragma once
-#include "definitions.h"
 #include "mysql/mysql.h"
 #include "user.h"
-#include <string>
-
-using namespace std;
 
 struct LoginResult {
 	unsigned long userID;

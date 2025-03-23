@@ -1,15 +1,20 @@
 #pragma once
-#include "definitions.h"
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <thread>
+
+using namespace std;
+
+#define UDP_PACKET_SIGNATURE 'W'
+
+#define UDP_PACKET_MAX_SIZE 4010
 
 class UDPServer {
 public:
 	UDPServer();
 	~UDPServer();
 
-	bool Init(IPV ipv, unsigned short port);
+	bool Init(unsigned short port);
 	void Start();
 	void Stop();
 

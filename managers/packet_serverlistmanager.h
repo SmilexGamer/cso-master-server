@@ -1,6 +1,6 @@
 #pragma once
-#include "tcp_connection.h"
 #include "user.h"
+#include "serverconfig.h"
 
 class Packet_ServerListManager {
 public:

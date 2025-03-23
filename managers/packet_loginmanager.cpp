@@ -1,6 +1,7 @@
 #include "packet_loginmanager.h"
-#include "packetmanager.h"
 #include "packet_charactermanager.h"
+#include "packet_cryptmanager.h"
+#include "packetmanager.h"
 #include "usermanager.h"
 #include "serverconfig.h"
 #include "databasemanager.h"
@@ -51,6 +52,14 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::Playing);
 		return;
 	}
+
+	if (!newUser->GetConnection()->SetupCrypt()) {
+		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+
+	packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Encrypt, newUser->GetConnection()->GetEncryptCipher());
+	packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Decrypt, newUser->GetConnection()->GetDecryptCipher());
 
 	char userCharacterExistsResult = newUser->IsUserCharacterExists();
 	if (!userCharacterExistsResult) {

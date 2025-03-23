@@ -5,6 +5,23 @@
 #undef GetUserName
 #endif
 
+enum UserCharacterFlag {
+	Unk1 = 0x1,
+	NickName = 0x2,
+	Unk4 = 0x4,
+	Level = 0x8,
+	Unk10 = 0x10,
+	Exp = 0x20,
+	Cash = 0x40,
+	Points = 0x80,
+	BattleStats = 0x100,
+	Location = 0x200,
+	Unk400 = 0x400,
+	Unk800 = 0x800,
+	Unk1000 = 0x1000,
+	All = 0xFFFF
+};
+
 struct UserCharacter {
 	unsigned short flag = 0;
 	unsigned char unk1 = 0;
@@ -70,12 +87,13 @@ public:
 		return _userName;
 	}
 
-	UserNetwork GetUserNetwork() const noexcept{
+	UserNetwork GetUserNetwork() const noexcept {
 		return _userNetwork;
 	}
 
 	void SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
 
+	char CreateCharacter(const string& nickName);
 	UserCharacterResult GetUserCharacter(unsigned short flag);
 	char IsUserCharacterExists();
 

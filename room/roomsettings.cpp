@@ -1,5 +1,4 @@
 #include "roomsettings.h"
-#include <iostream>
 
 RoomSettings::RoomSettings(TCPConnection::Packet::pointer packet) {
 	Init();

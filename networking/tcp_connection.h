@@ -1,17 +1,149 @@
 #pragma once
-#include "definitions.h"
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <queue>
-#include <vector>
+
+using namespace std;
+
+//#define NO_SSL
+
+#define SERVERCONNECTED "~SERVERCONNECTED\n\0"
+
+#define TCP_PACKET_SIGNATURE 'U'
+
+#define PACKET_HEADER_SIZE 4
+
+#define TCP_PACKET_MAX_SIZE 0x10000
+
+#define KEY_SIZE 32
+
+#define BLOCK_SIZE 32
 
 enum class PacketSource {
 	Client,
 	Server
 };
 
+enum PacketID {
+	Version = 0,
+	Reply = 1,
+	Transfer = 2,
+	RecvCharacter = 2,
+	Login = 3, // or Auth, whatever you want to name it
+	ServerList = 5,
+	TransferLogin = 5,
+	Character = 6,
+	Crypt = 7,
+	RequestTransfer = 7,
+	RequestServerList = 10,
+	RecvCrypt = 12,
+	Room = 65,
+	ClientCheck = 66,
+	UMsg = 67,
+	Host = 68,
+	UpdateInfo = 69,
+	Udp = 70,
+	Clan = 71,
+	Shop = 72,
+	Rank = 73,
+	Option = 76,
+	Favorite = 77,
+	Item = 78,
+	GameGuard = 79,
+	SearchRoom = 80,
+	Report = 83,
+	UserStart = 150,
+	RoomList = 151,
+	Lobby = 153,
+	Inventory = 154,
+	ClanStock = 155,
+	CafeItems = 156
+};
+
+enum Packet_ReplyType {
+	NoReply = -1,
+	LoginSuccess = 0,
+	CreateCharacterSuccess = 1,
+	InvalidName = 3,
+	Playing = 4,
+	NotExist = 5,
+	WrongPassword = 7,
+	InvalidPassword = 8,
+	ServerDown = 9,
+	SysError = 10,
+	InvalidServer = 11,
+	InvalidSlot = 12,
+	ID_NOT_ALLOWD = 14,
+	NEXONCOMERROR = 15,
+	NEXONCOM_PASSPORTERROR = 16,
+	NEXONCOM_INVALID_SESSION = 17,
+	INVALID_USERINFO = 18,
+	TRANSFER_ERR = 19,
+	ID_TOO_SHORT = 20,
+	ID_TOO_LONG = 21,
+	INVALID_CHAR = 22,
+	ID_DIGIT_BEFORE_CHAR = 23,
+	ID_EXCEED_CHAR_COUNT = 24,
+	ALREADY_EXIST = 25,
+	ID_PROHIBITED = 26,
+	EXCEED_MAX_CONNECTION = 27,
+	NEXONCOM_UNDER_AGE = 28,
+	INVALID_CLIENT_VERSION = 38
+};
+
+enum Packet_RoomType {
+	RequestCreate = 0,
+	ReplyCreateAndJoin = 0,
+	RequestJoin = 1,
+	RequestLeave = 2,
+	RequestStartGame = 4,
+	ReplyLeaveRoom = 4,
+	ReplyLeaveRoomInGame = 10
+};
+
+enum Packet_UMsgType {
+	WhisperChat = 0,
+	LobbyChat = 1,
+	RoomChat = 2,
+	FamilyChat = 3,
+	PartyChat = 5,
+	InfoMessage = 5,
+	WarningMessage = 6
+};
+
+enum Packet_HostType {
+	StartGame = 0,
+	JoinGame = 1,
+	HostRestart = 2
+};
+
+enum Packet_ShopType {
+	Unk0 = 0
+};
+
+enum Packet_LobbyType {
+	UserList = 0
+};
+
+enum CipherMethod {
+	CleanUp = 0,
+	CleanUp2 = 1,
+	RC4 = 2,
+	RC4_40 = 3,
+	Null = 4
+};
+
+struct Cipher {
+	CipherMethod method = CipherMethod::CleanUp;
+	EVP_CIPHER_CTX* ctx = NULL;
+	unsigned char key[KEY_SIZE] = {};
+	unsigned char iv[BLOCK_SIZE] = {};
+};
+
 class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
+	~TCPConnection();
+
 	using pointer = shared_ptr<TCPConnection>;
 
 	class Packet : public enable_shared_from_this<TCPConnection::Packet> {
@@ -353,19 +485,32 @@ public:
 		_incomingSequence = incomingSequence;
 	}
 
+	Cipher GetDecryptCipher() const noexcept {
+		return _decryptCipher;
+	}
+
+	Cipher GetEncryptCipher() const noexcept {
+		return _encryptCipher;
+	}
+
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
 	void DisconnectClient(bool eraseConnection = true);
 	void DisconnectClient(boost::system::error_code ec);
+	bool SetupCrypt();
 
 private:
 	explicit TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context);
 
+	bool decrypt(vector<unsigned char>& buffer);
+
 	void asyncRead();
 	void onRead(boost::system::error_code ec, size_t bytesTransferred);
 
+	bool encrypt(vector<unsigned char>& buffer);
+
 	void asyncWrite(bool noSSL = false);
-	void onWrite(boost::system::error_code ec, size_t bytesTransferred);
+	void onWrite(boost::system::error_code ec, size_t bytesTransferred, vector<unsigned char> rawBuffer);
 
 private:
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket> _sslStream;
@@ -375,6 +520,12 @@ private:
 	unsigned char _outgoingSequence = 0;
 	boost::asio::streambuf _streamBuf { PACKET_HEADER_SIZE + UINT16_MAX };
 	unsigned char _incomingSequence = 0;
+
+	bool _decrypt = false;
+	Cipher _decryptCipher;
+
+	bool _encrypt = false;
+	Cipher _encryptCipher;
 
 	PacketHandler _packetHandler;
 	ErrorHandler _errorHandler;

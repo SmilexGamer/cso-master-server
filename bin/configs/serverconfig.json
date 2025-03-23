@@ -10,9 +10,7 @@
 			"Name": "Server 1",
 			"Channels": [
 				{
-					"Name": "Channel 1-1",
-					"IP": "127.0.0.1",
-					"Port": 30002
+					"Name": "Channel 1-1"
 				}
 			]
 		}
@@ -23,5 +21,7 @@
 		"Password": "",
 		"Database": "csodatabase"
 	},
-	"ProhibitedNames": []
+	"ProhibitedNames": [],
+	"DecryptCipherMethod": 1,
+	"EncryptCipherMethod": 1
 }

@@ -1,11 +1,11 @@
 #pragma once
 #include <thread>
 
+using namespace std;
+
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
-
-using namespace std;
 
 class ServerTick {
 public:
