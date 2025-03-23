@@ -54,6 +54,19 @@ User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
 	return NULL;
 }
 
+User* UserManager::GetUserByUserID(unsigned long userID) {
+	if (!userID) {
+		return NULL;
+	}
+
+	auto it = find_if(_users.begin(), _users.end(), [&userID](User*& user) { return user->GetUserID() == userID; });
+	if (it != _users.end()) {
+		return _users.at(distance(_users.begin(), it));
+	}
+
+	return NULL;
+}
+
 void UserManager::RemoveUserByConnection(TCPConnection::pointer connection) {
 	if (connection == NULL) {
 		return;
@@ -78,8 +91,11 @@ void UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		return;
 	}
 
-	packetManager.SendPacket_Reply(user->GetConnection(), reply);
-	packet_UserStartManager.SendPacket_UserStart(user, result.userCharacter);
+	if (reply != Packet_ReplyType::NoReply) {
+		packetManager.SendPacket_Reply(user->GetConnection(), reply);
+	}
+
+	packet_UserStartManager.SendPacket_UserStart({ user, result.userCharacter });
 	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, result.userCharacter });
 	packet_ServerListManager.SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
@@ -91,5 +107,6 @@ void UserManager::UpdateChannelNumPlayers() {
 }
 
 void UserManager::OnMinuteTick() {
-	databaseManager.GetChannelsNumPlayers();
+	databaseManager.GetAllChannelsNumPlayers();
+	databaseManager.RemoveOldUserTransfers();
 }

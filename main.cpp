@@ -41,6 +41,8 @@ int main() {
 		return -1;
 	}
 
+	databaseManager.GetAllChannelsNumPlayers();
+
 	if (!tcpServer.Init(IPV::V4, serverConfig.tcpPort)) {
 		cout << "[TCPServer] Failed to initialize TCP server!\n";
 		return -1;

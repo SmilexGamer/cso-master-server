@@ -41,12 +41,25 @@ struct UserCharacterResult {
 	char result = 0;
 };
 
+struct UserNetwork {
+	unsigned long localIP = 0;
+	unsigned short localPortType0 = 0;
+	unsigned short localPortType1 = 0;
+	unsigned long externalIP = 0;
+	unsigned short externalPortType0 = 0;
+	unsigned short externalPortType1 = 0;
+};
+
 class User {
 public:
 	User(TCPConnection::pointer connection, unsigned long userID, const string& userName);
 
 	TCPConnection::pointer GetConnection() const noexcept {
 		return _connection;
+	}
+
+	const string& GetUserIPAddress() const noexcept {
+		return _connection->GetIPAddress();
 	}
 
 	unsigned long GetUserID() const noexcept {
@@ -57,6 +70,12 @@ public:
 		return _userName;
 	}
 
+	UserNetwork GetUserNetwork() const noexcept{
+		return _userNetwork;
+	}
+
+	void SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
+
 	UserCharacterResult GetUserCharacter(unsigned short flag);
 	char IsUserCharacterExists();
 
@@ -64,6 +83,7 @@ private:
 	TCPConnection::pointer _connection;
 	unsigned long _userID;
 	string _userName;
+	UserNetwork _userNetwork;
 };
 
 struct UserFull {

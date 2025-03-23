@@ -50,12 +50,12 @@ void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 		return;
 	}
 
-	cout << format("[PacketManager] Queueing packet from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[PacketManager] Queueing packet from client ({})\n", packet->GetConnection()->GetIPAddress());
 
 	_packetQueue.push_back(packet);
 }
 
-void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, vector<string> additionalText) {
+void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, vector<string> additionalText) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Reply });
 
 	packet->WriteUInt8(type);
@@ -226,7 +226,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetEndPoint(), ID);
+			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), ID);
 			break;
 		}
 	}

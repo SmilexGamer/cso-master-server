@@ -7,17 +7,17 @@ Packet_HostManager packet_HostManager;
 void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_HostManager] Client ({}) has sent Packet_Host, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		cout << format("[Packet_HostManager] Client ({}) has sent Packet_Host, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
-	cout << format("[Packet_HostManager] Parsing Packet_Host from client ({})\n", user->GetConnection()->GetEndPoint());
+	cout << format("[Packet_HostManager] Parsing Packet_Host from client ({})\n", user->GetUserIPAddress());
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		default: {
-			cout << format("[Packet_HostManager] Client ({}) has sent unregistered Packet_Host type {}!\n", user->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_HostManager] Client ({}) has sent unregistered Packet_Host type {}!\n", user->GetUserIPAddress(), type);
 			break;
 		}
 	}

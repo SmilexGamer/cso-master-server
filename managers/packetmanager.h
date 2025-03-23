@@ -12,7 +12,7 @@ public:
 	void Start();
 	void Stop();
 	void QueuePacket(TCPConnection::Packet::pointer packet);
-	void SendPacket_Reply(TCPConnection::pointer connection, unsigned char type, const vector<string> additionalText = {});
+	void SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, const vector<string> additionalText = {});
 	void BuildUserCharacter(TCPConnection::Packet::pointer packet, const UserCharacter& userCharacter);
 
 private:

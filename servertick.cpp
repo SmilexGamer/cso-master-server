@@ -70,6 +70,9 @@ int ServerTick::shutdown() {
 }
 
 void ServerTick::onSecondTick() {
+	time_t t;
+	time(&t);
+	_currentTime = t;
 	_secondCount++;
 
 	if (_secondCount == 60) {

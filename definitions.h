@@ -68,6 +68,7 @@ enum PacketID {
 };
 
 enum Packet_ReplyType {
+	NoReply = -1,
 	LoginSuccess = 0,
 	CreateCharacterSuccess = 1,
 	InvalidName = 3,
@@ -110,8 +111,11 @@ enum Packet_RoomType {
 enum Packet_UMsgType {
 	WhisperChat = 0,
 	LobbyChat = 1,
+	RoomChat = 2,
 	FamilyChat = 3,
-	PartyChat = 5
+	PartyChat = 5,
+	InfoMessage = 5,
+	WarningMessage = 6
 };
 
 enum Packet_HostType {
@@ -122,6 +126,10 @@ enum Packet_HostType {
 
 enum Packet_ShopType {
 	Unk0 = 0
+};
+
+enum Packet_LobbyType {
+	UserList = 0
 };
 
 enum UserCharacterFlag {
@@ -141,23 +149,29 @@ enum UserCharacterFlag {
 	All = 0xFFFF
 };
 
+enum ServerType {
+	Normal = 0,
+	Newbie = 1
+};
+
+enum ServerStatus {
+	NotReady = 0,
+	Ready = 1
+};
+
 struct Channel {
 	unsigned char id = 0;
 	string name = "";
 	unsigned short numPlayers = 0;
+	unsigned short maxPlayers = 0;
 	string ip = "";
 	unsigned short port = 0;
 };
 
 struct Server {
 	unsigned char id = 0;
-	bool status = false;
-	unsigned char type = 0;
+	ServerStatus status = ServerStatus::NotReady;
+	ServerType type = ServerType::Normal;
 	string name = "";
 	vector<Channel> channels;
-};
-
-enum ServerStatus {
-	NotReady = 0,
-	Ready = 1
 };

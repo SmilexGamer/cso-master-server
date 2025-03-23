@@ -8,11 +8,11 @@ TCPServer::TCPServer() : _sslContext(boost::asio::ssl::context::sslv23), _accept
 	_port = 0;
 
 	OnConnect = [](TCPConnection::pointer connection) {
-		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetEndPoint());
+		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetIPAddress());
 		};
 
 	OnDisconnect = [](TCPConnection::pointer connection) {
-		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetEndPoint());
+		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetIPAddress());
 		};
 
 	OnClientPacket = [](TCPConnection::Packet::pointer packet) {

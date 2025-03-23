@@ -333,8 +333,8 @@ public:
 		return _sslStream.next_layer();
 	}
 
-	const string& GetEndPoint() const noexcept {
-		return _endpoint;
+	const string& GetIPAddress() const noexcept {
+		return _ipAddress;
 	}
 
 	unsigned char GetOutgoingSequence() const noexcept {
@@ -369,7 +369,7 @@ private:
 
 private:
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket> _sslStream;
-	string _endpoint;
+	string _ipAddress;
 
 	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingSequence = 0;

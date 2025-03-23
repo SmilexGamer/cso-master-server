@@ -12,8 +12,9 @@ public:
 	char AddUser(User* user);
 	void RemoveUser(User* user);
 	User* GetUserByConnection(TCPConnection::pointer connection);
+	User* GetUserByUserID(unsigned long userID);
 	void RemoveUserByConnection(TCPConnection::pointer connection);
-	void SendLoginPackets(User* user, Packet_ReplyType reply);
+	void SendLoginPackets(User* user, Packet_ReplyType reply = Packet_ReplyType::NoReply);
 	void UpdateChannelNumPlayers();
 	void OnMinuteTick();
 

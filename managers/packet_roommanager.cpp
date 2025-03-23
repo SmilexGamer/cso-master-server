@@ -8,11 +8,11 @@ Packet_RoomManager packet_RoomManager;
 void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
-	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", user->GetConnection()->GetEndPoint());
+	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", user->GetUserIPAddress());
 
 	unsigned char type = packet->ReadUInt8();
 
@@ -30,7 +30,7 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetUserIPAddress(), type);
 			break;
 		}
 	}
@@ -39,7 +39,7 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 void Packet_RoomManager::parsePacket_Room_RequestCreate(User* user, TCPConnection::Packet::pointer packet) {
 	RoomSettings roomSettings = RoomSettings(packet);
 
-	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", user->GetConnection()->GetEndPoint(), roomSettings.roomName.c_str(), roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password.c_str(), roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
+	cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", user->GetUserIPAddress(), roomSettings.roomName, roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password, roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
 
 	sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), roomSettings);
 }

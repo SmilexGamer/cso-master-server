@@ -9,11 +9,11 @@ Packet_ServerListManager packet_ServerListManager;
 void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
-	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList\n", user->GetConnection()->GetEndPoint());
+	cout << format("[Packet_ServerListManager] Client ({}) has sent Packet_RequestServerList\n", user->GetUserIPAddress());
 
 	SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }
@@ -21,31 +21,31 @@ void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Pack
 void Packet_ServerListManager::SendPacket_ServerList(TCPConnection::pointer connection, const vector<Server>& servers) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::ServerList });
 
-	packet->WriteUInt8((unsigned char)servers.size()); // Num. of Servers
+	packet->WriteUInt8((unsigned char)servers.size());
 
 	for (auto& server : servers) {
-		packet->WriteUInt8(server.id); // ServerID
-		packet->WriteBool(server.status); // ServerStatus, 0 - Not ready, 1 - Ready
-		packet->WriteUInt8(server.type); // ServerType, 0 - Normal server, 1 - Newbie server
-		packet->WriteString(server.name); // ServerName
+		packet->WriteUInt8(server.id);
+		packet->WriteBool(server.status);
+		packet->WriteUInt8(server.type);
+		packet->WriteString(server.name);
 
-		packet->WriteUInt8((unsigned char)server.channels.size()); // Num. of Channels
+		packet->WriteUInt8((unsigned char)server.channels.size());
 
 		for (auto& channel : server.channels) {
-			packet->WriteUInt8(channel.id); // ChannelID
-			packet->WriteString(channel.name); // ChannelName
-			packet->WriteUInt16_LE(channel.numPlayers); // ChannelStatus, 0~199 - Smooth, 200~399 - Normal, 400~599 - Crowded, >=600 - Full
+			packet->WriteUInt8(channel.id);
+			packet->WriteString(channel.name);
+			packet->WriteUInt16_LE(channel.numPlayers);
 		}
 	}
 
 	packet->Send();
 }
 
-void Packet_ServerListManager::SendPacket_Lobby(TCPConnection::pointer connection, const vector<UserFull>& users) {
+void Packet_ServerListManager::SendPacket_Lobby_UserList(TCPConnection::pointer connection, const vector<UserFull>& users) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Lobby });
 
-	packet->WriteUInt8(0); // Packet_Lobby ID 0
-	packet->WriteUInt16_LE((unsigned short)users.size()); // Num. of Users
+	packet->WriteUInt8(Packet_LobbyType::UserList);
+	packet->WriteUInt16_LE((unsigned short)users.size());
 
 	for (auto& userFull : users) {
 		packet->WriteUInt32_LE(userFull.user->GetUserID());

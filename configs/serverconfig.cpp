@@ -31,9 +31,7 @@ string defaultServerConfig = R"({
 			"Name": "Server 1",
 			"Channels": [
 				{
-					"Name": "Channel 1-1",
-					"IP": "127.0.0.1",
-					"Port": 30002
+					"Name": "Channel 1-1"
 				}
 			]
 		}
@@ -83,8 +81,8 @@ bool ServerConfig::Load() {
 			for (auto& server : serverList) {
 				Server s;
 				s.id = serverID++;
-				s.status = s.id == this->serverID;
-				s.type = server.value("Type", 0);
+				s.status = (ServerStatus)(s.id == this->serverID);
+				s.type = (ServerType)server.value("Type", 0);
 				s.name = server.value("Name", format("Server {}", s.id));
 
 				if (server.contains("Channels")) {
@@ -97,8 +95,12 @@ bool ServerConfig::Load() {
 						ch.id = channelID++;
 						ch.name = channel.value("Name", format("Channel {}-{}", s.id, ch.id));
 						ch.numPlayers = 0;
-						ch.ip = channel.value("IP", "127.0.0.1");
-						ch.port = channel.value("Port", 30002);
+
+						if (s.id != this->serverID || s.id == this->serverID && ch.id != this->channelID) {
+							ch.maxPlayers = channel.value("MaxPlayers", 600);
+							ch.ip = channel.value("IP", "127.0.0.1");
+							ch.port = channel.value("Port", 30002);
+						}
 
 						s.channels.push_back(ch);
 					}

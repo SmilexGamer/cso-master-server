@@ -8,11 +8,11 @@ Packet_VersionManager packet_VersionManager;
 void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user != NULL) {
-		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in\n", packet->GetConnection()->GetEndPoint());
+		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
-	cout << format("[Packet_VersionManager] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetEndPoint());
+	cout << format("[Packet_VersionManager] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetIPAddress());
 
 	unsigned char launcherVersion = packet->ReadUInt8();
 	unsigned short clientVersion = packet->ReadUInt16_LE();
@@ -25,7 +25,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 	static char dateStr[10];
 	strftime(dateStr, sizeof(dateStr), "%d.%m.%y", &date);
 
-	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetEndPoint(), launcherVersion, clientVersion, dateStr, clientNARChecksum);
+	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetIPAddress(), launcherVersion, clientVersion, dateStr, clientNARChecksum);
 
 	if (launcherVersion != LAUNCHER_VERSION) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::INVALID_CLIENT_VERSION);

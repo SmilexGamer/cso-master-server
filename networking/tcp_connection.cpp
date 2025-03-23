@@ -44,16 +44,13 @@ TCPConnection::Packet::~Packet() {
 			unreadData += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
-		cout << format("[TCPConnection] Packet from client ({}) has unread data (_readOffset: {}, _buffer.size(): {}):{}\n", _connection->GetEndPoint(), readOffset, _buffer.size(), unreadData.c_str());
+		cout << format("[TCPConnection] Packet from client ({}) has unread data (_readOffset: {}, _buffer.size(): {}):{}\n", _connection->GetIPAddress(), readOffset, _buffer.size(), unreadData);
 	}
 #endif
 }
 
 TCPConnection::TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context) : _sslStream(move(socket), context) {
-	stringstream endpoint;
-	endpoint << _sslStream.next_layer().remote_endpoint();
-
-	_endpoint = endpoint.str();
+	_ipAddress = _sslStream.next_layer().remote_endpoint().address().to_string();
 }
 
 void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler) {
@@ -83,7 +80,7 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL) {
 	if (buffer.size() > TCP_PACKET_MAX_SIZE) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _endpoint, buffer.size(), TCP_PACKET_MAX_SIZE);
+		cout << format("[TCPConnection] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _ipAddress, buffer.size(), TCP_PACKET_MAX_SIZE);
 #endif
 		return;
 	}
@@ -134,7 +131,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 	if (!packet->IsValid()) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent TCP Packet with invalid signature!\n", _endpoint);
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with invalid signature!\n", _ipAddress);
 #endif
 
 		userManager.RemoveUserByConnection(shared_from_this());
@@ -143,7 +140,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	}
 	if (packet->GetSequence() != _incomingSequence) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _endpoint, _incomingSequence, packet->GetSequence());
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _ipAddress, _incomingSequence, packet->GetSequence());
 #endif
 
 		userManager.RemoveUserByConnection(shared_from_this());
@@ -152,7 +149,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	}
 	if (!packet->GetLength()) {
 #ifdef _DEBUG
-		cout << format("[TCPConnection] Client ({}) sent TCP Packet with length 0!\n", _endpoint);
+		cout << format("[TCPConnection] Client ({}) sent TCP Packet with length 0!\n", _ipAddress);
 #endif
 
 		userManager.RemoveUserByConnection(shared_from_this());
@@ -190,7 +187,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 			bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 		}
 
-		cout << format("[TCPConnection] Received packet from client ({}):{}\n", self->GetEndPoint(), bufferStr.c_str());
+		cout << format("[TCPConnection] Received packet from client ({}):{}\n", self->GetIPAddress(), bufferStr);
 #endif
 
 		self->_packetHandler(packet);
@@ -226,7 +223,7 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 		buffer += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
-	cout << format("[TCPConnection] Sent TCP Packet to client ({}):{}\n", GetEndPoint(), buffer.c_str());
+	cout << format("[TCPConnection] Sent TCP Packet to client ({}):{}\n", GetIPAddress(), buffer);
 #endif
 
 	_outgoingPackets.pop();

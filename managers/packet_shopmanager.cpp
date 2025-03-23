@@ -8,11 +8,11 @@ Packet_ShopManager packet_ShopManager;
 void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_ShopManager] Client ({}) has sent Packet_Shop, but it's not logged in\n", packet->GetConnection()->GetEndPoint());
+		cout << format("[Packet_ShopManager] Client ({}) has sent Packet_Shop, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
-	cout << format("[Packet_ShopManager] Parsing Packet_Shop from client ({})\n", user->GetConnection()->GetEndPoint());
+	cout << format("[Packet_ShopManager] Parsing Packet_Shop from client ({})\n", user->GetUserIPAddress());
 
 	unsigned char type = packet->ReadUInt8();
 
@@ -22,7 +22,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", user->GetConnection()->GetEndPoint(), type);
+			cout << format("[Packet_ShopManager] Client ({}) has sent unregistered Packet_Shop type {}!\n", user->GetUserIPAddress(), type);
 			break;
 		}
 	}

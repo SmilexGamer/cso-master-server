@@ -4,6 +4,7 @@
 #include <iostream>
 #include <format>
 #include "serverconfig.h"
+#include "servertick.h"
 #include "libbcrypt/BCrypt.hpp"
 
 DatabaseManager databaseManager;
@@ -14,8 +15,9 @@ DatabaseManager::DatabaseManager() {
 }
 
 DatabaseManager::~DatabaseManager() {
-    databaseManager.RemoveAllUserSessions();
-    databaseManager.RemoveServerChannel();
+    RemoveAllUserSessions();
+    RemoveAllUserTransfers();
+    RemoveServerChannel();
 
     mysql_close(_connection);
     _connection = NULL;
@@ -88,7 +90,31 @@ void DatabaseManager::UpdateChannelNumPlayers(unsigned short numPlayers) {
     }
 }
 
-void DatabaseManager::GetChannelsNumPlayers() {
+char DatabaseManager::GetChannelNumPlayers(unsigned char serverID, unsigned channelID) {
+    string query = format("SELECT numPlayers FROM server_channels WHERE serverID = {} AND channelID = {};", serverID, channelID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if (row == NULL) {
+        mysql_free_result(res);
+
+        return 0;
+    }
+
+    serverConfig.serverList[serverID - 1].channels[channelID - 1].numPlayers = atoi(row[0]);
+
+    mysql_free_result(res);
+
+    return 1;
+}
+
+void DatabaseManager::GetAllChannelsNumPlayers() {
     string query;
     MYSQL_RES* res = NULL;
     MYSQL_ROW row = NULL;
@@ -98,7 +124,7 @@ void DatabaseManager::GetChannelsNumPlayers() {
             query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
 
             if (mysql_query(_connection, query.c_str())) {
-                cout << format("[DatabaseManager] Query error on GetChannelsNumPlayers: {}\n", mysql_error(_connection));
+                cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
                 return;
             }
 
@@ -121,7 +147,7 @@ void DatabaseManager::GetChannelsNumPlayers() {
             query = format("SELECT 1 FROM server_channels WHERE serverID = {};", server.id);
 
             if (mysql_query(_connection, query.c_str())) {
-                cout << format("[DatabaseManager] Query error on GetChannelsNumPlayers: {}\n", mysql_error(_connection));
+                cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
                 return;
             }
 
@@ -140,7 +166,7 @@ void DatabaseManager::GetChannelsNumPlayers() {
                 query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
 
                 if (mysql_query(_connection, query.c_str())) {
-                    cout << format("[DatabaseManager] Query error on GetChannelsNumPlayers: {}\n", mysql_error(_connection));
+                    cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
                     return;
                 }
 
@@ -400,6 +426,115 @@ void DatabaseManager::RemoveAllUserSessions() {
 
         if (mysql_query(_connection, query.c_str())) {
             cout << format("[DatabaseManager] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection));
+            return;
+        }
+    }
+}
+
+LoginResult DatabaseManager::TransferLogin(const string& userName, const string& userIP) {
+    if (userName.empty()) {
+        return { 0, Packet_ReplyType::INVALID_USERINFO };
+    }
+
+    if (userIP.empty()) {
+        return { 0, Packet_ReplyType::INVALID_USERINFO };
+    }
+
+    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}' AND userIP = '{}' AND serverID = {} AND channelID = {};", userName, userIP, serverConfig.serverID, serverConfig.channelID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on TransferLogin: {}\n", mysql_error(_connection));
+        return { 0, Packet_ReplyType::SysError };
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    unsigned long userID = 0;
+    Packet_ReplyType reply = Packet_ReplyType::LoginSuccess;
+
+    if (row == NULL) {
+        reply = Packet_ReplyType::TRANSFER_ERR;
+    }
+    else {
+        mysql_free_result(res);
+
+        query = format("SELECT userID FROM users WHERE userName = '{}';", userName);
+
+        if (mysql_query(_connection, query.c_str())) {
+            cout << format("[DatabaseManager] Query error on TransferLogin: {}\n", mysql_error(_connection));
+            return { 0, Packet_ReplyType::SysError };
+        }
+
+        res = mysql_use_result(_connection);
+        row = mysql_fetch_row(res);
+
+        if (row != NULL) {
+            userID = atoi(row[0]);
+        }
+        else {
+            reply = Packet_ReplyType::NotExist;
+        }
+    }
+
+    mysql_free_result(res);
+
+    return { userID, reply };
+}
+
+char DatabaseManager::AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned channelID) {
+    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}';", userName);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on AddUserTransfer: {}\n", mysql_error(_connection));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+
+    if (mysql_fetch_row(res) == NULL) {
+        mysql_free_result(res);
+
+        query = format("INSERT INTO user_transfers (userName, userIP, serverID, channelID, transferTime) VALUES ('{}', '{}', {}, {}, {});", userName, userIP, serverID, channelID, serverTick.GetCurrentTime());
+
+        if (mysql_query(_connection, query.c_str())) {
+            cout << format("[DatabaseManager] Query error on AddUserTransfer: {}\n", mysql_error(_connection));
+            return -1;
+        }
+    }
+    else {
+        mysql_free_result(res);
+
+        return 0;
+    }
+
+    return 1;
+}
+
+void DatabaseManager::RemoveUserTransfer(const string& userName) {
+    string query = format("DELETE FROM user_transfers WHERE userName = '{}';", userName);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on RemoveUserTransfer: {}\n", mysql_error(_connection));
+        return;
+    }
+}
+
+void DatabaseManager::RemoveOldUserTransfers() {
+    string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {} AND transferTime < {};", serverConfig.serverID, serverConfig.channelID, serverTick.GetCurrentTime() - 60);
+
+    if (mysql_query(_connection, query.c_str())) {
+        cout << format("[DatabaseManager] Query error on RemoveOldUserTransfers: {}\n", mysql_error(_connection));
+        return;
+    }
+}
+
+void DatabaseManager::RemoveAllUserTransfers() {
+    if (_addedServerChannel) {
+        string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+
+        if (mysql_query(_connection, query.c_str())) {
+            cout << format("[DatabaseManager] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection));
             return;
         }
     }
