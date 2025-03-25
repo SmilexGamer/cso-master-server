@@ -55,10 +55,12 @@ TCPConnection::TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::s
 TCPConnection::~TCPConnection() {
 	if (_decryptCipher.ctx) {
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
+		_decryptCipher.ctx = NULL;
 	}
 
 	if (_encryptCipher.ctx) {
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
+		_encryptCipher.ctx = NULL;
 	}
 }
 
@@ -121,6 +123,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	int rc = RAND_bytes(_decryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.key failed\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
 	}
@@ -128,6 +131,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	rc = RAND_bytes(_decryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.iv failed\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
 	}
@@ -136,6 +140,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 
 	if (EVP_DecryptInit(_decryptCipher.ctx, _decryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_decryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _decryptCipher.key, _decryptCipher.iv) != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_DecryptInit() != 1\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
 	}
@@ -153,6 +158,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	int rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.key failed\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
 	}
@@ -160,6 +166,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	rc = RAND_bytes(_encryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.iv failed\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
 	}
@@ -168,6 +175,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 
 	if (EVP_EncryptInit(_encryptCipher.ctx, _encryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_encryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _encryptCipher.key, _encryptCipher.iv) != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_EncryptInit() != 1\n", _ipAddress);
+		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
 	}
@@ -176,6 +184,10 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 }
 
 bool TCPConnection::decrypt(vector<unsigned char>& buffer) {
+	if (_decryptCipher.ctx == NULL) {
+		return false;
+	}
+
 	int outLen = 0;
 	if (EVP_DecryptUpdate(_decryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
 		cout << format("[TCPConnection] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1\n", _ipAddress);
@@ -277,7 +289,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 				return;
 			}
 		}
-		else if (buffer[0] == PacketID::RecvCrypt && self->_decryptCipher.ctx != NULL) {
+		else if (buffer[0] == PacketID::RecvCrypt) {
 			self->_decrypt = true;
 		}
 
@@ -300,6 +312,10 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 }
 
 bool TCPConnection::encrypt(vector<unsigned char>& buffer) {
+	if (_encryptCipher.ctx == NULL) {
+		return false;
+	}
+
 	int outLen = 0;
 	if (EVP_EncryptUpdate(_encryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
 		cout << format("[TCPConnection] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1\n", _ipAddress);
