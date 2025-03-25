@@ -53,13 +53,13 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
-	if (!newUser->GetConnection()->SetupCrypt()) {
-		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
-		return;
+	if (newUser->GetConnection()->SetupEncryptCipher(serverConfig.encryptCipherMethod)) {
+		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Encrypt, newUser->GetConnection()->GetEncryptCipher());
 	}
 
-	packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Encrypt, newUser->GetConnection()->GetEncryptCipher());
-	packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Decrypt, newUser->GetConnection()->GetDecryptCipher());
+	if (newUser->GetConnection()->SetupDecryptCipher(serverConfig.decryptCipherMethod)) {
+		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Decrypt, newUser->GetConnection()->GetDecryptCipher());
+	}
 
 	char userCharacterExistsResult = newUser->IsUserCharacterExists();
 	if (!userCharacterExistsResult) {

@@ -497,7 +497,8 @@ public:
 	void WritePacket(const vector<unsigned char>& buffer, bool noSSL = false);
 	void DisconnectClient(bool eraseConnection = true);
 	void DisconnectClient(boost::system::error_code ec);
-	bool SetupCrypt();
+	bool SetupDecryptCipher(CipherMethod method);
+	bool SetupEncryptCipher(CipherMethod method);
 
 private:
 	explicit TCPConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context);

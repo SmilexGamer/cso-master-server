@@ -1,5 +1,4 @@
 #include "usermanager.h"
-#include "serverconfig.h"
 #include <iostream>
 
 TCPConnection::Packet::Packet(PacketSource source, TCPConnection::pointer connection, vector<unsigned char> buffer) : _source(source), _connection(connection), _buffer(buffer) {
@@ -112,7 +111,7 @@ void TCPConnection::DisconnectClient(boost::system::error_code ec) {
 	_errorHandler(true);
 }
 
-bool TCPConnection::SetupCrypt() {
+bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	_decryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_decryptCipher.ctx == NULL) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed\n", _ipAddress);
@@ -122,47 +121,57 @@ bool TCPConnection::SetupCrypt() {
 	int rc = RAND_bytes(_decryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.key failed\n", _ipAddress);
+		_decryptCipher.ctx = NULL;
 		return false;
 	}
 
 	rc = RAND_bytes(_decryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.iv failed\n", _ipAddress);
+		_decryptCipher.ctx = NULL;
 		return false;
 	}
 
-	_decryptCipher.method = serverConfig.decryptCipherMethod;
+	_decryptCipher.method = method;
 
 	if (EVP_DecryptInit(_decryptCipher.ctx, _decryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_decryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _decryptCipher.key, _decryptCipher.iv) != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_DecryptInit() != 1\n", _ipAddress);
+		_decryptCipher.ctx = NULL;
 		return false;
 	}
 
+	return true;
+}
+
+bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	_encryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_encryptCipher.ctx == NULL) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed\n", _ipAddress);
 		return false;
 	}
 
-	rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
+	int rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.key failed\n", _ipAddress);
+		_encryptCipher.ctx = NULL;
 		return false;
 	}
 
 	rc = RAND_bytes(_encryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.iv failed\n", _ipAddress);
+		_encryptCipher.ctx = NULL;
 		return false;
 	}
 
-	_encryptCipher.method = serverConfig.encryptCipherMethod;
+	_encryptCipher.method = method;
 
 	if (EVP_EncryptInit(_encryptCipher.ctx, _encryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_encryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _encryptCipher.key, _encryptCipher.iv) != 1) {
 		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_EncryptInit() != 1\n", _ipAddress);
+		_encryptCipher.ctx = NULL;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -268,7 +277,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 				return;
 			}
 		}
-		else if (buffer[0] == PacketID::RecvCrypt) {
+		else if (buffer[0] == PacketID::RecvCrypt && self->_decryptCipher.ctx != NULL) {
 			self->_decrypt = true;
 		}
 
