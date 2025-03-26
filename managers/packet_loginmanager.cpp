@@ -12,7 +12,7 @@ Packet_LoginManager packet_LoginManager;
 void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user != NULL) {
-		cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login, but it's already logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
@@ -45,7 +45,7 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	char userResult = userManager.AddUser(newUser);
 	if (!userResult) {
 		if (userResult < 0) {
-			packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
+			packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
 

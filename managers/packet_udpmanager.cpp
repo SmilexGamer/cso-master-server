@@ -7,7 +7,7 @@ Packet_UdpManager packet_UdpManager;
 void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

@@ -7,7 +7,7 @@ Packet_HostManager packet_HostManager;
 void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_HostManager] Client ({}) has sent Packet_Host, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_HostManager] Client ({}) has sent Packet_Host, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

@@ -89,7 +89,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 		_readOffset = 0;
 
 		if (ReadUInt8() != UDP_PACKET_SIGNATURE) {
-			cout << format("[UDPServer] Client ({}) sent UDP packet with invalid signature\n", _endpoint.address().to_string());
+			cout << format("[UDPServer] Client ({}) sent UDP packet with invalid signature!\n", _endpoint.address().to_string());
 			startReceive();
 			return;
 		}
@@ -98,13 +98,13 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 
 		User* user = userManager.GetUserByUserID(userID);
 		if (user == NULL) {
-			cout << format("[UDPServer] Client ({}) sent UDP packet, but it's not logged in\n", _endpoint.address().to_string());
+			cout << format("[UDPServer] Client ({}) sent UDP packet, but it's not logged in!\n", _endpoint.address().to_string());
 			startReceive();
 			return;
 		}
 
 		if (_endpoint.address().to_string() != user->GetUserIPAddress()) {
-			cout << format("[UDPServer] Client ({}) sent UDP packet, but its IP address doesn't match the user's IP address: {}\n", _endpoint.address().to_string(), user->GetUserIPAddress());
+			cout << format("[UDPServer] Client ({}) sent UDP packet, but its IP address doesn't match the user's IP address: {}!\n", _endpoint.address().to_string(), user->GetUserIPAddress());
 			startReceive();
 			return;
 		}
@@ -149,7 +149,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				break;
 			}
 			default: {
-				cout << format("[UDPServer] Client ({}) sent UDP packet with invalid signature\n", _endpoint.address().to_string());
+				cout << format("[UDPServer] Client ({}) sent unregistered UDP packet type {}!\n", _endpoint.address().to_string(), type);
 				startReceive();
 				break;
 			}

@@ -13,7 +13,7 @@ Packet_TransferManager packet_TransferManager;
 void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user != NULL) {
-		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_TransferLogin, but it's already logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_TransferLogin, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 
@@ -48,7 +48,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 	char userResult = userManager.AddUser(newUser);
 	if (!userResult) {
 		if (userResult < 0) {
-			packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
+			packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::SysError);
 			return;
 		}
 
@@ -82,7 +82,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_RequestTransfer, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_RequestTransfer, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

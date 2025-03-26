@@ -9,7 +9,7 @@ Packet_CharacterManager packet_CharacterManager;
 void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

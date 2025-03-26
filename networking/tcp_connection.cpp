@@ -116,13 +116,13 @@ void TCPConnection::DisconnectClient(boost::system::error_code ec) {
 bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	_decryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_decryptCipher.ctx == NULL) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup decrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed!\n", _ipAddress);
 		return false;
 	}
 
 	int rc = RAND_bytes(_decryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.key failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.key failed!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -130,7 +130,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 
 	rc = RAND_bytes(_decryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _decryptCipher.iv failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.iv failed!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -139,7 +139,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	_decryptCipher.method = method;
 
 	if (EVP_DecryptInit(_decryptCipher.ctx, _decryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_decryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _decryptCipher.key, _decryptCipher.iv) != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_DecryptInit() != 1\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup decrypt cipher for client ({}): EVP_DecryptInit() != 1!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -151,13 +151,13 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	_encryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_encryptCipher.ctx == NULL) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup encrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed!\n", _ipAddress);
 		return false;
 	}
 
 	int rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.key failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.key failed!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -165,7 +165,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 
 	rc = RAND_bytes(_encryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): RAND_bytes() for _encryptCipher.iv failed\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.iv failed!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -174,7 +174,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	_encryptCipher.method = method;
 
 	if (EVP_EncryptInit(_encryptCipher.ctx, _encryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_encryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _encryptCipher.key, _encryptCipher.iv) != 1) {
-		cout << format("[TCPConnection] Failed to setup crypt for client ({}): EVP_EncryptInit() != 1\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to setup encrypt cipher for client ({}): EVP_EncryptInit() != 1!\n", _ipAddress);
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -190,7 +190,7 @@ bool TCPConnection::decrypt(vector<unsigned char>& buffer) {
 
 	int outLen = 0;
 	if (EVP_DecryptUpdate(_decryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
-		cout << format("[TCPConnection] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1!\n", _ipAddress);
 		return false;
 	}
 
@@ -201,13 +201,13 @@ void TCPConnection::asyncRead() {
 #ifdef NO_SSL
 	boost::asio::async_read(_sslStream.next_layer(), _streamBuf, boost::asio::transfer_exactly(PACKET_HEADER_SIZE), [self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
-			self->onRead(ec, bytesTransferred);
-		});
+		self->onRead(ec, bytesTransferred);
+	});
 #else
 	boost::asio::async_read(_sslStream, _streamBuf, boost::asio::transfer_exactly(PACKET_HEADER_SIZE), [self = shared_from_this()]
 	(boost::system::error_code ec, size_t bytesTransferred) {
-			self->onRead(ec, bytesTransferred);
-		});
+		self->onRead(ec, bytesTransferred);
+	});
 #endif
 }
 
@@ -318,7 +318,7 @@ bool TCPConnection::encrypt(vector<unsigned char>& buffer) {
 
 	int outLen = 0;
 	if (EVP_EncryptUpdate(_encryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
-		cout << format("[TCPConnection] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1\n", _ipAddress);
+		cout << format("[TCPConnection] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1!\n", _ipAddress);
 		return false;
 	}
 
@@ -341,14 +341,14 @@ void TCPConnection::asyncWrite(bool noSSL) {
 	if (noSSL) {
 		boost::asio::async_write(_sslStream.next_layer(), boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this(), buffer]
 		(boost::system::error_code ec, size_t bytesTransferred) {
-				self->onWrite(ec, bytesTransferred, buffer);
-			});
+			self->onWrite(ec, bytesTransferred, buffer);
+		});
 	}
 	else {
 		boost::asio::async_write(_sslStream, boost::asio::buffer(_outgoingPackets.front()), [self = shared_from_this(), buffer]
 		(boost::system::error_code ec, size_t bytesTransferred) {
-				self->onWrite(ec, bytesTransferred, buffer);
-			});
+			self->onWrite(ec, bytesTransferred, buffer);
+		});
 	}
 }
 

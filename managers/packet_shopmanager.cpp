@@ -7,7 +7,7 @@ Packet_ShopManager packet_ShopManager;
 void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_ShopManager] Client ({}) has sent Packet_Shop, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_ShopManager] Client ({}) has sent Packet_Shop, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

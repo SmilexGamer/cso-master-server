@@ -8,7 +8,7 @@ Packet_VersionManager packet_VersionManager;
 void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user != NULL) {
-		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

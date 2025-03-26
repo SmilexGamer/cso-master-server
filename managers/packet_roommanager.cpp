@@ -8,7 +8,7 @@ Packet_RoomManager packet_RoomManager;
 void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

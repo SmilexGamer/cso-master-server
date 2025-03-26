@@ -8,7 +8,7 @@ Packet_UpdateInfoManager packet_UpdateInfoManager;
 void Packet_UpdateInfoManager::ParsePacket_UpdateInfo(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_UpdateInfoManager] Client ({}) has sent Packet_UpdateInfo, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

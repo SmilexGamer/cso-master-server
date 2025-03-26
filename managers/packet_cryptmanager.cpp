@@ -7,7 +7,7 @@ Packet_CryptManager packet_CryptManager;
 void Packet_CryptManager::ParsePacket_RecvCrypt(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_CryptManager] Client ({}) has sent Packet_RecvCrypt, but it's not logged in\n", packet->GetConnection()->GetIPAddress());
+		cout << format("[Packet_CryptManager] Client ({}) has sent Packet_RecvCrypt, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
 		return;
 	}
 

@@ -170,9 +170,9 @@ int PacketManager::shutdown() {
 }
 
 void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
-	unsigned char ID = packet->ReadUInt8();
+	unsigned char packetID = packet->ReadUInt8();
 
-	switch (ID) {
+	switch (packetID) {
 		case PacketID::Version: {
 			packet_VersionManager.ParsePacket_Version(packet);
 			break;
@@ -230,7 +230,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), ID);
+			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), packetID);
 			break;
 		}
 	}
