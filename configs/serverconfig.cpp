@@ -8,8 +8,7 @@ using json = nlohmann::json;
 ServerConfig serverConfig;
 
 ServerConfig::ServerConfig() {
-	tcpPort = 0;
-	udpPort = 0;
+	port = 0;
 	maxPlayers = 0;
 	serverID = 0;
 	channelID = 0;
@@ -22,8 +21,7 @@ ServerConfig::ServerConfig() {
 }
 
 string defaultServerConfig = R"({
-	"TCPPort": 30002,
-	"UDPPort": 30002,
+	"Port": 8001,
 	"MaxPlayers": 600,
 	"ServerID": 1,
 	"ChannelID": 1,
@@ -62,11 +60,8 @@ bool ServerConfig::Load() {
 			config = json::parse(f);
 		}
 
-		if (config.contains("TCPPort")) {
-			tcpPort = config.value("TCPPort", 30002);
-		}
-		if (config.contains("UDPPort")) {
-			udpPort = config.value("UDPPort", 30002);
+		if (config.contains("Port")) {
+			port = config.value("Port", 8001);
 		}
 		if (config.contains("MaxPlayers")) {
 			maxPlayers = config.value("MaxPlayers", 600);
@@ -103,7 +98,7 @@ bool ServerConfig::Load() {
 						if (s.id != this->serverID || s.id == this->serverID && ch.id != this->channelID) {
 							ch.maxPlayers = channel.value("MaxPlayers", 600);
 							ch.ip = channel.value("IP", "127.0.0.1");
-							ch.port = channel.value("Port", 30002);
+							ch.port = channel.value("Port", 8001);
 						}
 
 						s.channels.push_back(ch);

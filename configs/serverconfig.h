@@ -38,8 +38,7 @@ public:
 
 	bool Load();
 
-	unsigned short tcpPort;
-	unsigned short udpPort;
+	unsigned short port;
 	unsigned short maxPlayers;
 	unsigned char serverID;
 	unsigned char channelID;

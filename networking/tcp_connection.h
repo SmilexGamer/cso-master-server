@@ -511,7 +511,7 @@ private:
 	bool encrypt(vector<unsigned char>& buffer);
 
 	void asyncWrite(bool noSSL = false);
-	void onWrite(boost::system::error_code ec, size_t bytesTransferred, vector<unsigned char> rawBuffer);
+	void onWrite(boost::system::error_code ec, size_t bytesTransferred, vector<unsigned char> buffer);
 
 private:
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket> _sslStream;

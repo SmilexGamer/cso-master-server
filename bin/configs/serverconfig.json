@@ -1,6 +1,5 @@
 {
-	"TCPPort": 30002,
-	"UDPPort": 30002,
+	"Port": 8001,
 	"MaxPlayers": 600,
 	"ServerID": 1,
 	"ChannelID": 1,
