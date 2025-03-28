@@ -53,6 +53,7 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		return;
 	}
 
+#ifdef NO_SSL
 	if (newUser->GetConnection()->SetupEncryptCipher(serverConfig.encryptCipherMethod)) {
 		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Encrypt, newUser->GetConnection()->GetEncryptCipher());
 	}
@@ -60,6 +61,7 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	if (newUser->GetConnection()->SetupDecryptCipher(serverConfig.decryptCipherMethod)) {
 		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Decrypt, newUser->GetConnection()->GetDecryptCipher());
 	}
+#endif
 
 	char userCharacterExistsResult = newUser->IsUserCharacterExists();
 	if (!userCharacterExistsResult) {

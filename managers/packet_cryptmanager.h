@@ -9,7 +9,7 @@ enum CipherType {
 class Packet_CryptManager {
 public:
 	void ParsePacket_RecvCrypt(TCPConnection::Packet::pointer packet);
-	void SendPacket_Crypt(TCPConnection::pointer connection, CipherType type, Cipher cipher = {});
+	void SendPacket_Crypt(TCPConnection::pointer connection, CipherType type, const Cipher& cipher = {});
 };
 
 extern Packet_CryptManager packet_CryptManager;

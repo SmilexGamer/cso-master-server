@@ -5,22 +5,20 @@
 #undef GetUserName
 #endif
 
-enum UserCharacterFlag {
-	Unk1 = 0x1,
-	NickName = 0x2,
-	Unk4 = 0x4,
-	Level = 0x8,
-	Unk10 = 0x10,
-	Exp = 0x20,
-	Cash = 0x40,
-	Points = 0x80,
-	BattleStats = 0x100,
-	Location = 0x200,
-	Unk400 = 0x400,
-	Unk800 = 0x800,
-	Unk1000 = 0x1000,
-	All = 0xFFFF
-};
+#define USERCHARACTER_FLAG_UNK1			0x1
+#define USERCHARACTER_FLAG_NICKNAME		0x2
+#define USERCHARACTER_FLAG_UNK4			0x4
+#define USERCHARACTER_FLAG_LEVEL		0x8
+#define USERCHARACTER_FLAG_UNK10		0x10
+#define USERCHARACTER_FLAG_EXP			0x20
+#define USERCHARACTER_FLAG_CASH			0x40
+#define USERCHARACTER_FLAG_POINTS		0x80
+#define USERCHARACTER_FLAG_BATTLESTATS	0x100
+#define USERCHARACTER_FLAG_LOCATION		0x200
+#define USERCHARACTER_FLAG_UNK400		0x400
+#define USERCHARACTER_FLAG_UNK800		0x800
+#define USERCHARACTER_FLAG_UNK1000		0x1000
+#define USERCHARACTER_FLAG_ALL			0xFFFF
 
 struct UserCharacter {
 	unsigned short flag = 0;
@@ -67,6 +65,12 @@ struct UserNetwork {
 	unsigned short externalPortType1 = 0;
 };
 
+enum UserStatus {
+	InLobby = 0,
+	InRoom = 1,
+	InGame = 2
+};
+
 class User {
 public:
 	User(TCPConnection::pointer connection, unsigned long userID, const string& userName);
@@ -87,11 +91,19 @@ public:
 		return _userName;
 	}
 
-	UserNetwork GetUserNetwork() const noexcept {
+	const UserNetwork& GetUserNetwork() const noexcept {
 		return _userNetwork;
 	}
 
 	void SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
+
+	UserStatus GetUserStatus() const noexcept {
+		return _userStatus;
+	}
+
+	void SetUserStatus(UserStatus userStatus) noexcept {
+		_userStatus = userStatus;
+	}
 
 	char CreateCharacter(const string& nickName);
 	UserCharacterResult GetUserCharacter(unsigned short flag);
@@ -102,6 +114,7 @@ private:
 	unsigned long _userID;
 	string _userName;
 	UserNetwork _userNetwork;
+	UserStatus _userStatus;
 };
 
 struct UserFull {

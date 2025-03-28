@@ -32,6 +32,10 @@ char UserManager::AddUser(User* user) {
 }
 
 void UserManager::RemoveUser(User* user) {
+	if (user == NULL) {
+		return;
+	}
+
 	databaseManager.RemoveUserSession(user->GetUserID());
 	_users.erase(find(_users.begin(), _users.end(), user));
 	delete user;
@@ -84,7 +88,7 @@ void UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		return;
 	}
 
-	UserCharacterResult result = user->GetUserCharacter(UserCharacterFlag::All);
+	UserCharacterResult result = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
 	if (!result.result) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 		return;

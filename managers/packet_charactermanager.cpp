@@ -84,7 +84,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 }
 
 void Packet_CharacterManager::SendPacket_Character(TCPConnection::pointer connection) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Character });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Character });
 
 	packet->Send();
 }

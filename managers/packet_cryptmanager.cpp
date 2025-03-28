@@ -14,8 +14,8 @@ void Packet_CryptManager::ParsePacket_RecvCrypt(TCPConnection::Packet::pointer p
 	cout << format("[Packet_CryptManager] Client ({}) has sent Packet_RecvCrypt\n", user->GetUserIPAddress());
 }
 
-void Packet_CryptManager::SendPacket_Crypt(TCPConnection::pointer connection, CipherType type, Cipher cipher) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Crypt });
+void Packet_CryptManager::SendPacket_Crypt(TCPConnection::pointer connection, CipherType type, const Cipher& cipher) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Crypt });
 
 	packet->WriteUInt8(type);
 	packet->WriteUInt8(cipher.method);

@@ -24,7 +24,7 @@ void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet)
 }
 
 void Packet_HostManager::SendPacket_Host_StartGame(User* user) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { PacketID::Host });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { (unsigned char)PacketID::Host });
 
 	packet->WriteUInt8(Packet_HostType::StartGame);
 	packet->WriteUInt32_LE(user->GetUserID());
@@ -33,7 +33,7 @@ void Packet_HostManager::SendPacket_Host_StartGame(User* user) {
 }
 
 void Packet_HostManager::SendPacket_Host_JoinGame(TCPConnection::pointer connection, unsigned long userID) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Host });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Host });
 
 	packet->WriteUInt8(Packet_HostType::JoinGame);
 	packet->WriteUInt32_LE(userID);

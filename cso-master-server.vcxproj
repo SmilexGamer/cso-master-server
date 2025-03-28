@@ -176,10 +176,11 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="managers\packet_userstartmanager.cpp" />
     <ClCompile Include="managers\usermanager.cpp" />
     <ClCompile Include="managers\databasemanager.cpp" />
+    <ClCompile Include="managers\roommanager.cpp" />
     <ClCompile Include="networking\tcp_connection.cpp" />
     <ClCompile Include="networking\tcp_server.cpp" />
     <ClCompile Include="networking\udp_server.cpp" />
-    <ClCompile Include="room\roomsettings.cpp" />
+    <ClCompile Include="room\room.cpp" />
     <ClCompile Include="user\user.cpp" />
     <ClCompile Include="thirdparty\libbcrypt\bcrypt.c" />
     <ClCompile Include="thirdparty\libbcrypt\crypt_blowfish.c" />
@@ -205,10 +206,11 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="managers\packet_userstartmanager.h" />
     <ClInclude Include="managers\usermanager.h" />
     <ClInclude Include="managers\databasemanager.h" />
+    <ClInclude Include="managers\roommanager.h" />
     <ClInclude Include="networking\tcp_connection.h" />
     <ClInclude Include="networking\tcp_server.h" />
     <ClInclude Include="networking\udp_server.h" />
-    <ClInclude Include="room\roomsettings.h" />
+    <ClInclude Include="room\room.h" />
     <ClInclude Include="user\user.h" />
     <ClInclude Include="thirdparty\libbcrypt\bcrypt.h" />
     <ClInclude Include="thirdparty\libbcrypt\BCrypt.hpp" />

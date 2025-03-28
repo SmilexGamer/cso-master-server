@@ -24,7 +24,7 @@ enum class PacketSource {
 	Server
 };
 
-enum PacketID {
+enum class PacketID {
 	Version = 0,
 	Reply = 1,
 	Transfer = 2,
@@ -89,40 +89,6 @@ enum Packet_ReplyType {
 	EXCEED_MAX_CONNECTION = 27,
 	NEXONCOM_UNDER_AGE = 28,
 	INVALID_CLIENT_VERSION = 38
-};
-
-enum Packet_RoomType {
-	RequestCreate = 0,
-	ReplyCreateAndJoin = 0,
-	RequestJoin = 1,
-	RequestLeave = 2,
-	RequestStartGame = 4,
-	ReplyLeaveRoom = 4,
-	ReplyLeaveRoomInGame = 10
-};
-
-enum Packet_UMsgType {
-	WhisperChat = 0,
-	LobbyChat = 1,
-	RoomChat = 2,
-	FamilyChat = 3,
-	PartyChat = 5,
-	InfoMessage = 5,
-	WarningMessage = 6
-};
-
-enum Packet_HostType {
-	StartGame = 0,
-	JoinGame = 1,
-	HostRestart = 2
-};
-
-enum Packet_ShopType {
-	Unk0 = 0
-};
-
-enum Packet_LobbyType {
-	UserList = 0
 };
 
 enum CipherMethod {

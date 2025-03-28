@@ -36,7 +36,7 @@ void Packet_UpdateInfoManager::ParsePacket_UpdateInfo(TCPConnection::Packet::poi
 }
 
 void Packet_UpdateInfoManager::SendPacket_UpdateInfo(const UserFull& userFull) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, userFull.user->GetConnection(), { PacketID::UpdateInfo });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, userFull.user->GetConnection(), { (unsigned char)PacketID::UpdateInfo });
 
 	packet->WriteUInt32_LE(userFull.user->GetUserID());
 	packetManager.BuildUserCharacter(packet, userFull.userCharacter);

@@ -16,7 +16,7 @@ public:
 	bool AddServerChannel();
 	void RemoveServerChannel();
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
-	char GetChannelNumPlayers(unsigned char serverID, unsigned channelID);
+	char GetChannelNumPlayers(unsigned char serverID, unsigned char channelID);
 	void GetAllChannelsNumPlayers();
 	LoginResult Login(const string& userName, const string& password);
 	char CreateCharacter(unsigned long userID, const string& nickName);
@@ -25,7 +25,7 @@ public:
 	void RemoveUserSession(unsigned long userID);
 	void RemoveAllUserSessions();
 	LoginResult TransferLogin(const string& userName, const string& userIP);
-	char AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned channelID);
+	char AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned char channelID);
 	void RemoveUserTransfer(const string& userName);
 	void RemoveOldUserTransfers();
 	void RemoveAllUserTransfers();

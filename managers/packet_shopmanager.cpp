@@ -28,7 +28,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 }
 
 void Packet_ShopManager::sendPacket_Shop_Unk0(TCPConnection::pointer connection) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Shop });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Shop });
 
 	packet->WriteUInt8(Packet_ShopType::Unk0);
 	packet->WriteUInt8(0); // Num. of products

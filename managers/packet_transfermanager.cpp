@@ -1,11 +1,13 @@
 #include "packet_transfermanager.h"
 #include "packet_serverlistmanager.h"
 #include "packet_cryptmanager.h"
+#include "packet_roommanager.h"
 #include "packet_umsgmanager.h"
 #include "packetmanager.h"
 #include "usermanager.h"
 #include "serverconfig.h"
 #include "databasemanager.h"
+#include "roommanager.h"
 #include <iostream>
 
 Packet_TransferManager packet_TransferManager;
@@ -56,6 +58,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		return;
 	}
 
+#ifdef NO_SSL
 	if (newUser->GetConnection()->SetupEncryptCipher(serverConfig.encryptCipherMethod)) {
 		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Encrypt, newUser->GetConnection()->GetEncryptCipher());
 	}
@@ -63,20 +66,25 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 	if (newUser->GetConnection()->SetupDecryptCipher(serverConfig.decryptCipherMethod)) {
 		packet_CryptManager.SendPacket_Crypt(newUser->GetConnection(), CipherType::Decrypt, newUser->GetConnection()->GetDecryptCipher());
 	}
+#endif
 
 	vector<User*> users = userManager.GetUsers();
-	vector<UserFull> newUsers;
+	vector<UserFull> fullUsers;
 	UserCharacterResult userCharacterResult;
 	for (auto& user : users) {
-		userCharacterResult = user->GetUserCharacter(UserCharacterFlag::All);
+		if (user->GetUserStatus() != UserStatus::InLobby) {
+			continue;
+		}
+
+		userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
 		if (userCharacterResult.result) {
-			newUsers.push_back({ user, userCharacterResult.userCharacter });
+			fullUsers.push_back({ user, userCharacterResult.userCharacter });
 		}
 	}
 
 	userManager.SendLoginPackets(newUser);
-	packet_ServerListManager.SendPacket_Lobby_UserList(newUser->GetConnection(), newUsers);
-	packet_ServerListManager.SendPacket_RoomList(newUser->GetConnection());
+	packet_ServerListManager.SendPacket_Lobby_FullUserList(newUser->GetConnection(), fullUsers);
+	packet_RoomManager.SendPacket_RoomList_FullRoomList(newUser->GetConnection(), roomManager.GetRooms(), ROOMLIST_FLAG_ALL);
 }
 
 void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet) {
@@ -105,17 +113,21 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 
 	if (serverID == serverConfig.serverID && channelID == serverConfig.channelID) {
 		vector<User*> users = userManager.GetUsers();
-		vector<UserFull> newUsers;
+		vector<UserFull> fullUsers;
 		UserCharacterResult result;
 		for (auto& user : users) {
-			result = user->GetUserCharacter(UserCharacterFlag::All);
+			if (user->GetUserStatus() != UserStatus::InLobby) {
+				continue;
+			}
+
+			result = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
 			if (result.result) {
-				newUsers.push_back({ user, result.userCharacter });
+				fullUsers.push_back({ user, result.userCharacter });
 			}
 		}
 
-		packet_ServerListManager.SendPacket_Lobby_UserList(user->GetConnection(), newUsers);
-		packet_ServerListManager.SendPacket_RoomList(user->GetConnection());
+		packet_ServerListManager.SendPacket_Lobby_FullUserList(user->GetConnection(), fullUsers);
+		packet_RoomManager.SendPacket_RoomList_FullRoomList(user->GetConnection(), roomManager.GetRooms(), ROOMLIST_FLAG_ALL);
 	}
 	else {
 		char getChannelNumPlayersResult = databaseManager.GetChannelNumPlayers(serverID, channelID);
@@ -134,7 +146,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 			return;
 		}
 
-		UserCharacterResult userCharacterResult = user->GetUserCharacter(UserCharacterFlag::Level);
+		UserCharacterResult userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_LEVEL);
 		if (!userCharacterResult.result) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 			return;
@@ -165,7 +177,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 }
 
 void Packet_TransferManager::sendPacket_Transfer(User* user, unsigned long ip, unsigned short port) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { PacketID::Transfer });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { (unsigned char)PacketID::Transfer });
 
 	packet->WriteUInt32_LE(ip);
 	packet->WriteUInt16_LE(port);

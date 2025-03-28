@@ -54,6 +54,9 @@
     <ClCompile Include="managers\databasemanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\roommanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="networking\tcp_connection.cpp">
       <Filter>networking</Filter>
     </ClCompile>
@@ -63,7 +66,7 @@
     <ClCompile Include="networking\udp_server.cpp">
       <Filter>networking</Filter>
     </ClCompile>
-    <ClCompile Include="room\roomsettings.cpp">
+    <ClCompile Include="room\room.cpp">
       <Filter>room</Filter>
     </ClCompile>
     <ClCompile Include="user\user.cpp">
@@ -135,6 +138,9 @@
     <ClInclude Include="managers\databasemanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\roommanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="networking\tcp_connection.h">
       <Filter>networking</Filter>
     </ClInclude>
@@ -144,7 +150,7 @@
     <ClInclude Include="networking\udp_server.h">
       <Filter>networking</Filter>
     </ClInclude>
-    <ClInclude Include="room\roomsettings.h">
+    <ClInclude Include="room\room.h">
       <Filter>room</Filter>
     </ClInclude>
     <ClInclude Include="user\user.h">

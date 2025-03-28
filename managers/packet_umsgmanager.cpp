@@ -23,8 +23,8 @@ void Packet_UMsgManager::ParsePacket_UMsg(TCPConnection::Packet::pointer packet)
 	}
 }
 
-void Packet_UMsgManager::SendPacket_UMsg_ServerMessage(TCPConnection::pointer connection, Packet_UMsgType type, const string& text, vector<string> additionalText) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::UMsg });
+void Packet_UMsgManager::SendPacket_UMsg_ServerMessage(TCPConnection::pointer connection, Packet_UMsgType type, const string& text, const vector<string>& additionalText) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::UMsg });
 
 	packet->WriteUInt8(type);
 	packet->WriteString(text);

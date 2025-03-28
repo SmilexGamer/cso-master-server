@@ -14,7 +14,7 @@ void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::point
 }
 
 void Packet_UserStartManager::SendPacket_UserStart(const UserFull& userFull) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, userFull.user->GetConnection(), { PacketID::UserStart });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, userFull.user->GetConnection(), { (unsigned char)PacketID::UserStart });
 
 	packet->WriteUInt32_LE(userFull.user->GetUserID());
 	packet->WriteString(userFull.user->GetUserName());

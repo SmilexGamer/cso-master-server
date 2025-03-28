@@ -6,6 +6,8 @@ User::User(TCPConnection::pointer connection, unsigned long userID, const string
 	inet_pton(AF_INET, connection->GetIPAddress().c_str(), &(addr.sin_addr));
 
 	_userNetwork.externalIP = addr.sin_addr.S_un.S_addr;
+
+	_userStatus = UserStatus::InLobby;
 }
 
 void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort) {

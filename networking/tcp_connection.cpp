@@ -288,7 +288,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 					return;
 				}
 			}
-			else if (buffer[0] == PacketID::RecvCrypt) {
+			else if ((PacketID)buffer[0] == PacketID::RecvCrypt) {
 				self->_decrypt = true;
 			}
 		}
@@ -331,7 +331,7 @@ void TCPConnection::asyncWrite(bool noSSL) {
 				return;
 			}
 		}
-		else if (buffer[4] == PacketID::Crypt) {
+		else if ((PacketID)buffer[4] == PacketID::Crypt) {
 			_encrypt = true;
 		}
 	}

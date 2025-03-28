@@ -91,7 +91,7 @@ void DatabaseManager::UpdateChannelNumPlayers(unsigned short numPlayers) {
     }
 }
 
-char DatabaseManager::GetChannelNumPlayers(unsigned char serverID, unsigned channelID) {
+char DatabaseManager::GetChannelNumPlayers(unsigned char serverID, unsigned char channelID) {
     string query = format("SELECT numPlayers FROM server_channels WHERE serverID = {} AND channelID = {};", serverID, channelID);
 
     if (mysql_query(_connection, query.c_str())) {
@@ -264,43 +264,43 @@ UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID, unsi
         info += " 1 ";
     }
     else {
-        if (flag & UserCharacterFlag::Unk1) {
+        if (flag & USERCHARACTER_FLAG_UNK1) {
             info += " unk1,";
         }
-        if (flag & UserCharacterFlag::NickName) {
+        if (flag & USERCHARACTER_FLAG_NICKNAME) {
             info += " nickName,";
         }
-        if (flag & UserCharacterFlag::Unk4) {
+        if (flag & USERCHARACTER_FLAG_UNK4) {
             info += " unk4_1, unk4_2, unk4_3, unk4_4,";
         }
-        if (flag & UserCharacterFlag::Level) {
+        if (flag & USERCHARACTER_FLAG_LEVEL) {
             info += " level,";
         }
-        if (flag & UserCharacterFlag::Unk10) {
+        if (flag & USERCHARACTER_FLAG_UNK10) {
             info += " unk10,";
         }
-        if (flag & UserCharacterFlag::Exp) {
+        if (flag & USERCHARACTER_FLAG_EXP) {
             info += " exp,";
         }
-        if (flag & UserCharacterFlag::Cash) {
+        if (flag & USERCHARACTER_FLAG_CASH) {
             info += " cash,";
         }
-        if (flag & UserCharacterFlag::Points) {
+        if (flag & USERCHARACTER_FLAG_POINTS) {
             info += " points,";
         }
-        if (flag & UserCharacterFlag::BattleStats) {
+        if (flag & USERCHARACTER_FLAG_BATTLESTATS) {
             info += " battles, wins, frags, deaths,";
         }
-        if (flag & UserCharacterFlag::Location) {
+        if (flag & USERCHARACTER_FLAG_LOCATION) {
             info += " city, county, neighborhood, unk200_5,";
         }
-        if (flag & UserCharacterFlag::Unk400) {
+        if (flag & USERCHARACTER_FLAG_UNK400) {
             info += " unk400,";
         }
-        if (flag & UserCharacterFlag::Unk800) {
+        if (flag & USERCHARACTER_FLAG_UNK800) {
             info += " unk800,";
         }
-        if (flag & UserCharacterFlag::Unk1000) {
+        if (flag & USERCHARACTER_FLAG_UNK1000) {
             info += " unk1000_1, unk1000_2, unk1000_3, unk1000_4, unk1000_5, unk1000_6,";
         }
         info[info.size() - 1] = ' ';
@@ -323,52 +323,52 @@ UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID, unsi
 
     if (flag != NULL) {
         char index = 0;
-        if (flag & UserCharacterFlag::Unk1) {
+        if (flag & USERCHARACTER_FLAG_UNK1) {
             userCharacter.unk1 = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::NickName) {
+        if (flag & USERCHARACTER_FLAG_NICKNAME) {
             userCharacter.nickName = row[index++];
         }
-        if (flag & UserCharacterFlag::Unk4) {
+        if (flag & USERCHARACTER_FLAG_UNK4) {
             userCharacter.unk4_1 = row[index++];
             userCharacter.unk4_2 = atoi(row[index++]);
             userCharacter.unk4_3 = atoi(row[index++]);
             userCharacter.unk4_4 = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Level) {
+        if (flag & USERCHARACTER_FLAG_LEVEL) {
             userCharacter.level = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Unk10) {
+        if (flag & USERCHARACTER_FLAG_UNK10) {
             userCharacter.unk10 = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Exp) {
+        if (flag & USERCHARACTER_FLAG_EXP) {
             userCharacter.exp = atoll(row[index++]);
         }
-        if (flag & UserCharacterFlag::Cash) {
+        if (flag & USERCHARACTER_FLAG_CASH) {
             userCharacter.cash = atoll(row[index++]);
         }
-        if (flag & UserCharacterFlag::Points) {
+        if (flag & USERCHARACTER_FLAG_POINTS) {
             userCharacter.points = atoll(row[index++]);
         }
-        if (flag & UserCharacterFlag::BattleStats) {
+        if (flag & USERCHARACTER_FLAG_BATTLESTATS) {
             userCharacter.battles = atoi(row[index++]);
             userCharacter.wins = atoi(row[index++]);
             userCharacter.frags = atoi(row[index++]);
             userCharacter.deaths = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Location) {
+        if (flag & USERCHARACTER_FLAG_LOCATION) {
             userCharacter.city = atoi(row[index++]);
             userCharacter.county = atoi(row[index++]);
             userCharacter.neighborhood = atoi(row[index++]);
             userCharacter.unk200_5 = row[index++];
         }
-        if (flag & UserCharacterFlag::Unk400) {
+        if (flag & USERCHARACTER_FLAG_UNK400) {
             userCharacter.unk400 = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Unk800) {
+        if (flag & USERCHARACTER_FLAG_UNK800) {
             userCharacter.unk800 = atoi(row[index++]);
         }
-        if (flag & UserCharacterFlag::Unk1000) {
+        if (flag & USERCHARACTER_FLAG_UNK1000) {
             userCharacter.unk1000_1 = atoi(row[index++]);
             userCharacter.unk1000_2 = atoi(row[index++]);
             userCharacter.unk1000_3 = row[index++];
@@ -481,7 +481,7 @@ LoginResult DatabaseManager::TransferLogin(const string& userName, const string&
     return { userID, reply };
 }
 
-char DatabaseManager::AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned channelID) {
+char DatabaseManager::AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned char channelID) {
     string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}';", userName);
 
     if (mysql_query(_connection, query.c_str())) {

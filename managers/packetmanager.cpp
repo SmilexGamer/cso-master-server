@@ -55,8 +55,8 @@ void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 	_packetQueue.push_back(packet);
 }
 
-void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, vector<string> additionalText) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Reply });
+void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, const vector<string>& additionalText) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Reply });
 
 	packet->WriteUInt8(type);
 	packet->WriteString("");
@@ -71,53 +71,53 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_R
 void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, const UserCharacter& userCharacter) {
 	packet->WriteUInt16_LE(userCharacter.flag);
 
-	if (userCharacter.flag & UserCharacterFlag::Unk1) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK1) {
 		packet->WriteUInt8(userCharacter.unk1);
 	}
-	if (userCharacter.flag & UserCharacterFlag::NickName) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_NICKNAME) {
 		packet->WriteString(userCharacter.nickName);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Unk4) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK4) {
 		packet->WriteString(userCharacter.unk4_1);
 		packet->WriteUInt8(userCharacter.unk4_2);
 		packet->WriteUInt8(userCharacter.unk4_3);
 		packet->WriteUInt8(userCharacter.unk4_4);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Level) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_LEVEL) {
 		packet->WriteUInt8(userCharacter.level);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Unk10) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK10) {
 		packet->WriteUInt8(userCharacter.unk10);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Exp) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_EXP) {
 		packet->WriteUInt64_LE(userCharacter.exp);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Cash) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_CASH) {
 		packet->WriteUInt64_LE(userCharacter.cash);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Points) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_POINTS) {
 		packet->WriteUInt64_LE(userCharacter.points);
 	}
-	if (userCharacter.flag & UserCharacterFlag::BattleStats) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_BATTLESTATS) {
 		packet->WriteUInt32_LE(userCharacter.battles);
 		packet->WriteUInt32_LE(userCharacter.wins);
 		packet->WriteUInt32_LE(userCharacter.frags);
 		packet->WriteUInt32_LE(userCharacter.deaths);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Location) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_LOCATION) {
 		packet->WriteString(""); // pcBang
 		packet->WriteUInt16_LE(userCharacter.city); // province/city (도시) index
 		packet->WriteUInt16_LE(userCharacter.county); // district/county (구군) index
 		packet->WriteUInt16_LE(userCharacter.neighborhood); // neighborhood (동) index
 		packet->WriteString(userCharacter.unk200_5);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Unk400) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK400) {
 		packet->WriteUInt32_LE(userCharacter.unk400);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Unk800) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK800) {
 		packet->WriteUInt8(userCharacter.unk800);
 	}
-	if (userCharacter.flag & UserCharacterFlag::Unk1000) {
+	if (userCharacter.flag & USERCHARACTER_FLAG_UNK1000) {
 		packet->WriteUInt32_LE(userCharacter.unk1000_1);
 		packet->WriteUInt32_LE(userCharacter.unk1000_2);
 		packet->WriteString(userCharacter.unk1000_3);
@@ -172,7 +172,7 @@ int PacketManager::shutdown() {
 void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 	unsigned char packetID = packet->ReadUInt8();
 
-	switch (packetID) {
+	switch ((PacketID)packetID) {
 		case PacketID::Version: {
 			packet_VersionManager.ParsePacket_Version(packet);
 			break;

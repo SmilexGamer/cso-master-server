@@ -51,7 +51,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 }
 
 void Packet_VersionManager::sendPacket_Version(TCPConnection::pointer connection) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { PacketID::Version });
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Version });
 
 	packet->Send();
 }
