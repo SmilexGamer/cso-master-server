@@ -12,7 +12,7 @@
 #include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
-#include <iostream>
+#include "serverconsole.h"
 
 PacketManager packetManager;
 
@@ -26,18 +26,18 @@ PacketManager::~PacketManager() {
 
 void PacketManager::Start() {
 	if (_packetThread.joinable()) {
-		cout << "[PacketManager] Thread is already running!\n";
+		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is already running!\n");
 		return;
 	}
 
-	cout << "[PacketManager] Starting!\n";
+	serverConsole.Print(PrintType::Info, "[ PacketManager ] Starting!\n");
 
 	_packetThread = thread(&PacketManager::run, this);
 }
 
 void PacketManager::Stop() {
 	if (!_packetThread.joinable()) {
-		cout << "[PacketManager] Thread is already shut down!\n";
+		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -46,11 +46,11 @@ void PacketManager::Stop() {
 
 void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 	if (!_running) {
-		cout << "[PacketManager] Thread is shut down! Please call Start() again to begin queueing!\n";
+		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is shut down! Please call Start() again to begin queueing!\n");
 		return;
 	}
 
-	cout << format("[PacketManager] Queueing packet from client ({})\n", packet->GetConnection()->GetIPAddress());
+	serverConsole.Print(PrintType::Info, format("[ PacketManager ] Queueing packet from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	_packetQueue.push_back(packet);
 }
@@ -128,7 +128,7 @@ void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, co
 }
 
 int PacketManager::run() {
-	cout << "[PacketManager] Thread starting!\n";
+	serverConsole.Print(PrintType::Info, "[ PacketManager ] Thread starting!\n");
 
 	try {
 		_running = true;
@@ -143,18 +143,18 @@ int PacketManager::run() {
 		}
 	}
 	catch (exception& e) {
-		cerr << format("[PacketManager] Error on run: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ PacketManager ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	cout << "[PacketManager] Thread shutting down!\n";
+	serverConsole.Print(PrintType::Info, "[ PacketManager ] Thread shutting down!\n");
 	return 0;
 }
 
 int PacketManager::shutdown() {
 	try {
 		if (_packetThread.joinable()) {
-			cout << "[PacketManager] Shutting down!\n";
+			serverConsole.Print(PrintType::Info, "[ PacketManager ] Shutting down!\n");
 
 			_running = false;
 			_packetQueue.clear();
@@ -162,7 +162,7 @@ int PacketManager::shutdown() {
 		}
 	}
 	catch (exception& e) {
-		cerr << format("[PacketManager] Error on shutdown: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ PacketManager ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 
@@ -230,7 +230,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			cout << format("[PacketManager] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), packetID);
+			serverConsole.Print(PrintType::Warn, format("[ PacketManager ] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), packetID));
 			break;
 		}
 	}

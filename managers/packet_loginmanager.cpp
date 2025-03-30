@@ -4,19 +4,24 @@
 #include "packetmanager.h"
 #include "usermanager.h"
 #include "serverconfig.h"
+#include "serverconsole.h"
 #include "databasemanager.h"
-#include <iostream>
 
 Packet_LoginManager packet_LoginManager;
 
 void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packet) {
-	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user != NULL) {
-		cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
+	if (!packet->GetConnection()->IsVersionReceived()) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login, but it hasn't sent Packet_Version!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_LoginManager] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetIPAddress());
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login, but it's already logged in!\n", packet->GetConnection()->GetIPAddress()));
+		return;
+	}
+
+	serverConsole.Print(PrintType::Info, format("[ Packet_LoginManager ] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	string userName = packet->ReadString();
 	string password = packet->ReadString();
@@ -28,14 +33,14 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
-	cout << format("[Packet_LoginManager] Client ({}) has sent Packet_Login - userName: {}, password: {}, hardwareID:{}, pcBang: {}\n", packet->GetConnection()->GetIPAddress(), userName, password, hardwareIDStr, pcBang);
+	serverConsole.Print(PrintType::Info, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login - userName: {}, password: {}, hardwareID:{}, pcBang: {}\n", packet->GetConnection()->GetIPAddress(), userName, password, hardwareIDStr, pcBang));
 
 	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::EXCEED_MAX_CONNECTION);
 		return;
 	}
 
-	LoginResult loginResult = databaseManager.Login(userName, password);
+	const LoginResult& loginResult = databaseManager.Login(userName, password);
 	if (loginResult.reply > Packet_ReplyType::LoginSuccess) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), loginResult.reply);
 		return;
@@ -46,10 +51,16 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	if (!userResult) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::SysError);
+
+			delete newUser;
+			newUser = NULL;
 			return;
 		}
 
 		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::Playing);
+
+		delete newUser;
+		newUser = NULL;
 		return;
 	}
 
@@ -67,6 +78,8 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 	if (!userCharacterExistsResult) {
 		if (userCharacterExistsResult < 0) {
 			packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::SysError);
+
+			userManager.RemoveUser(newUser);
 			return;
 		}
 

@@ -66,9 +66,11 @@ struct UserNetwork {
 };
 
 enum UserStatus {
-	InLobby = 0,
-	InRoom = 1,
-	InGame = 2
+	InLogin = 0,
+	InServerList = 1,
+	InLobby = 2,
+	InRoom = 3,
+	InGame = 4
 };
 
 class User {
@@ -105,6 +107,14 @@ public:
 		_userStatus = userStatus;
 	}
 
+	unsigned short GetCurrentRoomID() const noexcept {
+		return _currentRoomID;
+	}
+
+	void SetCurrentRoomID(unsigned short roomID) noexcept {
+		_currentRoomID = roomID;
+	}
+
 	char CreateCharacter(const string& nickName);
 	UserCharacterResult GetUserCharacter(unsigned short flag);
 	char IsUserCharacterExists();
@@ -115,9 +125,10 @@ private:
 	string _userName;
 	UserNetwork _userNetwork;
 	UserStatus _userStatus;
+	unsigned short _currentRoomID;
 };
 
-struct UserFull {
+struct GameUser {
 	User* user;
 	UserCharacter userCharacter;
 };

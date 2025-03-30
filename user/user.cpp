@@ -7,7 +7,8 @@ User::User(TCPConnection::pointer connection, unsigned long userID, const string
 
 	_userNetwork.externalIP = addr.sin_addr.S_un.S_addr;
 
-	_userStatus = UserStatus::InLobby;
+	_userStatus = UserStatus::InLogin;
+	_currentRoomID = 0;
 }
 
 void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort) {
@@ -36,7 +37,7 @@ UserCharacterResult User::GetUserCharacter(unsigned short flag) {
 }
 
 char User::IsUserCharacterExists() {
-	UserCharacterResult result = GetUserCharacter(NULL);
+	const UserCharacterResult& userCharacterResult = GetUserCharacter(NULL);
 
-	return result.result;
+	return userCharacterResult.result;
 }

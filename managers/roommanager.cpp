@@ -1,14 +1,11 @@
 #include "roommanager.h"
+#include "usermanager.h"
+#include "packet_roommanager.h"
 
 RoomManager roomManager;
 
 RoomManager::~RoomManager() {
-	for (auto& room : _rooms) {
-		delete room;
-		room = NULL;
-	}
-
-	_rooms.clear();
+	RemoveAllRooms();
 }
 
 bool RoomManager::AddRoom(Room* room) {
@@ -26,9 +23,19 @@ void RoomManager::RemoveRoom(Room* room) {
 		return;
 	}
 
+	roomManager.SendRemoveRoomPacketToAll(room->GetRoomID());
 	_rooms.erase(find(_rooms.begin(), _rooms.end(), room));
 	delete room;
 	room = NULL;
+}
+
+void RoomManager::RemoveAllRooms() {
+	for (auto& room : _rooms) {
+		delete room;
+		room = NULL;
+	}
+
+	_rooms.clear();
 }
 
 Room* RoomManager::GetRoomByRoomID(unsigned short roomID) {
@@ -67,4 +74,44 @@ unsigned short RoomManager::GetFreeRoomID() {
 	}
 
 	return 0;
+}
+
+void RoomManager::SendFullRoomListPacket(TCPConnection::pointer connection) {
+	if (connection == NULL) {
+		return;
+	}
+
+	packet_RoomManager.SendPacket_RoomList_FullRoomList(connection, _rooms, ROOMLIST_FLAG_ALL);
+}
+
+void RoomManager::SendAddRoomPacketToAll(Room* room, unsigned short flag) {
+	const vector<User*>& users = userManager.GetUsers();
+
+	for (auto& user : users) {
+		if (user->GetUserStatus() != UserStatus::InLobby) {
+			continue;
+		}
+
+		packet_RoomManager.SendPacket_RoomList_AddRoom(user->GetConnection(), room, flag);
+	}
+}
+
+void RoomManager::SendRemoveRoomPacketToAll(unsigned short roomID) {
+	const vector<User*>& users = userManager.GetUsers();
+
+	for (auto& user : users) {
+		if (user->GetUserStatus() != UserStatus::InLobby) {
+			continue;
+		}
+
+		packet_RoomManager.SendPacket_RoomList_RemoveRoom(user->GetConnection(), roomID);
+	}
+}
+
+void RoomManager::SendRoomUserLeavePacket(TCPConnection::pointer connection, unsigned long userID) {
+	if (connection == NULL) {
+		return;
+	}
+
+	packet_RoomManager.SendPacket_Room_UserLeave(connection, userID);
 }

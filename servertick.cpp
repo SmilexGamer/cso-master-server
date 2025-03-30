@@ -1,12 +1,14 @@
 #include "servertick.h"
+#include "serverconsole.h"
 #include "usermanager.h"
-#include <iostream>
 
 ServerTick serverTick;
 
 ServerTick::ServerTick() {
 	_running = false;
-	_currentTime = 0;
+	time_t t;
+	time(&t);
+	_currentTime = t;
 	_secondCount = 0;
 }
 
@@ -16,16 +18,18 @@ ServerTick::~ServerTick() {
 
 void ServerTick::Start() {
 	if (_serverTickThread.joinable()) {
-		cout << "[ServerTick] Thread is already running!\n";
+		serverConsole.Print(PrintType::Warn, "[ ServerTick ] Thread is already running!\n");
 		return;
 	}
+
+	serverConsole.Print(PrintType::Info, "[ ServerTick ] Starting!\n");
 
 	_serverTickThread = thread(&ServerTick::run, this);
 }
 
 void ServerTick::Stop() {
 	if (!_serverTickThread.joinable()) {
-		cout << "[ServerTick] Thread is already shut down!\n";
+		serverConsole.Print(PrintType::Warn, "[ ServerTick ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -33,7 +37,7 @@ void ServerTick::Stop() {
 }
 
 int ServerTick::run() {
-	cout << "[ServerTick] Thread starting!\n";
+	serverConsole.Print(PrintType::Info, "[ ServerTick ] Thread starting!\n");
 
 	try {
 		_running = true;
@@ -44,25 +48,25 @@ int ServerTick::run() {
 		}
 	}
 	catch (exception& e) {
-		cerr << format("[ServerTick] Error on run: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ ServerTick ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	cout << "[ServerTick] Thread shutting down!\n";
+	serverConsole.Print(PrintType::Info, "[ ServerTick ] Thread shutting down!\n");
 	return 0;
 }
 
 int ServerTick::shutdown() {
 	try {
 		if (_serverTickThread.joinable()) {
-			cout << "[ServerTick] Shutting down!\n";
+			serverConsole.Print(PrintType::Info, "[ ServerTick ] Shutting down!\n");
 
 			_running = false;
 			_serverTickThread.detach();
 		}
 	}
 	catch (exception& e) {
-		cerr << format("[ServerTick] Error on shutdown: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ ServerTick ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 
@@ -70,7 +74,7 @@ int ServerTick::shutdown() {
 }
 
 void ServerTick::onSecondTick() {
-	time_t t;
+	static time_t t;
 	time(&t);
 	_currentTime = t;
 	_secondCount++;

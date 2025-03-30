@@ -8,15 +8,10 @@ using namespace std;
 //#define NO_SSL
 
 #define SERVERCONNECTED "~SERVERCONNECTED\n\0"
-
 #define TCP_PACKET_SIGNATURE 'U'
-
 #define PACKET_HEADER_SIZE 4
-
 #define TCP_PACKET_MAX_SIZE 0x10000
-
 #define KEY_SIZE 32
-
 #define BLOCK_SIZE 32
 
 enum class PacketSource {
@@ -427,7 +422,7 @@ public:
 		return pointer(new TCPConnection(move(socket), context));
 	}
 
-	const boost::asio::ip::tcp::socket& GetSocket() noexcept {
+	const boost::asio::ip::tcp::socket& GetSocket() const noexcept {
 		return _sslStream.next_layer();
 	}
 
@@ -451,11 +446,19 @@ public:
 		_incomingSequence = incomingSequence;
 	}
 
-	Cipher GetDecryptCipher() const noexcept {
+	bool IsVersionReceived() const noexcept {
+		return _versionReceived;
+	}
+
+	void SetVersionReceived(bool versionReceived) noexcept {
+		_versionReceived = versionReceived;
+	}
+
+	const Cipher& GetDecryptCipher() const noexcept {
 		return _decryptCipher;
 	}
 
-	Cipher GetEncryptCipher() const noexcept {
+	const Cipher& GetEncryptCipher() const noexcept {
 		return _encryptCipher;
 	}
 
@@ -487,6 +490,8 @@ private:
 	unsigned char _outgoingSequence = 0;
 	boost::asio::streambuf _streamBuf { PACKET_HEADER_SIZE + UINT16_MAX };
 	unsigned char _incomingSequence = 0;
+
+	bool _versionReceived = false;
 
 	bool _decrypt = false;
 	Cipher _decryptCipher;

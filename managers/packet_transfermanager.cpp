@@ -1,25 +1,23 @@
 #include "packet_transfermanager.h"
-#include "packet_serverlistmanager.h"
 #include "packet_cryptmanager.h"
-#include "packet_roommanager.h"
 #include "packet_umsgmanager.h"
 #include "packetmanager.h"
 #include "usermanager.h"
 #include "serverconfig.h"
+#include "serverconsole.h"
 #include "databasemanager.h"
 #include "roommanager.h"
-#include <iostream>
 
 Packet_TransferManager packet_TransferManager;
 
 void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user != NULL) {
-		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_TransferLogin, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
+	if (userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin, but it's already logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_TransferManager] Parsing Packet_TransferLogin from client ({})\n", packet->GetConnection()->GetIPAddress());
+	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Parsing Packet_TransferLogin from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	string userName = packet->ReadString();
 	vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
@@ -31,14 +29,14 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
 	}
 
-	cout << format("[Packet_TransferManager] Client ({}) has sent Packet_TransferLogin - userName: {}, hardwareID:{}, pcBang: {}, unk: {}\n", packet->GetConnection()->GetIPAddress(), userName, hardwareIDStr, pcBang, unk);
+	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin - userName: {}, hardwareID:{}, pcBang: {}, unk: {}\n", packet->GetConnection()->GetIPAddress(), userName, hardwareIDStr, pcBang, unk));
 
 	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::EXCEED_MAX_CONNECTION);
 		return;
 	}
 
-	LoginResult transferLoginResult = databaseManager.TransferLogin(userName, packet->GetConnection()->GetIPAddress());
+	const LoginResult& transferLoginResult = databaseManager.TransferLogin(userName, packet->GetConnection()->GetIPAddress());
 	if (transferLoginResult.reply > Packet_ReplyType::LoginSuccess) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), transferLoginResult.reply);
 		return;
@@ -51,10 +49,16 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 	if (!userResult) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::SysError);
+
+			delete newUser;
+			newUser = NULL;
 			return;
 		}
 
 		packetManager.SendPacket_Reply(newUser->GetConnection(), Packet_ReplyType::Playing);
+
+		delete newUser;
+		newUser = NULL;
 		return;
 	}
 
@@ -68,38 +72,25 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 	}
 #endif
 
-	vector<User*> users = userManager.GetUsers();
-	vector<UserFull> fullUsers;
-	UserCharacterResult userCharacterResult;
-	for (auto& user : users) {
-		if (user->GetUserStatus() != UserStatus::InLobby) {
-			continue;
-		}
-
-		userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-		if (userCharacterResult.result) {
-			fullUsers.push_back({ user, userCharacterResult.userCharacter });
-		}
+	if (!userManager.SendLoginPackets(newUser)) {
+		packet->GetConnection()->DisconnectClient();
+		return;
 	}
-
-	userManager.SendLoginPackets(newUser);
-	packet_ServerListManager.SendPacket_Lobby_FullUserList(newUser->GetConnection(), fullUsers);
-	packet_RoomManager.SendPacket_RoomList_FullRoomList(newUser->GetConnection(), roomManager.GetRooms(), ROOMLIST_FLAG_ALL);
 }
 
 void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user == NULL) {
-		cout << format("[Packet_TransferManager] Client ({}) has sent Packet_RequestTransfer, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
+	if (!userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_TransferManager ] Client ({}) has sent Packet_RequestTransfer, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_TransferManager] Parsing Packet_RequestTransfer from client ({})\n", user->GetUserIPAddress());
+	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Parsing Packet_RequestTransfer from client ({})\n", user->GetUserIPAddress()));
 
 	unsigned char serverID = packet->ReadUInt8();
 	unsigned char channelID = packet->ReadUInt8();
 
-	cout << format("[Packet_TransferManager] Client ({}) has sent Packet_RequestTransfer - serverID: {}, channelID: {}\n", user->GetUserIPAddress(), serverID, channelID);
+	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_RequestTransfer - serverID: {}, channelID: {}\n", user->GetUserIPAddress(), serverID, channelID));
 
 	if (!serverID || serverID > serverConfig.serverList.size()) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::InvalidServer);
@@ -112,22 +103,13 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 	}
 
 	if (serverID == serverConfig.serverID && channelID == serverConfig.channelID) {
-		vector<User*> users = userManager.GetUsers();
-		vector<UserFull> fullUsers;
-		UserCharacterResult result;
-		for (auto& user : users) {
-			if (user->GetUserStatus() != UserStatus::InLobby) {
-				continue;
-			}
+		if (user->GetUserStatus() == UserStatus::InServerList) {
+			user->SetUserStatus(UserStatus::InLobby);
 
-			result = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-			if (result.result) {
-				fullUsers.push_back({ user, result.userCharacter });
-			}
+			userManager.SendAddUserPacketToAll(user);
+			userManager.SendFullUserListPacket(user->GetConnection());
+			roomManager.SendFullRoomListPacket(user->GetConnection());
 		}
-
-		packet_ServerListManager.SendPacket_Lobby_FullUserList(user->GetConnection(), fullUsers);
-		packet_RoomManager.SendPacket_RoomList_FullRoomList(user->GetConnection(), roomManager.GetRooms(), ROOMLIST_FLAG_ALL);
 	}
 	else {
 		char getChannelNumPlayersResult = databaseManager.GetChannelNumPlayers(serverID, channelID);
@@ -146,7 +128,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 			return;
 		}
 
-		UserCharacterResult userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_LEVEL);
+		const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_LEVEL);
 		if (!userCharacterResult.result) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
 			return;

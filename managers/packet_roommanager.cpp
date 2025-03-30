@@ -1,40 +1,35 @@
 ﻿#include "packet_roommanager.h"
+#include "packet_umsgmanager.h"
 #include "packet_hostmanager.h"
 #include "packetmanager.h"
 #include "usermanager.h"
 #include "roommanager.h"
-#include <iostream>
+#include "serverconsole.h"
 
 Packet_RoomManager packet_RoomManager;
 
 void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user == NULL) {
-		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
+	if (!userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_RoomManager] Parsing Packet_Room from client ({})\n", user->GetUserIPAddress());
+	serverConsole.Print(PrintType::Info, format("[ Packet_RoomManager ] Parsing Packet_Room from client ({})\n", user->GetUserIPAddress()));
 
 	unsigned char type = packet->ReadUInt8();
-
-	if (user->GetUserStatus() == UserStatus::InLobby && type != Packet_RoomType::RequestCreate && type != Packet_RoomType::RequestJoin) {
-		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room type {}, but it's not in a room!\n", packet->GetConnection()->GetIPAddress(), type);
-		return;
-	}
-
-	if (user->GetUserStatus() != UserStatus::InLobby && (type == Packet_RoomType::RequestCreate || type == Packet_RoomType::RequestJoin)) {
-		cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room type {}, but it's already in a room!\n", packet->GetConnection()->GetIPAddress(), type);
-		return;
-	}
 
 	switch (type) {
 		case Packet_RoomType::RequestCreate: {
 			parsePacket_Room_RequestCreate(user, packet);
 			break;
 		}
+		case Packet_RoomType::RequestJoin: {
+			parsePacket_Room_RequestJoin(user, packet);
+			break;
+		}
 		case Packet_RoomType::RequestLeave: {
-			parsePacket_Room_RequestLeave(user);
+			parsePacket_Room_RequestLeave(user, packet);
 			break;
 		}
 		case Packet_RoomType::RequestStartGame: {
@@ -42,7 +37,7 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			cout << format("[Packet_RoomManager] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetUserIPAddress(), type);
+			serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetUserIPAddress(), type));
 			break;
 		}
 	}
@@ -54,70 +49,46 @@ void Packet_RoomManager::SendPacket_RoomList_FullRoomList(TCPConnection::pointer
 	packet->WriteUInt8(Packet_RoomListType::FullRoomList);
 	packet->WriteUInt16_LE((unsigned short)rooms.size());
 
-	RoomSettings roomSettings;
-
 	for (auto& room : rooms) {
-		packet->WriteUInt16_LE(room->GetRoomID());
-		packet->WriteUInt16_LE(flag);
-
-		roomSettings = room->GetRoomSettings();
-
-		if (flag & ROOMLIST_FLAG_ROOMNAME) {
-			packet->WriteString(roomSettings.roomName);
-		}
-		if (flag & ROOMLIST_FLAG_UNK2) {
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_ISPASSWORDED) {
-			packet->WriteBool(!roomSettings.password.empty());
-		}
-		if (flag & ROOMLIST_FLAG_LEVELLIMIT) {
-			packet->WriteUInt8(0); // levelLimit
-		}
-		if (flag & ROOMLIST_FLAG_GAMEMODEID) {
-			packet->WriteUInt8(0); // gamemodeID
-		}
-		if (flag & ROOMLIST_FLAG_MAPID) {
-			packet->WriteUInt8(roomSettings.mapID); // mapID
-		}
-		if (flag & ROOMLIST_FLAG_CURRENTPLAYERS) {
-			packet->WriteUInt8((unsigned char)room->GetRoomUsers().size());
-		}
-		if (flag & ROOMLIST_FLAG_MAXPLAYERS) {
-			packet->WriteUInt8(roomSettings.maxPlayers);
-		}
-		if (flag & ROOMLIST_FLAG_WEAPONLIMIT) {
-			packet->WriteUInt8(0); // weaponLimit
-		}
-		if (flag & ROOMLIST_FLAG_UNK200) {
-			packet->WriteUInt32_LE(0); // unk
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_UNK400) {
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_UNK800) {
-			packet->WriteUInt32_LE(0); // unk
-			packet->WriteUInt16_LE(0); // unk
-			packet->WriteUInt32_LE(0); // unk
-			packet->WriteUInt16_LE(0); // unk
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_UNK1000) {
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_UNK2000) {
-			packet->WriteUInt8(0); // unk
-		}
-		if (flag & ROOMLIST_FLAG_UNK4000) {
-			packet->WriteUInt8(0); // unk
-		}
+		buildRoomInfo(packet, room, flag);
 	}
 
 	packet->Send();
 }
 
+void Packet_RoomManager::SendPacket_RoomList_AddRoom(TCPConnection::pointer connection, Room* room, unsigned short flag) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::RoomList });
+
+	packet->WriteUInt8(Packet_RoomListType::AddRoom);
+	buildRoomInfo(packet, room, flag);
+
+	packet->Send();
+}
+
+void Packet_RoomManager::SendPacket_RoomList_RemoveRoom(TCPConnection::pointer connection, unsigned short roomID) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::RoomList });
+
+	packet->WriteUInt8(Packet_RoomListType::RemoveRoom);
+	packet->WriteUInt16_LE(roomID);
+
+	packet->Send();
+}
+
+void Packet_RoomManager::SendPacket_Room_UserLeave(TCPConnection::pointer connection, unsigned long userID) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
+
+	packet->WriteUInt8(Packet_RoomType::UserLeave);
+	packet->WriteUInt32_LE(userID);
+
+	packet->Send();
+}
+
 void Packet_RoomManager::parsePacket_Room_RequestCreate(User* user, TCPConnection::Packet::pointer packet) {
+	if (user->GetUserStatus() == UserStatus::InRoom) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestCreate, but it's already in a room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
 	unsigned short roomID = roomManager.GetFreeRoomID();
 
 	if (roomID != 0) {
@@ -127,28 +98,172 @@ void Packet_RoomManager::parsePacket_Room_RequestCreate(User* user, TCPConnectio
 			return;
 		}
 
-		//cout << format("[Packet_RoomManager] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", user->GetUserIPAddress(), roomSettings.roomName, roomSettings.unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password, roomSettings.unk11, roomSettings.unk12, roomSettings.quickStart, roomSettings.unk14, roomSettings.unk15, roomSettings.unk16);
-
-		UserCharacterResult result = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-		if (!result.result) {
+		const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
+		if (!userCharacterResult.result) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+
+			delete room;
+			room = NULL;
 			return;
 		}
 
-		roomManager.AddRoom(room);
-		user->SetUserStatus(UserStatus::InRoom);
+		room->AddRoomUser(user);
+		userManager.SendRemoveUserPacketToAll(user);
 
-		sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), room, { { user, result.userCharacter } });
+		roomManager.AddRoom(room);
+		roomManager.SendAddRoomPacketToAll(room, ROOMLIST_FLAG_ALL);
+
+		sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), room, { { user, userCharacterResult.userCharacter } });
 	}
 }
 
+void Packet_RoomManager::parsePacket_Room_RequestJoin(User* user, TCPConnection::Packet::pointer packet) {
+	if (user->GetUserStatus() == UserStatus::InRoom) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestJoin, but it's already in a room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	unsigned short roomID = packet->ReadUInt16_LE();
+	string password = packet->ReadString();
+
+	serverConsole.Print(PrintType::Info, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestJoin - roomID: {}, password: {}\n", user->GetUserIPAddress(), roomID, password));
+
+	Room* room = roomManager.GetRoomByRoomID(roomID);
+	if (room == NULL) {
+		packet_UMsgManager.SendPacket_UMsg_ServerMessage(user->GetConnection(), Packet_UMsgType::WarningMessage, "ROOM_JOIN_FAILED_CLOSED");
+		return;
+	}
+
+	const RoomSettings& roomSettings = room->GetRoomSettings();
+	if (!roomSettings.password.empty() && password != roomSettings.password) {
+		packet_UMsgManager.SendPacket_UMsg_ServerMessage(user->GetConnection(), Packet_UMsgType::WarningMessage, "ROOM_JOIN_FAILED_INVALID_PASSWD");
+		return;
+	}
+
+	if (room->GetRoomUsers().size() >= roomSettings.maxPlayers) {
+		packet_UMsgManager.SendPacket_UMsg_ServerMessage(user->GetConnection(), Packet_UMsgType::WarningMessage, "ROOM_JOIN_FAILED_FULL");
+		return;
+	}
+
+	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
+	if (!userCharacterResult.result) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
+
+	if (!room->AddRoomUser(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestJoin, but it's already in the room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	userManager.SendRemoveUserPacketToAll(user);
+
+	const vector<User*>& users = room->GetRoomUsers();
+	vector<GameUser> gameUsers;
+	for (auto& u : users) {
+		const UserCharacterResult& uCharacterResult = u->GetUserCharacter(USERCHARACTER_FLAG_ALL);
+		if (uCharacterResult.result) {
+			gameUsers.push_back({ u, uCharacterResult.userCharacter });
+		}
+
+		if (u != user) {
+			sendPacket_Room_UserJoin(u->GetConnection(), { user, userCharacterResult.userCharacter });
+		}
+	}
+
+	sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), room, gameUsers);
+}
+
+void Packet_RoomManager::parsePacket_Room_RequestLeave(User* user, TCPConnection::Packet::pointer packet) {
+	if (user->GetUserStatus() != UserStatus::InRoom) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestLeave, but it's not in a room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	unsigned char unk = packet->ReadUInt8();
+
+	serverConsole.Print(PrintType::Info, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestLeave - unk: {}\n", user->GetUserIPAddress(), unk));
+
+	Room* room = roomManager.GetRoomByRoomID(user->GetCurrentRoomID());
+	if (room == NULL) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestLeave, but its room is NULL!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	room->RemoveRoomUser(user);
+	userManager.SendAddUserPacketToAll(user);
+
+	sendPacket_Room_ReplyLeaveRoomInGame(user->GetConnection());
+
+	userManager.SendFullUserListPacket(user->GetConnection());
+	roomManager.SendFullRoomListPacket(user->GetConnection());
+}
+
 void Packet_RoomManager::parsePacket_Room_RequestStartGame(User* user) {
+	if (user->GetUserStatus() != UserStatus::InRoom) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestStartGame, but it's not in a room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
 	packet_HostManager.SendPacket_Host_StartGame(user);
 }
 
-void Packet_RoomManager::parsePacket_Room_RequestLeave(User* user) {
-	sendPacket_Room_ReplyLeaveRoomInGame(user->GetConnection());
-	sendPacket_Room_ReplyLeaveRoom(user);
+void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Room* room, unsigned short flag) {
+	packet->WriteUInt16_LE(room->GetRoomID());
+	packet->WriteUInt16_LE(flag);
+
+	const RoomSettings& roomSettings = room->GetRoomSettings();
+
+	if (flag & ROOMLIST_FLAG_ROOMNAME) {
+		packet->WriteString(roomSettings.roomName);
+	}
+	if (flag & ROOMLIST_FLAG_UNK2) {
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_ISPASSWORDED) {
+		packet->WriteBool(!roomSettings.password.empty());
+	}
+	if (flag & ROOMLIST_FLAG_LEVELLIMIT) {
+		packet->WriteUInt8(0); // levelLimit
+	}
+	if (flag & ROOMLIST_FLAG_GAMEMODEID) {
+		packet->WriteUInt8(0); // gamemodeID
+	}
+	if (flag & ROOMLIST_FLAG_MAPID) {
+		packet->WriteUInt8(roomSettings.mapID); // mapID
+	}
+	if (flag & ROOMLIST_FLAG_CURRENTPLAYERS) {
+		packet->WriteUInt8((unsigned char)room->GetRoomUsers().size());
+	}
+	if (flag & ROOMLIST_FLAG_MAXPLAYERS) {
+		packet->WriteUInt8(roomSettings.maxPlayers);
+	}
+	if (flag & ROOMLIST_FLAG_WEAPONLIMIT) {
+		packet->WriteUInt8(0); // weaponLimit
+	}
+	if (flag & ROOMLIST_FLAG_UNK200) {
+		packet->WriteUInt32_LE(0); // unk
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_UNK400) {
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_UNK800) {
+		packet->WriteUInt32_LE(0); // unk
+		packet->WriteUInt16_LE(0); // unk
+		packet->WriteUInt32_LE(0); // unk
+		packet->WriteUInt16_LE(0); // unk
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_UNK1000) {
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_UNK2000) {
+		packet->WriteUInt8(0); // unk
+	}
+	if (flag & ROOMLIST_FLAG_UNK4000) {
+		packet->WriteUInt8(0); // unk
+	}
 }
 
 void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet, const RoomSettings& roomSettings) {
@@ -277,7 +392,24 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	}
 }
 
-void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<UserFull>& roomUsers) {
+void Packet_RoomManager::buildRoomUserInfo(TCPConnection::Packet::pointer packet, const GameUser& gameUser) {
+	packet->WriteUInt32_LE(gameUser.user->GetUserID());
+	packet->WriteUInt8(0); // unk
+	packet->WriteUInt8(0); // unk
+
+	const UserNetwork& userNetwork = gameUser.user->GetUserNetwork();
+
+	packet->WriteUInt32_LE(userNetwork.externalIP);
+	packet->WriteUInt16_LE(userNetwork.externalPortType0);
+	packet->WriteUInt16_LE(userNetwork.externalPortType1);
+	packet->WriteUInt32_LE(userNetwork.localIP);
+	packet->WriteUInt16_LE(userNetwork.localPortType0);
+	packet->WriteUInt16_LE(userNetwork.localPortType1);
+
+	packetManager.BuildUserCharacter(packet, gameUser.userCharacter);
+}
+
+void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<GameUser>& gameUsers) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
 
 	packet->WriteUInt8(Packet_RoomType::ReplyCreateAndJoin);
@@ -287,35 +419,21 @@ void Packet_RoomManager::sendPacket_Room_ReplyCreateAndJoin(TCPConnection::point
 
 	buildRoomSettings(packet, room->GetRoomSettings());
 
-	packet->WriteUInt8((unsigned char)roomUsers.size());
+	packet->WriteUInt8((unsigned char)gameUsers.size());
 
-	UserNetwork userNetwork;
-
-	for (auto& roomUser : roomUsers) {
-		packet->WriteUInt32_LE(roomUser.user->GetUserID());
-		packet->WriteUInt8(0); // unk
-		packet->WriteUInt8(0); // unk
-
-		userNetwork = roomUser.user->GetUserNetwork();
-
-		packet->WriteUInt32_LE(userNetwork.externalIP);
-		packet->WriteUInt16_LE(userNetwork.externalPortType0);
-		packet->WriteUInt16_LE(userNetwork.externalPortType1);
-		packet->WriteUInt32_LE(userNetwork.localIP);
-		packet->WriteUInt16_LE(userNetwork.localPortType0);
-		packet->WriteUInt16_LE(userNetwork.localPortType1);
-
-		packetManager.BuildUserCharacter(packet, roomUser.userCharacter);
+	for (auto& gameUser : gameUsers) {
+		buildRoomUserInfo(packet, gameUser);
 	}
 
 	packet->Send();
 }
 
-void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoom(User* user) {
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, user->GetConnection(), { (unsigned char)PacketID::Room });
+void Packet_RoomManager::sendPacket_Room_UserJoin(TCPConnection::pointer connection, const GameUser& gameUser) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
 
-	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoom);
-	packet->WriteUInt32_LE(user->GetUserID());
+	packet->WriteUInt8(Packet_RoomType::UserJoin);
+	buildRoomUserInfo(packet, gameUser);
+
 	packet->Send();
 }
 
@@ -323,5 +441,6 @@ void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::poi
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
 
 	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoomInGame);
+
 	packet->Send();
 }

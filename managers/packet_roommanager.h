@@ -22,28 +22,37 @@ enum Packet_RoomType {
 	RequestCreate = 0,
 	ReplyCreateAndJoin = 0,
 	RequestJoin = 1,
+	UserJoin = 1,
 	RequestLeave = 2,
+	UserLeave = 2,
 	RequestStartGame = 4,
-	ReplyLeaveRoom = 4,
 	ReplyLeaveRoomInGame = 10
 };
 
 enum Packet_RoomListType {
-	FullRoomList = 0
+	FullRoomList = 0,
+	AddRoom = 1,
+	RemoveRoom = 2
 };
 
 class Packet_RoomManager {
 public:
 	void ParsePacket_Room(TCPConnection::Packet::pointer packet);
 	void SendPacket_RoomList_FullRoomList(TCPConnection::pointer connection, const vector<Room*>& rooms, unsigned short flag);
+	void SendPacket_RoomList_AddRoom(TCPConnection::pointer connection, Room* room, unsigned short flag);
+	void SendPacket_RoomList_RemoveRoom(TCPConnection::pointer connection, unsigned short roomID);
+	void SendPacket_Room_UserLeave(TCPConnection::pointer connection, unsigned long userID);
 
 private:
 	void parsePacket_Room_RequestCreate(User* user, TCPConnection::Packet::pointer packet);
+	void parsePacket_Room_RequestJoin(User* user, TCPConnection::Packet::pointer packet);
+	void parsePacket_Room_RequestLeave(User* user, TCPConnection::Packet::pointer packet);
 	void parsePacket_Room_RequestStartGame(User* user);
-	void parsePacket_Room_RequestLeave(User* user);
+	void buildRoomInfo(TCPConnection::Packet::pointer packet, Room* room, unsigned short flag);
 	void buildRoomSettings(TCPConnection::Packet::pointer packet, const RoomSettings& roomSettings);
-	void sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<UserFull>& roomUsers);
-	void sendPacket_Room_ReplyLeaveRoom(User* user);
+	void buildRoomUserInfo(TCPConnection::Packet::pointer packet, const GameUser& gameUser);
+	void sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<GameUser>& gameUsers);
+	void sendPacket_Room_UserJoin(TCPConnection::pointer connection, const GameUser& gameUser);
 	void sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::pointer connection);
 };
 

@@ -2,22 +2,27 @@
 #include "usermanager.h"
 #include "packetmanager.h"
 #include "serverconfig.h"
-#include <iostream>
+#include "serverconsole.h"
 
 Packet_CharacterManager packet_CharacterManager;
 
 void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
+		serverConsole.Print(PrintType::Warn, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_CharacterManager] Parsing Packet_RecvCharacter from client ({})\n", user->GetUserIPAddress());
+	if (user->GetUserStatus() != UserStatus::InLogin) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter, but it's not in character creation!\n", packet->GetConnection()->GetIPAddress()));
+		return;
+	}
+
+	serverConsole.Print(PrintType::Info, format("[ Packet_CharacterManager ] Parsing Packet_RecvCharacter from client ({})\n", user->GetUserIPAddress()));
 
 	string nickName = packet->ReadString();
 
-	cout << format("[Packet_CharacterManager] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", user->GetUserIPAddress(), nickName);
+	serverConsole.Print(PrintType::Info, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", user->GetUserIPAddress(), nickName));
 
 	char userCharacterExistsResult = user->IsUserCharacterExists();
 	if (userCharacterExistsResult < 0) {

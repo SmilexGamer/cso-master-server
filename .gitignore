@@ -4,3 +4,5 @@ thirdparty/boost
 [Dd]ebug/
 [Rr]elease/
 *.vcxproj.user
+bin/certs
+bin/logs

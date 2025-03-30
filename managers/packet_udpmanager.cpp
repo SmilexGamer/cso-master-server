@@ -1,30 +1,30 @@
 #include "packet_udpmanager.h"
 #include "usermanager.h"
-#include <iostream>
+#include "serverconsole.h"
 
 Packet_UdpManager packet_UdpManager;
 
 void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp, but it's not logged in!\n", packet->GetConnection()->GetIPAddress());
+		serverConsole.Print(PrintType::Warn, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_UdpManager] Parsing Packet_Udp from client ({})\n", user->GetUserIPAddress());
+	serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Parsing Packet_Udp from client ({})\n", user->GetUserIPAddress()));
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		case 0: {
 			// nothing to read
-			cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}\n", user->GetUserIPAddress(), type);
+			serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}\n", user->GetUserIPAddress(), type));
 			break;
 		}
 		case 1: {
 			unsigned long unk1 = packet->ReadUInt32_LE();
 
-			cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, unk1: {}\n", user->GetUserIPAddress(), type, unk1);
+			serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, unk1: {}\n", user->GetUserIPAddress(), type, unk1));
 			break;
 		}
 		case 2: {
@@ -36,7 +36,7 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 					unsigned short retryNumPortType0 = packet->ReadUInt16_LE();
 					unsigned short retryNumPortType1 = packet->ReadUInt16_LE();
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, localIP: {}.{}.{}.{}, retryNumPortType0: {}, retryNumPortType1: {}\n", user->GetUserIPAddress(), type, subType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), retryNumPortType0, retryNumPortType1);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, localIP: {}.{}.{}.{}, retryNumPortType0: {}, retryNumPortType1: {}\n", user->GetUserIPAddress(), type, subType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), retryNumPortType0, retryNumPortType1));
 					break;
 				}
 				case 1: {
@@ -44,27 +44,27 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 					unsigned short unk2 = packet->ReadUInt16_LE();
 					unsigned short unk3 = packet->ReadUInt16_LE();
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}, unk3: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2, unk3);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}, unk3: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2, unk3));
 					break;
 				}
 				case 2: {
 					unsigned long unk1 = packet->ReadUInt32_LE();
 					unsigned short unk2 = packet->ReadUInt16_LE();
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2));
 					break;
 				}
 				case 3: {
 					unsigned long unk1 = packet->ReadUInt32_LE();
 					unsigned short unk2 = packet->ReadUInt16_LE();
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}\n", user->GetUserIPAddress(), type, subType, unk1, unk2));
 					break;
 				}
 				case 4: {
 					unsigned long unk1 = packet->ReadUInt32_LE();
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}\n", user->GetUserIPAddress(), type, subType, unk1);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}\n", user->GetUserIPAddress(), type, subType, unk1));
 					break;
 				}
 				case 5: {
@@ -78,11 +78,11 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 						log += format(", unk3_{}: {}", i, unk3);
 					}
 
-					cout << format("[Packet_UdpManager] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}{}\n", user->GetUserIPAddress(), type, subType, unk1, unk2, log);
+					serverConsole.Print(PrintType::Info, format("[ Packet_UdpManager ] Client ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}{}\n", user->GetUserIPAddress(), type, subType, unk1, unk2, log));
 					break;
 				}
 				default: {
-					cout << format("[Packet_UdpManager] Client ({}) has sent unregistered Packet_Udp type: {}, subType: {}!\n", user->GetUserIPAddress(), type, subType);
+					serverConsole.Print(PrintType::Warn, format("[ Packet_UdpManager ] Client ({}) has sent unregistered Packet_Udp type: {}, subType: {}!\n", user->GetUserIPAddress(), type, subType));
 					break;
 				}
 			}
@@ -90,7 +90,7 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			cout << format("[Packet_UdpManager] Client ({}) has sent unregistered Packet_Udp type: {}!\n", user->GetUserIPAddress(), type);
+			serverConsole.Print(PrintType::Warn, format("[ Packet_UdpManager ] Client ({}) has sent unregistered Packet_Udp type: {}!\n", user->GetUserIPAddress(), type));
 			break;
 		}
 	}

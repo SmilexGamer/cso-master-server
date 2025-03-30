@@ -6,7 +6,6 @@
 using namespace std;
 
 #define UDP_PACKET_SIGNATURE 'W'
-
 #define UDP_PACKET_MAX_SIZE 4010
 
 class UDPServer {

@@ -4,20 +4,31 @@
 #include "packetmanager.h"
 #include "databasemanager.h"
 #include "usermanager.h"
+#include "roommanager.h"
 #include "servertick.h"
-#include <iostream>
+#include "serverconsole.h"
 
-BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType)
-{
+BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 	switch (CtrlType) {
-	case CTRL_C_EVENT:
-	case CTRL_BREAK_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_LOGOFF_EVENT:
-	case CTRL_SHUTDOWN_EVENT:
-		return TRUE;
-	default:
-		break;
+		case CTRL_CLOSE_EVENT:
+		case CTRL_LOGOFF_EVENT:
+		case CTRL_SHUTDOWN_EVENT: {
+			serverConsole.Stop();
+			serverTick.Stop();
+			roomManager.RemoveAllRooms();
+			userManager.RemoveAllUsers();
+			packetManager.Stop();
+			databaseManager.Shutdown();
+			tcpServer.Stop();
+			udpServer.Stop();
+			return TRUE;
+		}
+		case CTRL_C_EVENT:
+		case CTRL_BREAK_EVENT: {
+			return TRUE;
+		}
+		default:
+			break;
 	}
 
 	return FALSE;
@@ -27,31 +38,31 @@ int main() {
 	serverTick.Start();
 
 	if (!serverConfig.Load()) {
-		cout << "[ServerConfig] Failed to load server configs!\n";
+		serverConsole.Print(PrintType::Fatal, "[ ServerConfig ] Failed to load server configs!\n");
 		return -1;
 	}
 
 	if (!databaseManager.Init(serverConfig.sqlServer, serverConfig.sqlUser, serverConfig.sqlPassword, serverConfig.sqlDatabase)) {
-		cout << "[DatabaseManager] Failed to initialize database manager!\n";
+		serverConsole.Print(PrintType::Fatal, "[ DatabaseManager ] Failed to initialize database manager!\n");
 		return -1;
 	}
 
 	if (!databaseManager.AddServerChannel()) {
-		cout << "[DatabaseManager] Failed to add server channel to the database!\n";
+		serverConsole.Print(PrintType::Fatal, "[ DatabaseManager ] Failed to add server channel to the database!\n");
 		return -1;
 	}
 
 	databaseManager.GetAllChannelsNumPlayers();
 
 	if (!tcpServer.Init(serverConfig.port)) {
-		cout << "[TCPServer] Failed to initialize TCP server!\n";
+		serverConsole.Print(PrintType::Fatal, "[ TCPServer ] Failed to initialize TCP server!\n");
 		return -1;
 	}
 
 	tcpServer.Start();
 
 	if (!udpServer.Init(serverConfig.port)) {
-		cout << "[UDPServer] Failed to initialize UDP server!\n";
+		serverConsole.Print(PrintType::Fatal, "[ UDPServer ] Failed to initialize UDP server!\n");
 		return -1;
 	}
 
@@ -61,20 +72,7 @@ int main() {
 	
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
-	string command;
-	while (getline(cin >> ws, command)) {
-		if (command == "stop") {
-			break;
-		}
-		else if (command == "status") {
-			cout << format("Connected clients: {}, connected users: {}\n", tcpServer.GetConnections().size(), userManager.GetUsers().size());
-			continue;
-		}
-		else {
-			cout << "Available commands: stop, status\n";
-			continue;
-		}
-	}
+	serverConsole.Start();
 
 	return 0;
 }

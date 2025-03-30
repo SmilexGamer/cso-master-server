@@ -1,10 +1,10 @@
 #include "databasemanager.h"
 #include "serverconfig.h"
 #include "servertick.h"
+#include "serverconsole.h"
 #include "mysql/mysqld_error.h"
 #include "libbcrypt/BCrypt.hpp"
 #include <tuple>
-#include <iostream>
 
 DatabaseManager databaseManager;
 
@@ -14,6 +14,24 @@ DatabaseManager::DatabaseManager() {
 }
 
 DatabaseManager::~DatabaseManager() {
+    Shutdown();
+}
+
+bool DatabaseManager::Init(const string& server, const string& user, const string& password, const string& database) {
+    _connection = mysql_init(NULL);
+    bool success = true;
+
+    if (!mysql_real_connect(_connection, server.c_str(), user.c_str(), password.c_str(), database.c_str(), 0, NULL, 0)) {
+        success = false;
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Connection error on Init: {}\n", mysql_error(_connection)));
+    }
+
+    tie(success, _connection) = make_tuple(success, _connection);
+
+    return success;
+}
+
+void DatabaseManager::Shutdown() {
     if (_addedServerChannel) {
         _addedServerChannel = false;
 
@@ -28,25 +46,11 @@ DatabaseManager::~DatabaseManager() {
     }
 }
 
-bool DatabaseManager::Init(const string& server, const string& user, const string& password, const string& database) {
-    _connection = mysql_init(NULL);
-    bool success = true;
-
-    if (!mysql_real_connect(_connection, server.c_str(), user.c_str(), password.c_str(), database.c_str(), 0, NULL, 0)) {
-        success = false;
-        cout << format("[DatabaseManager] Connection error on Init: {}\n", mysql_error(_connection));
-    }
-
-    tie(success, _connection) = make_tuple(success, _connection);
-
-    return success;
-}
-
 bool DatabaseManager::AddServerChannel() {
     string query = format("SELECT 1 FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on AddServerChannel: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddServerChannel: {}\n", mysql_error(_connection)));
         return false;
     }
 
@@ -58,14 +62,14 @@ bool DatabaseManager::AddServerChannel() {
         query = format("INSERT INTO server_channels (serverID, channelID, numPlayers) VALUES ({}, {}, 0);", serverConfig.serverID, serverConfig.channelID, 0);
 
         if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on AddServerChannel: {}\n", mysql_error(_connection));
+            serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddServerChannel: {}\n", mysql_error(_connection)));
             return false;
         }
     }
     else {
         mysql_free_result(res);
 
-        cout << format("[DatabaseManager] Server channel already present in database!\n");
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Server channel already present in database!\n"));
         return false;
     }
 
@@ -77,7 +81,7 @@ void DatabaseManager::RemoveServerChannel() {
     string query = format("DELETE FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveServerChannel: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveServerChannel: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -86,7 +90,7 @@ void DatabaseManager::UpdateChannelNumPlayers(unsigned short numPlayers) {
     string query = format("UPDATE server_channels SET numPlayers = {} WHERE serverID = {} AND channelID = {};", numPlayers, serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -95,7 +99,7 @@ char DatabaseManager::GetChannelNumPlayers(unsigned char serverID, unsigned char
     string query = format("SELECT numPlayers FROM server_channels WHERE serverID = {} AND channelID = {};", serverID, channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetChannelNumPlayers: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -125,7 +129,7 @@ void DatabaseManager::GetAllChannelsNumPlayers() {
             query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
 
             if (mysql_query(_connection, query.c_str())) {
-                cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
+                serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
                 return;
             }
 
@@ -148,7 +152,7 @@ void DatabaseManager::GetAllChannelsNumPlayers() {
             query = format("SELECT 1 FROM server_channels WHERE serverID = {};", server.id);
 
             if (mysql_query(_connection, query.c_str())) {
-                cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
+                serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
                 return;
             }
 
@@ -167,7 +171,7 @@ void DatabaseManager::GetAllChannelsNumPlayers() {
                 query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
 
                 if (mysql_query(_connection, query.c_str())) {
-                    cout << format("[DatabaseManager] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection));
+                    serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
                     return;
                 }
 
@@ -198,7 +202,7 @@ LoginResult DatabaseManager::Login(const string& userName, const string& passwor
     string query = format("SELECT userID, password FROM users WHERE userName = '{}';", userName);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on Login: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on Login: {}\n", mysql_error(_connection)));
         return { 0, Packet_ReplyType::SysError };
     }
 
@@ -230,7 +234,7 @@ char DatabaseManager::CreateCharacter(unsigned long userID, const string& nickNa
     string query = format("SELECT 1 FROM user_characters WHERE nickName = '{}';", nickName);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on CreateCharacter: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on CreateCharacter: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -247,7 +251,7 @@ char DatabaseManager::CreateCharacter(unsigned long userID, const string& nickNa
     query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on CreateCharacter: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on CreateCharacter: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -309,7 +313,7 @@ UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID, unsi
     string query = format("SELECT{}FROM user_characters WHERE userID = {};", info, userID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on GetUserCharacter: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetUserCharacter: {}\n", mysql_error(_connection)));
         return { userCharacter, -1 };
     }
 
@@ -387,7 +391,7 @@ char DatabaseManager::AddUserSession(unsigned long userID) {
     string query = format("SELECT 1 FROM user_sessions WHERE userID = {};", userID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on AddUserSession: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddUserSession: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -399,7 +403,7 @@ char DatabaseManager::AddUserSession(unsigned long userID) {
         query = format("INSERT INTO user_sessions (userID, serverID, channelID) VALUES ({}, {}, {});", userID, serverConfig.serverID, serverConfig.channelID);
 
         if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on AddUserSession: {}\n", mysql_error(_connection));
+            serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddUserSession: {}\n", mysql_error(_connection)));
             return -1;
         }
     }
@@ -416,7 +420,7 @@ void DatabaseManager::RemoveUserSession(unsigned long userID) {
     string query = format("DELETE FROM user_sessions WHERE userID = {};", userID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveUserSession: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveUserSession: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -425,7 +429,7 @@ void DatabaseManager::RemoveAllUserSessions() {
     string query = format("DELETE FROM user_sessions WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -442,7 +446,7 @@ LoginResult DatabaseManager::TransferLogin(const string& userName, const string&
     string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}' AND userIP = '{}' AND serverID = {} AND channelID = {};", userName, userIP, serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on TransferLogin: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on TransferLogin: {}\n", mysql_error(_connection)));
         return { 0, Packet_ReplyType::SysError };
     }
 
@@ -461,7 +465,7 @@ LoginResult DatabaseManager::TransferLogin(const string& userName, const string&
         query = format("SELECT userID FROM users WHERE userName = '{}';", userName);
 
         if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on TransferLogin: {}\n", mysql_error(_connection));
+            serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on TransferLogin: {}\n", mysql_error(_connection)));
             return { 0, Packet_ReplyType::SysError };
         }
 
@@ -485,7 +489,7 @@ char DatabaseManager::AddUserTransfer(const string& userName, const string& user
     string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}';", userName);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on AddUserTransfer: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddUserTransfer: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -497,7 +501,7 @@ char DatabaseManager::AddUserTransfer(const string& userName, const string& user
         query = format("INSERT INTO user_transfers (userName, userIP, serverID, channelID, transferTime) VALUES ('{}', '{}', {}, {}, {});", userName, userIP, serverID, channelID, serverTick.GetCurrentTime());
 
         if (mysql_query(_connection, query.c_str())) {
-            cout << format("[DatabaseManager] Query error on AddUserTransfer: {}\n", mysql_error(_connection));
+            serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on AddUserTransfer: {}\n", mysql_error(_connection)));
             return -1;
         }
     }
@@ -514,7 +518,7 @@ void DatabaseManager::RemoveUserTransfer(const string& userName) {
     string query = format("DELETE FROM user_transfers WHERE userName = '{}';", userName);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveUserTransfer: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveUserTransfer: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -523,7 +527,7 @@ void DatabaseManager::RemoveOldUserTransfers() {
     string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {} AND transferTime < {};", serverConfig.serverID, serverConfig.channelID, serverTick.GetCurrentTime() - 60);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveOldUserTransfers: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveOldUserTransfers: {}\n", mysql_error(_connection)));
         return;
     }
 }
@@ -532,7 +536,7 @@ void DatabaseManager::RemoveAllUserTransfers() {
     string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
-        cout << format("[DatabaseManager] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection));
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection)));
         return;
     }
 }

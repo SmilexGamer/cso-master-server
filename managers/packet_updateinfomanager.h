@@ -4,7 +4,7 @@
 class Packet_UpdateInfoManager {
 public:
 	void ParsePacket_UpdateInfo(TCPConnection::Packet::pointer packet);
-	void SendPacket_UpdateInfo(const UserFull& user);
+	void SendPacket_UpdateInfo(const GameUser& gameUser);
 };
 
 extern Packet_UpdateInfoManager packet_UpdateInfoManager;

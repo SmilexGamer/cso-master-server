@@ -1,18 +1,23 @@
 #include "packet_versionmanager.h"
 #include "packetmanager.h"
 #include "usermanager.h"
-#include <iostream>
+#include "serverconsole.h"
 
 Packet_VersionManager packet_VersionManager;
 
 void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer packet) {
-	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user != NULL) {
-		cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version, but it's already logged in!\n", packet->GetConnection()->GetIPAddress());
+	if (packet->GetConnection()->IsVersionReceived()) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_VersionManager ] Client ({}) has sent Packet_Version, but it already sent Packet_Version!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	cout << format("[Packet_VersionManager] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetIPAddress());
+	User* user = userManager.GetUserByConnection(packet->GetConnection());
+	if (userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_VersionManager ] Client ({}) has sent Packet_Version, but it's already logged in!\n", packet->GetConnection()->GetIPAddress()));
+		return;
+	}
+
+	serverConsole.Print(PrintType::Info, format("[ Packet_VersionManager ] Parsing Packet_Version from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	unsigned char launcherVersion = packet->ReadUInt8();
 	unsigned short clientVersion = packet->ReadUInt16_LE();
@@ -22,10 +27,10 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 	struct tm date;
 	time_t t = clientBuildTimestamp;
 	localtime_s(&date, &t);
-	static char dateStr[10];
+	char dateStr[9];
 	strftime(dateStr, sizeof(dateStr), "%d.%m.%y", &date);
 
-	cout << format("[Packet_VersionManager] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetIPAddress(), launcherVersion, clientVersion, dateStr, clientNARChecksum);
+	serverConsole.Print(PrintType::Info, format("[ Packet_VersionManager ] Client ({}) has sent Packet_Version - launcherVersion: {}, clientVersion: {}, clientBuildTimestamp: {}, clientNARChecksum: {}\n", packet->GetConnection()->GetIPAddress(), launcherVersion, clientVersion, dateStr, clientNARChecksum));
 
 	if (launcherVersion != LAUNCHER_VERSION) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::INVALID_CLIENT_VERSION);
@@ -47,6 +52,7 @@ void Packet_VersionManager::ParsePacket_Version(TCPConnection::Packet::pointer p
 		return;
 	}
 
+	packet->GetConnection()->SetVersionReceived(true);
 	sendPacket_Version(packet->GetConnection());
 }
 

@@ -3,9 +3,8 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="servertick.cpp" />
-    <ClCompile Include="configs\serverconfig.cpp">
-      <Filter>configs</Filter>
-    </ClCompile>
+    <ClCompile Include="serverconfig.cpp" />
+    <ClCompile Include="serverconsole.cpp" />
     <ClCompile Include="managers\packetmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
@@ -87,9 +86,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="servertick.h" />
-    <ClInclude Include="configs\serverconfig.h">
-      <Filter>configs</Filter>
-    </ClInclude>
+    <ClInclude Include="serverconfig.h" />
+    <ClInclude Include="serverconsole.h" />
     <ClInclude Include="managers\packetmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
@@ -179,9 +177,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="configs">
-      <UniqueIdentifier>{dfd0851f-38fb-46e0-882c-a2bda01c37c9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="managers">
       <UniqueIdentifier>{c7f64b36-f5d9-4c48-bdd9-6d7f661d4423}</UniqueIdentifier>
     </Filter>

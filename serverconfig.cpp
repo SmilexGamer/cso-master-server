@@ -1,7 +1,7 @@
 #include "serverconfig.h"
+#include "serverconsole.h"
 #include "nlohmann/json.hpp"
 #include <fstream>
-#include <iostream>
 
 using json = nlohmann::json;
 
@@ -54,7 +54,7 @@ bool ServerConfig::Load() {
 
 		if (f.fail()) {
 			config = json::parse(defaultServerConfig);
-			cout << format("[ServerConfig] Couldn't open serverconfig.json, using default values!\n");
+			serverConsole.Print(PrintType::Warn, format("[ ServerConfig ] Couldn't open serverconfig.json, using default values!\n"));
 		}
 		else {
 			config = json::parse(f);
@@ -140,10 +140,10 @@ bool ServerConfig::Load() {
 			}
 		}
 
-		cout << "[ServerConfig] Loaded server configs!\n";
+		serverConsole.Print(PrintType::Info, "[ ServerConfig ] Loaded server configs!\n");
 	}
 	catch (json::parse_error& e) {
-		cerr << format("[ServerConfig] Error in parsing serverconfig.json: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ ServerConfig ] Error in parsing serverconfig.json: {}\n", e.what()));
 		return false;
 	}
 

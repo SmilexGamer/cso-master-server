@@ -13,6 +13,7 @@ public:
 	~DatabaseManager();
 
 	bool Init(const string& server, const string& user, const string& password, const string& database);
+	void Shutdown();
 	bool AddServerChannel();
 	void RemoveServerChannel();
 	void UpdateChannelNumPlayers(unsigned short numPlayers);

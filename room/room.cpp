@@ -1,4 +1,5 @@
-#include "room.h"
+#include "roommanager.h"
+#include "serverconsole.h"
 
 Room::Room(unsigned short roomID, User* roomHostUser, TCPConnection::Packet::pointer packet) : _roomID(roomID), _roomHostUser(roomHostUser) {
 	_roomSettings.lowFlag = ROOMSETTINGS_LFLAG_ALL;
@@ -21,7 +22,7 @@ Room::Room(unsigned short roomID, User* roomHostUser, TCPConnection::Packet::poi
 	unsigned char unk15 = packet->ReadUInt8();
 	unsigned char unk16 = packet->ReadUInt32_LE();
 
-	AddRoomUser(roomHostUser);
+	serverConsole.Print(PrintType::Info, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, quickStart: {}, unk14: {}, unk15: {}, unk16: {}\n", roomHostUser->GetUserIPAddress(), _roomSettings.roomName, unk2, _roomSettings.maxPlayers, gameModeID, _roomSettings.mapID, _roomSettings.winLimit, killLimit, _roomSettings.timeLimit, _roomSettings.roundTime, _roomSettings.password, unk11, unk12, fastStart, unk14, unk15, unk16));
 }
 
 char Room::AddRoomUser(User* user) {
@@ -36,6 +37,9 @@ char Room::AddRoomUser(User* user) {
 
 	_roomUsers.push_back(user);
 
+	user->SetUserStatus(UserStatus::InRoom);
+	user->SetCurrentRoomID(_roomID);
+
 	return 1;
 }
 
@@ -45,4 +49,30 @@ void Room::RemoveRoomUser(User* user) {
 	}
 
 	_roomUsers.erase(find(_roomUsers.begin(), _roomUsers.end(), user));
+
+	user->SetUserStatus(UserStatus::InLobby);
+	user->SetCurrentRoomID(NULL);
+
+	if (_roomUsers.empty()) {
+		roomManager.RemoveRoom(this);
+	}
+	else {
+		if (_roomHostUser == user) {
+			UpdateRoomHostUser(_roomUsers[0]);
+		}
+
+		unsigned long userID = user->GetUserID();
+
+		for (auto& u : _roomUsers) {
+			roomManager.SendRoomUserLeavePacket(u->GetConnection(), userID);
+		}
+	}
+}
+
+void Room::UpdateRoomHostUser(User* user) {
+	if (user == NULL) {
+		return;
+	}
+
+	_roomHostUser = user;
 }

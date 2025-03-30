@@ -120,6 +120,7 @@ public:
 
 	char AddRoomUser(User* user);
 	void RemoveRoomUser(User* user);
+	void UpdateRoomHostUser(User* user);
 
 private:
 	unsigned short _roomID;

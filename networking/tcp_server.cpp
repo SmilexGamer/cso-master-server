@@ -1,6 +1,6 @@
 #include "tcp_server.h"
 #include "packetmanager.h"
-#include <iostream>
+#include "serverconsole.h"
 
 TCPServer tcpServer;
 
@@ -8,12 +8,12 @@ TCPServer::TCPServer() : _sslContext(boost::asio::ssl::context::sslv23), _accept
 	_port = 0;
 
 	OnConnect = [](TCPConnection::pointer connection) {
-		cout << format("[TCPServer] Client ({}) has connected to the server\n", connection->GetIPAddress());
-		};
+		serverConsole.Print(PrintType::Info, format("[ TCPServer ] Client ({}) has connected to the server\n", connection->GetIPAddress()));
+	};
 
 	OnDisconnect = [](TCPConnection::pointer connection) {
-		cout << format("[TCPServer] Client ({}) has disconnected from the server\n", connection->GetIPAddress());
-		};
+		serverConsole.Print(PrintType::Info, format("[ TCPServer ] Client ({}) has disconnected from the server\n", connection->GetIPAddress()));
+	};
 
 	OnClientPacket = [](TCPConnection::Packet::pointer packet) {
 		packetManager.QueuePacket(packet);
@@ -41,7 +41,7 @@ bool TCPServer::Init(unsigned short port) {
 #endif
 	}
 	catch (exception& e) {
-		cerr << format("[TCPServer] Error on Init: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on Init: {}\n", e.what()));
 		return false;
 	}
 
@@ -50,18 +50,18 @@ bool TCPServer::Init(unsigned short port) {
 
 void TCPServer::Start() {
 	if (_tcpServerThread.joinable()) {
-		cout << "[TCPServer] Thread is already running!\n";
+		serverConsole.Print(PrintType::Warn, "[ TCPServer ] Thread is already running!\n");
 		return;
 	}
 
-	cout << format("[TCPServer] Starting on port {}!\n", _port);
+	serverConsole.Print(PrintType::Info, format("[ TCPServer ] Starting on port {}!\n", _port));
 
 	_tcpServerThread = thread(&TCPServer::run, this);
 }
 
 void TCPServer::Stop() {
 	if (!_tcpServerThread.joinable()) {
-		cout << "[TCPServer] Thread is already shut down!\n";
+		serverConsole.Print(PrintType::Warn, "[ TCPServer ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -69,25 +69,25 @@ void TCPServer::Stop() {
 }
 
 int TCPServer::run() {
-	cout << "[TCPServer] Thread starting!\n";
+	serverConsole.Print(PrintType::Info, "[ TCPServer ] Thread starting!\n");
 
 	try {
 		startAccept();
 		_ioContext.run();
 	}
 	catch (exception& e) {
-		cerr << format("[TCPServer] Error on run: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	cout << "[TCPServer] Thread shutting down!\n";
+	serverConsole.Print(PrintType::Info, "[ TCPServer ] Thread shutting down!\n");
 	return 0;
 }
 
 int TCPServer::shutdown() {
 	try {
 		if (_tcpServerThread.joinable()) {
-			cout << "[TCPServer] Shutting down!\n";
+			serverConsole.Print(PrintType::Info, "[ TCPServer ] Shutting down!\n");
 
 			_ioContext.stop();
 
@@ -100,7 +100,7 @@ int TCPServer::shutdown() {
 		}
 	}
 	catch (exception& e) {
-		cerr << format("[TCPServer] Error on shutdown: {}\n", e.what());
+		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 
