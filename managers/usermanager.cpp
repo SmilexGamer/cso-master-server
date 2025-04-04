@@ -5,6 +5,7 @@
 #include "packet_serverlistmanager.h"
 #include "packet_updateinfomanager.h"
 #include "packet_userstartmanager.h"
+#include "packet_optionmanager.h"
 
 UserManager userManager;
 
@@ -138,6 +139,7 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 	packet_UserStartManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
 	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, userCharacterResult.userCharacter });
+	packet_OptionManager.SendPacket_OptionData({ user, userCharacterResult.userCharacter });
 
 	return true;
 }

@@ -30,6 +30,8 @@ public:
 	void RemoveUserTransfer(const string& userName);
 	void RemoveOldUserTransfers();
 	void RemoveAllUserTransfers();
+	bool SaveUserOptionData(int userID, std::vector<unsigned char>& data);
+	std::vector<unsigned char> GetUserOptionData(int userID);
 
 private:
 	MYSQL* _connection;

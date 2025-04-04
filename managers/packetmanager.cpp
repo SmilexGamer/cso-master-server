@@ -12,6 +12,7 @@
 #include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
 #include "packet_userstartmanager.h"
+#include "packet_optionmanager.h"
 #include "serverconsole.h"
 
 PacketManager packetManager;
@@ -223,6 +224,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::Shop: {
 			packet_ShopManager.ParsePacket_Shop(packet);
+			break;
+		}
+		case PacketID::Option: {
+			packet_OptionManager.ParsePacket_Option(packet);
 			break;
 		}
 		case PacketID::UserStart: {

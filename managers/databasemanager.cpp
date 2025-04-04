@@ -540,3 +540,74 @@ void DatabaseManager::RemoveAllUserTransfers() {
         return;
     }
 }
+
+bool DatabaseManager::SaveUserOptionData(int userID, std::vector<unsigned char>& data) {
+    string checkQuery = format("SELECT COUNT(*) FROM user_options WHERE userID = {};", userID);
+    if (mysql_query(_connection, checkQuery.c_str())) {
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on checking user option: {}\n", mysql_error(_connection)));
+        return false;
+    }
+    MYSQL_RES* res = mysql_store_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
+    bool exists = (row && atoi(row[0]) > 0);
+    mysql_free_result(res);
+
+    string hexData = "";
+    char hex_buf[3];
+    for (size_t i = 0; i < data.size(); ++i) {
+        snprintf(hex_buf, sizeof(hex_buf), "%02X", data[i]);
+        hexData += hex_buf;
+    }
+
+    string query;
+    if (exists) {
+        query = format("UPDATE user_options SET optionData = 0x{} WHERE userID = {};", hexData, userID);
+    }
+    else {
+        query = format("INSERT INTO user_options (userID, optionData) VALUES ({}, 0x{});", userID, hexData);
+    }
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on SaveUserOptionData: {}\n", mysql_error(_connection)));
+        return false;
+    }
+
+    return true;
+}
+
+std::vector<unsigned char> DatabaseManager::GetUserOptionData(int userID) {
+    std::vector<unsigned char> data;
+    string query = format("SELECT optionData FROM user_options WHERE userID = {};", userID);
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Query error on GetUserOptionData: {}\n", mysql_error(_connection)));
+        return data;
+    }
+
+    MYSQL_RES* res = mysql_store_result(_connection);
+    if (res == NULL) {
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Could not store result on GetUserOptionData: {}\n", mysql_error(_connection)));
+        return data;
+    }
+
+    MYSQL_ROW row = mysql_fetch_row(res);
+    if (row == NULL) {
+        serverConsole.Print(PrintType::Info, format("[ DatabaseManager ] No option data found for userID: {}\n", userID));
+        mysql_free_result(res);
+        return data;
+    }
+
+    unsigned long* lengths = mysql_fetch_lengths(res);
+    if (lengths == NULL) {
+        serverConsole.Print(PrintType::Error, format("[ DatabaseManager ] Could not fetch data lengths on GetUserOptionData: {}\n", mysql_error(_connection)));
+        mysql_free_result(res);
+        return data;
+    }
+
+    if (lengths[0] > 0 && row[0] != NULL) {
+        data.assign(row[0], row[0] + lengths[0]);
+    }
+
+    mysql_free_result(res);
+
+    return data;
+}

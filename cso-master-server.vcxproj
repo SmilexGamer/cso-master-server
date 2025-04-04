@@ -158,6 +158,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="managers\packet_optionmanager.cpp" />
     <ClCompile Include="servertick.cpp" />
     <ClCompile Include="serverconfig.cpp" />
     <ClCompile Include="serverconsole.cpp" />
@@ -189,6 +190,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="thirdparty\libbcrypt\wrapper.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="managers\packet_optionmanager.h" />
     <ClInclude Include="servertick.h" />
     <ClInclude Include="serverconfig.h" />
     <ClInclude Include="serverconsole.h" />

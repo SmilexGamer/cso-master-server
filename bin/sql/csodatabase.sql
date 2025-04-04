@@ -59,3 +59,10 @@ CREATE TABLE IF NOT EXISTS server_channels (
 	channelID TINYINT UNSIGNED NOT NULL,
 	numPlayers SMALLINT UNSIGNED
 );
+
+CREATE TABLE IF NOT EXISTS user_options (
+  `index` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  userID INT UNSIGNED NOT NULL,
+  optionData blob NULL,
+  PRIMARY KEY (`index`)
+);
