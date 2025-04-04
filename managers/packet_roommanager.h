@@ -26,6 +26,8 @@ enum Packet_RoomType {
 	RequestLeave = 2,
 	UserLeave = 2,
 	RequestStartGame = 4,
+	ReplyUpdateRoomSettings = 4,
+	RequestUpdateRoomSettings = 5,
 	ReplyLeaveRoomInGame = 10
 };
 
@@ -48,12 +50,14 @@ private:
 	void parsePacket_Room_RequestJoin(User* user, TCPConnection::Packet::pointer packet);
 	void parsePacket_Room_RequestLeave(User* user, TCPConnection::Packet::pointer packet);
 	void parsePacket_Room_RequestStartGame(User* user);
+	void parsePacket_Room_RequestUpdateRoomSettings(User* user, TCPConnection::Packet::pointer packet);
 	void buildRoomInfo(TCPConnection::Packet::pointer packet, Room* room, unsigned short flag);
 	void buildRoomSettings(TCPConnection::Packet::pointer packet, const RoomSettings& roomSettings);
 	void buildRoomUserInfo(TCPConnection::Packet::pointer packet, const GameUser& gameUser);
 	void sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<GameUser>& gameUsers);
 	void sendPacket_Room_UserJoin(TCPConnection::pointer connection, const GameUser& gameUser);
 	void sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::pointer connection);
+	void sendPacket_Room_ReplyUpdateRoomSettings(TCPConnection::pointer connection, Room* room);
 };
 
 extern Packet_RoomManager packet_RoomManager;

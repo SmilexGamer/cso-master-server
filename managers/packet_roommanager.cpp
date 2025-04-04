@@ -36,6 +36,10 @@ void Packet_RoomManager::ParsePacket_Room(TCPConnection::Packet::pointer packet)
 			parsePacket_Room_RequestStartGame(user);
 			break;
 		}
+		case Packet_RoomType::RequestUpdateRoomSettings: {
+			parsePacket_Room_RequestUpdateRoomSettings(user, packet);
+			break;
+		}
 		default: {
 			serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent unregistered Packet_Room type {}!\n", user->GetUserIPAddress(), type));
 			break;
@@ -206,6 +210,156 @@ void Packet_RoomManager::parsePacket_Room_RequestStartGame(User* user) {
 	}
 
 	packet_HostManager.SendPacket_Host_StartGame(user);
+}
+
+void Packet_RoomManager::parsePacket_Room_RequestUpdateRoomSettings(User* user, TCPConnection::Packet::pointer packet) {
+	if (user->GetUserStatus() != UserStatus::InRoom) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestUpdateRoomSettings, but it's not in a room!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	Room* room = roomManager.GetRoomByRoomID(user->GetCurrentRoomID());
+	if (room == NULL) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestUpdateRoomSettings, but its room is NULL!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	if (room->GetRoomHostUser() != user) {
+		serverConsole.Print(PrintType::Warn, format("[ Packet_RoomManager ] Client ({}) has sent Packet_Room RequestUpdateRoomSettings, but it's not the room host!\n", user->GetUserIPAddress()));
+		return;
+	}
+
+	RoomSettings newSettings = room->GetRoomSettings();
+	unsigned long lowFlag = packet->ReadUInt32_LE();
+	unsigned char highFlag = packet->ReadUInt8();
+
+	if (lowFlag & ROOMSETTINGS_LFLAG_ROOMNAME) {
+		newSettings.roomName = packet->ReadString();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2) {
+		newSettings.unk2 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4) {
+		newSettings.unk4_1 = packet->ReadUInt8();
+		newSettings.unk4_2 = packet->ReadUInt8();
+		newSettings.unk4_3 = packet->ReadUInt8();
+		newSettings.unk4_4 = packet->ReadUInt32_LE();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_PASSWORD) {
+		newSettings.password = packet->ReadString();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10) {
+		newSettings.unk10 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20) {
+		newSettings.unk20 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40) {
+		newSettings.unk40 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_MAPID) {
+		newSettings.mapID = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_MAXPLAYERS) {
+		newSettings.maxPlayers = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_WINLIMIT) {
+		newSettings.winLimit = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK400) {
+		newSettings.unk400 = packet->ReadUInt16_LE();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_TIMELIMIT) {
+		newSettings.timeLimit = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_ROUNDTIME) {
+		newSettings.roundTime = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2000) {
+		newSettings.unk2000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4000) {
+		newSettings.unk4000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK8000) {
+		newSettings.unk8000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10000) {
+		newSettings.unk10000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20000) {
+		newSettings.unk20000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40000) {
+		newSettings.unk40000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK80000) {
+		newSettings.unk80000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK100000) {
+		newSettings.unk100000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK200000) {
+		newSettings.unk200000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK400000) {
+		newSettings.unk400000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK800000) {
+		newSettings.unk800000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK1000000) {
+		newSettings.unk1000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2000000) {
+		newSettings.unk2000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4000000) {
+		newSettings.unk4000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK8000000) {
+		newSettings.unk8000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10000000) {
+		newSettings.unk10000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20000000) {
+		newSettings.unk20000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40000000) {
+		newSettings.unk40000000 = packet->ReadUInt8();
+	}
+	if (lowFlag & ROOMSETTINGS_LFLAG_UNK80000000) {
+		newSettings.unk80000000_1 = packet->ReadUInt8();
+		for (unsigned char i = 0; i < 2; i++) {
+			newSettings.unk80000000_2[i].unk8000000_vec_1 = packet->ReadUInt32_LE();
+			newSettings.unk80000000_2[i].unk8000000_vec_2 = packet->ReadUInt32_LE();
+			newSettings.unk80000000_2[i].unk8000000_vec_3 = packet->ReadUInt8();
+			newSettings.unk80000000_2[i].unk8000000_vec_4 = packet->ReadUInt8();
+			newSettings.unk80000000_2[i].unk8000000_vec_5 = packet->ReadUInt8();
+			newSettings.unk80000000_2[i].unk8000000_vec_6 = packet->ReadUInt8();
+			newSettings.unk80000000_2[i].unk8000000_vec_7 = packet->ReadUInt16_LE();
+			newSettings.unk80000000_2[i].unk8000000_vec_8 = packet->ReadUInt8();
+			newSettings.unk80000000_2[i].unk8000000_vec_9 = packet->ReadUInt8();
+		}
+	}
+	if (highFlag & ROOMSETTINGS_HFLAG_UNK1) {
+		newSettings.unkh1_1 = packet->ReadUInt32_LE();
+		newSettings.unkh1_2 = packet->ReadString();
+		newSettings.unkh1_3 = packet->ReadUInt8();
+		newSettings.unkh1_4 = packet->ReadUInt8();
+		newSettings.unkh1_5 = packet->ReadUInt8();
+	}
+	if (highFlag & ROOMSETTINGS_HFLAG_UNK2) {
+		newSettings.unkh2 = packet->ReadUInt8();
+	}
+
+	room->UpdateRoomSettings(newSettings);
+
+	const vector<User*>& users = room->GetRoomUsers();
+	for (auto& u : users) {
+		sendPacket_Room_ReplyUpdateRoomSettings(u->GetConnection(), room);
+	}
 }
 
 void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Room* room, unsigned short flag) {
@@ -441,6 +595,15 @@ void Packet_RoomManager::sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::poi
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
 
 	packet->WriteUInt8(Packet_RoomType::ReplyLeaveRoomInGame);
+
+	packet->Send();
+}
+
+void Packet_RoomManager::sendPacket_Room_ReplyUpdateRoomSettings(TCPConnection::pointer connection, Room* room) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
+
+	packet->WriteUInt8(Packet_RoomType::ReplyUpdateRoomSettings);
+	buildRoomSettings(packet, room->GetRoomSettings());
 
 	packet->Send();
 }

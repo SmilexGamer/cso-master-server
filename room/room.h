@@ -118,6 +118,10 @@ public:
 		return _roomUsers;
 	}
 
+	void UpdateRoomSettings(const RoomSettings& newSettings) {
+		_roomSettings = newSettings;
+	}
+
 	char AddRoomUser(User* user);
 	void RemoveRoomUser(User* user);
 	void UpdateRoomHostUser(User* user);
