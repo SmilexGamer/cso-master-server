@@ -28,6 +28,14 @@ bool DatabaseManager::Init(const string& server, const string& user, const strin
 
     tie(success, _connection) = make_tuple(success, _connection);
 
+    HANDLE hMutex = CreateMutexA(NULL, FALSE, "cso-master-server");
+    DWORD dwWaitResult = WaitForSingleObject(hMutex, 0);
+    if (!dwWaitResult || dwWaitResult == WAIT_ABANDONED) {
+        RemoveAllUserSessions();
+        RemoveAllUserTransfers();
+        RemoveServerChannel();
+    }
+
     return success;
 }
 
