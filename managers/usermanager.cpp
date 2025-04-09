@@ -139,7 +139,11 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 	packet_UserStartManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
 	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, userCharacterResult.userCharacter });
-	packet_OptionManager.SendPacket_OptionData({ user, userCharacterResult.userCharacter });
+
+	const vector<unsigned char>& userOption = user->GetUserOption();
+	if (!userOption.empty()) {
+		packet_OptionManager.SendPacket_Option_UserOption(user->GetConnection(), userOption);
+	}
 
 	return true;
 }

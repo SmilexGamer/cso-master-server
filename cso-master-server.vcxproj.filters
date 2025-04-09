@@ -2,7 +2,6 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="servertick.cpp" />
     <ClCompile Include="serverconfig.cpp" />
     <ClCompile Include="serverconsole.cpp" />
     <ClCompile Include="managers\packetmanager.cpp">
@@ -88,7 +87,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="servertick.h" />
     <ClInclude Include="serverconfig.h" />
     <ClInclude Include="serverconsole.h" />
     <ClInclude Include="managers\packetmanager.h">

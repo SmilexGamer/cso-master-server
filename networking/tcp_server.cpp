@@ -8,11 +8,11 @@ TCPServer::TCPServer() : _sslContext(boost::asio::ssl::context::sslv23), _accept
 	_port = 0;
 
 	OnConnect = [](TCPConnection::pointer connection) {
-		serverConsole.Print(PrintType::Info, format("[ TCPServer ] Client ({}) has connected to the server\n", connection->GetIPAddress()));
+		serverConsole.Print(PrefixType::Info, format("[ TCPServer ] Client ({}) has connected to the server\n", connection->GetIPAddress()));
 	};
 
 	OnDisconnect = [](TCPConnection::pointer connection) {
-		serverConsole.Print(PrintType::Info, format("[ TCPServer ] Client ({}) has disconnected from the server\n", connection->GetIPAddress()));
+		serverConsole.Print(PrefixType::Info, format("[ TCPServer ] Client ({}) has disconnected from the server\n", connection->GetIPAddress()));
 	};
 
 	OnClientPacket = [](TCPConnection::Packet::pointer packet) {
@@ -41,7 +41,7 @@ bool TCPServer::Init(unsigned short port) {
 #endif
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on Init: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ TCPServer ] Error on Init: {}\n", e.what()));
 		return false;
 	}
 
@@ -50,18 +50,18 @@ bool TCPServer::Init(unsigned short port) {
 
 void TCPServer::Start() {
 	if (_tcpServerThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ TCPServer ] Thread is already running!\n");
+		serverConsole.Print(PrefixType::Warn, "[ TCPServer ] Thread is already running!\n");
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ TCPServer ] Starting on port {}!\n", _port));
+	serverConsole.Print(PrefixType::Info, format("[ TCPServer ] Starting on port {}!\n", _port));
 
 	_tcpServerThread = thread(&TCPServer::run, this);
 }
 
 void TCPServer::Stop() {
 	if (!_tcpServerThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ TCPServer ] Thread is already shut down!\n");
+		serverConsole.Print(PrefixType::Warn, "[ TCPServer ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -69,25 +69,25 @@ void TCPServer::Stop() {
 }
 
 int TCPServer::run() {
-	serverConsole.Print(PrintType::Info, "[ TCPServer ] Thread starting!\n");
+	serverConsole.Print(PrefixType::Info, "[ TCPServer ] Thread starting!\n");
 
 	try {
 		startAccept();
 		_ioContext.run();
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on run: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ TCPServer ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	serverConsole.Print(PrintType::Info, "[ TCPServer ] Thread shutting down!\n");
+	serverConsole.Print(PrefixType::Info, "[ TCPServer ] Thread shutting down!\n");
 	return 0;
 }
 
 int TCPServer::shutdown() {
 	try {
 		if (_tcpServerThread.joinable()) {
-			serverConsole.Print(PrintType::Info, "[ TCPServer ] Shutting down!\n");
+			serverConsole.Print(PrefixType::Info, "[ TCPServer ] Shutting down!\n");
 
 			_ioContext.stop();
 
@@ -100,7 +100,7 @@ int TCPServer::shutdown() {
 		}
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ TCPServer ] Error on shutdown: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ TCPServer ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 

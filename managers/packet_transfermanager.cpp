@@ -13,23 +13,23 @@ Packet_TransferManager packet_TransferManager;
 void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin, but it's already logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_TransferManager ] User ({}) has sent Packet_TransferLogin, but it's already logged in!\n", user->GetUserLogName()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Parsing Packet_TransferLogin from client ({})\n", packet->GetConnection()->GetIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_TransferManager ] Parsing Packet_TransferLogin from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
-	string userName = packet->ReadString();
-	vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
+	const string& userName = packet->ReadString();
+	const vector<unsigned char>& hardwareID = packet->ReadArray_UInt8(HARDWARE_ID_SIZE);
 	unsigned long pcBang = packet->ReadUInt32_LE();
 	unsigned char unk = packet->ReadUInt8();
 
 	string hardwareIDStr;
 	for (auto& c : hardwareID) {
-		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin - userName: {}, hardwareID:{}, pcBang: {}, unk: {}\n", packet->GetConnection()->GetIPAddress(), userName, hardwareIDStr, pcBang, unk));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin - userName: {}, hardwareID:{}, pcBang: {}, unk: {}\n", packet->GetConnection()->GetIPAddress(), userName, hardwareIDStr, pcBang, unk));
 
 	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::EXCEED_MAX_CONNECTION);
@@ -81,16 +81,16 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (!userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_TransferManager ] Client ({}) has sent Packet_RequestTransfer, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_TransferManager ] Client ({}) has sent Packet_RequestTransfer, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Parsing Packet_RequestTransfer from client ({})\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_TransferManager ] Parsing Packet_RequestTransfer from user ({})\n", user->GetUserLogName()));
 
 	unsigned char serverID = packet->ReadUInt8();
 	unsigned char channelID = packet->ReadUInt8();
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_RequestTransfer - serverID: {}, channelID: {}\n", user->GetUserIPAddress(), serverID, channelID));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_TransferManager ] User ({}) has sent Packet_RequestTransfer - serverID: {}, channelID: {}\n", user->GetUserLogName(), serverID, channelID));
 
 	if (!serverID || serverID > serverConfig.serverList.size()) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::InvalidServer);

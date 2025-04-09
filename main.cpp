@@ -5,7 +5,6 @@
 #include "databasemanager.h"
 #include "usermanager.h"
 #include "roommanager.h"
-#include "servertick.h"
 #include "serverconsole.h"
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
@@ -14,7 +13,6 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 		case CTRL_LOGOFF_EVENT:
 		case CTRL_SHUTDOWN_EVENT: {
 			serverConsole.Stop();
-			serverTick.Stop();
 			roomManager.RemoveAllRooms();
 			userManager.RemoveAllUsers();
 			packetManager.Stop();
@@ -35,34 +33,39 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 }
 
 int main() {
-	serverTick.Start();
+	if (!serverConsole.Init()) {
+		serverConsole.Print(PrefixType::Fatal, "[ ServerConsole ] Failed to initialize server console!\n");
+		return -1;
+	}
+
+	serverConsole.Start();
 
 	if (!serverConfig.Load()) {
-		serverConsole.Print(PrintType::Fatal, "[ ServerConfig ] Failed to load server configs!\n");
+		serverConsole.Print(PrefixType::Fatal, "[ ServerConfig ] Failed to load server configs!\n");
 		return -1;
 	}
 
 	if (!databaseManager.Init(serverConfig.sqlServer, serverConfig.sqlUser, serverConfig.sqlPassword, serverConfig.sqlDatabase)) {
-		serverConsole.Print(PrintType::Fatal, "[ DatabaseManager ] Failed to initialize database manager!\n");
+		serverConsole.Print(PrefixType::Fatal, "[ DatabaseManager ] Failed to initialize database manager!\n");
 		return -1;
 	}
 
 	if (!databaseManager.AddServerChannel()) {
-		serverConsole.Print(PrintType::Fatal, "[ DatabaseManager ] Failed to add server channel to the database!\n");
+		serverConsole.Print(PrefixType::Fatal, "[ DatabaseManager ] Failed to add server channel to the database!\n");
 		return -1;
 	}
 
 	databaseManager.GetAllChannelsNumPlayers();
 
 	if (!tcpServer.Init(serverConfig.port)) {
-		serverConsole.Print(PrintType::Fatal, "[ TCPServer ] Failed to initialize TCP server!\n");
+		serverConsole.Print(PrefixType::Fatal, "[ TCPServer ] Failed to initialize TCP server!\n");
 		return -1;
 	}
 
 	tcpServer.Start();
 
 	if (!udpServer.Init(serverConfig.port)) {
-		serverConsole.Print(PrintType::Fatal, "[ UDPServer ] Failed to initialize UDP server!\n");
+		serverConsole.Print(PrefixType::Fatal, "[ UDPServer ] Failed to initialize UDP server!\n");
 		return -1;
 	}
 
@@ -72,7 +75,7 @@ int main() {
 	
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
-	serverConsole.Start();
+	serverConsole.StartRead();
 
 	return 0;
 }

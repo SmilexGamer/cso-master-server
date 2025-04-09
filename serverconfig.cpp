@@ -54,7 +54,7 @@ bool ServerConfig::Load() {
 
 		if (f.fail()) {
 			config = json::parse(defaultServerConfig);
-			serverConsole.Print(PrintType::Warn, format("[ ServerConfig ] Couldn't open serverconfig.json, using default values!\n"));
+			serverConsole.Print(PrefixType::Warn, format("[ ServerConfig ] Couldn't open serverconfig.json, using default values!\n"));
 		}
 		else {
 			config = json::parse(f);
@@ -140,10 +140,10 @@ bool ServerConfig::Load() {
 			}
 		}
 
-		serverConsole.Print(PrintType::Info, "[ ServerConfig ] Loaded server configs!\n");
+		serverConsole.Print(PrefixType::Info, "[ ServerConfig ] Loaded server configs!\n");
 	}
 	catch (json::parse_error& e) {
-		serverConsole.Print(PrintType::Error, format("[ ServerConfig ] Error in parsing serverconfig.json: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ ServerConfig ] Error in parsing serverconfig.json: {}\n", e.what()));
 		return false;
 	}
 

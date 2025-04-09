@@ -7,17 +7,17 @@ Packet_HostManager packet_HostManager;
 void Packet_HostManager::ParsePacket_Host(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (!userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_HostManager ] Client ({}) has sent Packet_Host, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] Client ({}) has sent Packet_Host, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_HostManager ] Parsing Packet_Host from client ({})\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_HostManager ] Parsing Packet_Host from user ({})\n", user->GetUserLogName()));
 
 	unsigned char type = packet->ReadUInt8();
 
 	switch (type) {
 		default: {
-			serverConsole.Print(PrintType::Warn, format("[ Packet_HostManager ] Client ({}) has sent unregistered Packet_Host type {}!\n", user->GetUserIPAddress(), type));
+			serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent unregistered Packet_Host type {}!\n", user->GetUserLogName(), type));
 			break;
 		}
 	}

@@ -5,6 +5,8 @@
 #undef GetUserName
 #endif
 
+#define HARDWARE_ID_SIZE 16
+
 #define USERCHARACTER_FLAG_UNK1			0x1
 #define USERCHARACTER_FLAG_NICKNAME		0x2
 #define USERCHARACTER_FLAG_UNK4			0x4
@@ -81,6 +83,10 @@ public:
 		return _connection;
 	}
 
+	const string GetUserLogName() const noexcept {
+		return format("{}, {}", _userID, _userName);
+	}
+
 	const string& GetUserIPAddress() const noexcept {
 		return _connection->GetIPAddress();
 	}
@@ -115,9 +121,11 @@ public:
 		_currentRoomID = roomID;
 	}
 
-	char CreateCharacter(const string& nickName);
-	UserCharacterResult GetUserCharacter(unsigned short flag);
-	char IsUserCharacterExists();
+	char CreateCharacter(const string& nickName) const noexcept;
+	UserCharacterResult GetUserCharacter(unsigned short flag) const noexcept;
+	char IsUserCharacterExists() const noexcept;
+	bool SaveUserOption(const vector<unsigned char>& userOption) const noexcept;
+	const vector<unsigned char> GetUserOption() const noexcept;
 
 private:
 	TCPConnection::pointer _connection;

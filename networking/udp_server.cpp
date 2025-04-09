@@ -20,7 +20,7 @@ bool UDPServer::Init(unsigned short port) {
 		_socket = boost::asio::ip::udp::socket(_ioService, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), _port));
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ UDPServer ] Error on Init: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ UDPServer ] Error on Init: {}\n", e.what()));
 		return false;
 	}
 
@@ -29,18 +29,18 @@ bool UDPServer::Init(unsigned short port) {
 
 void UDPServer::Start() {
 	if (_udpServerThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ UDPServer ] Thread is already running!\n");
+		serverConsole.Print(PrefixType::Warn, "[ UDPServer ] Thread is already running!\n");
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ UDPServer ] Starting on port {}!\n", _port));
+	serverConsole.Print(PrefixType::Info, format("[ UDPServer ] Starting on port {}!\n", _port));
 
 	_udpServerThread = thread(&UDPServer::run, this);
 }
 
 void UDPServer::Stop() {
 	if (!_udpServerThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ UDPServer ] Thread is already shut down!\n");
+		serverConsole.Print(PrefixType::Warn, "[ UDPServer ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -48,32 +48,32 @@ void UDPServer::Stop() {
 }
 
 int UDPServer::run() {
-	serverConsole.Print(PrintType::Info, "[ UDPServer ] Thread starting!\n");
+	serverConsole.Print(PrefixType::Info, "[ UDPServer ] Thread starting!\n");
 
 	try {
 		startReceive();
 		_ioService.run();
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ UDPServer ] Error on run: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ UDPServer ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	serverConsole.Print(PrintType::Info, "[ UDPServer ] Thread shutting down!\n");
+	serverConsole.Print(PrefixType::Info, "[ UDPServer ] Thread shutting down!\n");
 	return 0;
 }
 
 int UDPServer::shutdown() {
 	try {
 		if (_udpServerThread.joinable()) {
-			serverConsole.Print(PrintType::Info, "[ UDPServer ] Shutting down!\n");
+			serverConsole.Print(PrefixType::Info, "[ UDPServer ] Shutting down!\n");
 
 			_ioService.stop();
 			_udpServerThread.detach();
 		}
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ UDPServer ] Error on shutdown: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ UDPServer ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 
@@ -90,7 +90,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 
 		if (ReadUInt8() != UDP_PACKET_SIGNATURE) {
 #ifdef _DEBUG
-			serverConsole.Log(PrintType::Debug, format("[ UDPServer ] Client ({}) sent UDP packet with invalid signature!\n", _endpoint.address().to_string()));
+			serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] Client ({}) sent UDP packet with invalid signature!\n", _endpoint.address().to_string()));
 #endif
 			startReceive();
 			return;
@@ -100,13 +100,13 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 
 		User* user = userManager.GetUserByUserID(userID);
 		if (!userManager.IsUserLoggedIn(user)) {
-			serverConsole.Print(PrintType::Warn, format("[ UDPServer ] Client ({}) sent UDP packet, but it's not logged in!\n", _endpoint.address().to_string()));
+			serverConsole.Print(PrefixType::Warn, format("[ UDPServer ] Client ({}) sent UDP packet, but it's not logged in!\n", _endpoint.address().to_string()));
 			startReceive();
 			return;
 		}
 
 		if (_endpoint.address().to_string() != user->GetUserIPAddress()) {
-			serverConsole.Print(PrintType::Warn, format("[ UDPServer ] Client ({}) sent UDP packet, but its IP address doesn't match the user's IP address: {}!\n", _endpoint.address().to_string(), user->GetUserIPAddress()));
+			serverConsole.Print(PrefixType::Warn, format("[ UDPServer ] Client ({}) sent UDP packet, but its IP address doesn't match the user's IP address: {}!\n", _endpoint.address().to_string(), user->GetUserIPAddress()));
 			startReceive();
 			return;
 		}
@@ -117,14 +117,14 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 		vector<unsigned char> buffer(_recvBuffer.begin(), _recvBuffer.begin() + bytes_transferred);
 		string bufferStr;
 		for (auto& c : buffer) {
-			bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+			bufferStr += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 		}
 
 		if (type == 1) {
-			serverConsole.Log(PrintType::Debug, format("[ UDPServer ] Received UDP packet from client ({}):{}\n", _endpoint.address().to_string(), bufferStr));
+			serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] Received UDP packet from user ({}):{}\n", user->GetUserLogName(), bufferStr));
 		}
 		else {
-			serverConsole.Print(PrintType::Debug, format("[ UDPServer ] Received UDP packet from client ({}):{}\n", _endpoint.address().to_string(), bufferStr));
+			serverConsole.Print(PrefixType::Debug, format("[ UDPServer ] Received UDP packet from user ({}):{}\n", user->GetUserLogName(), bufferStr));
 		}
 #endif
 
@@ -135,7 +135,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				unsigned short localPort = ReadUInt16_LE();
 				unsigned char retryNum = ReadUInt8();
 
-				serverConsole.Print(PrintType::Info, format("[ UDPServer ] Client ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}\n", _endpoint.address().to_string(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum));
+				serverConsole.Print(PrefixType::Info, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}\n", user->GetUserLogName(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum));
 
 				user->SetUserNetwork(portType, localIP, localPort, _endpoint.port());
 
@@ -149,10 +149,10 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 #ifdef _DEBUG
 				string buffer;
 				for (auto& c : *message) {
-					buffer += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+					buffer += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 				}
 
-				serverConsole.Print(PrintType::Debug, format("[ UDPServer ] Sent UDP packet to client ({}):{}\n", _endpoint.address().to_string(), buffer));
+				serverConsole.Print(PrefixType::Debug, format("[ UDPServer ] Sent UDP packet to user ({}):{}\n", user->GetUserLogName(), buffer));
 #endif
 				break;
 			}
@@ -160,13 +160,13 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				unsigned char retryNum = ReadUInt8();
 
 #ifdef _DEBUG
-				serverConsole.Log(PrintType::Debug, format("[ UDPServer ] Client ({}) sent UDP packet - userID: {}, type: {}, retryNum: {}\n", _endpoint.address().to_string(), userID, type, retryNum));
+				serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, retryNum: {}\n", user->GetUserLogName(), userID, type, retryNum));
 #endif
 				startReceive();
 				break;
 			}
 			default: {
-				serverConsole.Print(PrintType::Warn, format("[ UDPServer ] Client ({}) sent unregistered UDP packet type {}!\n", _endpoint.address().to_string(), type));
+				serverConsole.Print(PrefixType::Warn, format("[ UDPServer ] User ({}) sent unregistered UDP packet type {}!\n", user->GetUserLogName(), type));
 				startReceive();
 				break;
 			}

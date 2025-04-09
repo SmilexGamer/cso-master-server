@@ -19,19 +19,19 @@ public:
 	void UpdateChannelNumPlayers(unsigned short numPlayers);
 	char GetChannelNumPlayers(unsigned char serverID, unsigned char channelID);
 	void GetAllChannelsNumPlayers();
-	LoginResult Login(const string& userName, const string& password);
+	const LoginResult Login(const string& userName, const string& password);
 	char CreateCharacter(unsigned long userID, const string& nickName);
-	UserCharacterResult GetUserCharacter(unsigned long userID, unsigned short flag);
+	const UserCharacterResult GetUserCharacter(unsigned long userID, unsigned short flag);
 	char AddUserSession(unsigned long userID);
 	void RemoveUserSession(unsigned long userID);
 	void RemoveAllUserSessions();
-	LoginResult TransferLogin(const string& userName, const string& userIP);
+	const LoginResult TransferLogin(const string& userName, const string& userIP);
 	char AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned char channelID);
 	void RemoveUserTransfer(const string& userName);
 	void RemoveOldUserTransfers();
 	void RemoveAllUserTransfers();
-	bool SaveUserOptionData(int userID, std::vector<unsigned char>& data);
-	std::vector<unsigned char> GetUserOptionData(int userID);
+	bool SaveUserOption(unsigned long userID, const vector<unsigned char>& userOption);
+	const vector<unsigned char> GetUserOption(unsigned long userID);
 
 private:
 	MYSQL* _connection;

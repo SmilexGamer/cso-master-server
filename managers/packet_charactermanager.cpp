@@ -9,20 +9,20 @@ Packet_CharacterManager packet_CharacterManager;
 void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (user == NULL) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
 	if (user->GetUserStatus() != UserStatus::InLogin) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter, but it's not in character creation!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_CharacterManager ] User ({}) has sent Packet_RecvCharacter, but it's not in character creation!\n", user->GetUserLogName()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_CharacterManager ] Parsing Packet_RecvCharacter from client ({})\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_CharacterManager ] Parsing Packet_RecvCharacter from user ({})\n", user->GetUserLogName()));
 
-	string nickName = packet->ReadString();
+	const string& nickName = packet->ReadString();
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_CharacterManager ] Client ({}) has sent Packet_RecvCharacter - nickName: {}\n", user->GetUserIPAddress(), nickName));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_CharacterManager ] User ({}) has sent Packet_RecvCharacter - nickName: {}\n", user->GetUserLogName(), nickName));
 
 	char userCharacterExistsResult = user->IsUserCharacterExists();
 	if (userCharacterExistsResult < 0) {
@@ -33,12 +33,12 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	if (nickName.size() < 4) {
+	if (nickName.size() < NICKNAME_MIN_SIZE) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_TOO_SHORT);
 		return;
 	}
 
-	if (nickName.size() > 16) {
+	if (nickName.size() > NICKNAME_MAX_SIZE) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_TOO_LONG);
 		return;
 	}
@@ -57,7 +57,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 	}
 
 	for (auto& c : nickName) {
-		if (count(nickName.begin(), nickName.end(), c) > 3) {
+		if (count(nickName.begin(), nickName.end(), c) > NICKNAME_MAX_CHAR_COUNT) {
 			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_EXCEED_CHAR_COUNT);
 			return;
 		}

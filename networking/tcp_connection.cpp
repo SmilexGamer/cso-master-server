@@ -40,10 +40,10 @@ TCPConnection::Packet::~Packet() {
 
 		string unreadData;
 		for (auto& c : ReadArray_UInt8((int)_buffer.size() - _readOffset)) {
-			unreadData += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+			unreadData += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 		}
 
-		serverConsole.Print(PrintType::Debug, format("[ TCPConnection ] Packet from client ({}) has unread data (_readOffset: {}, _buffer.size(): {}):{}\n", _connection->GetIPAddress(), readOffset, _buffer.size(), unreadData));
+		serverConsole.Print(PrefixType::Debug, format("[ TCPConnection ] Packet from client ({}) has unread data (_readOffset: {}, _buffer.size(): {}):{}\n", _connection->GetIPAddress(), readOffset, _buffer.size(), unreadData));
 	}
 #endif
 }
@@ -90,7 +90,7 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 void TCPConnection::WritePacket(const vector<unsigned char>& buffer, bool noSSL) {
 	if (buffer.size() > TCP_PACKET_MAX_SIZE) {
 #ifdef _DEBUG
-		serverConsole.Print(PrintType::Debug, format("[ TCPConnection ] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _ipAddress, buffer.size(), TCP_PACKET_MAX_SIZE));
+		serverConsole.Print(PrefixType::Debug, format("[ TCPConnection ] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _ipAddress, buffer.size(), TCP_PACKET_MAX_SIZE));
 #endif
 		return;
 	}
@@ -116,13 +116,13 @@ void TCPConnection::DisconnectClient(boost::system::error_code ec) {
 bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	_decryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_decryptCipher.ctx == NULL) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _decryptCipher.ctx failed!\n", _ipAddress));
 		return false;
 	}
 
 	int rc = RAND_bytes(_decryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.key failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.key failed!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -130,7 +130,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 
 	rc = RAND_bytes(_decryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.iv failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): RAND_bytes() for _decryptCipher.iv failed!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -139,7 +139,7 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 	_decryptCipher.method = method;
 
 	if (EVP_DecryptInit(_decryptCipher.ctx, _decryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_decryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _decryptCipher.key, _decryptCipher.iv) != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): EVP_DecryptInit() != 1!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup decrypt cipher for client ({}): EVP_DecryptInit() != 1!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_decryptCipher.ctx);
 		_decryptCipher.ctx = NULL;
 		return false;
@@ -151,13 +151,13 @@ bool TCPConnection::SetupDecryptCipher(CipherMethod method) {
 bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	_encryptCipher.ctx = EVP_CIPHER_CTX_new();
 	if (_encryptCipher.ctx == NULL) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): EVP_CIPHER_CTX_new() for _encryptCipher.ctx failed!\n", _ipAddress));
 		return false;
 	}
 
 	int rc = RAND_bytes(_encryptCipher.key, KEY_SIZE);
 	if (rc != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.key failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.key failed!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -165,7 +165,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 
 	rc = RAND_bytes(_encryptCipher.iv, BLOCK_SIZE);
 	if (rc != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.iv failed!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): RAND_bytes() for _encryptCipher.iv failed!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -174,7 +174,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 	_encryptCipher.method = method;
 
 	if (EVP_EncryptInit(_encryptCipher.ctx, _encryptCipher.method == CipherMethod::RC4_40 ? EVP_rc4_40() : (_encryptCipher.method == CipherMethod::RC4 ? EVP_rc4() : EVP_enc_null()), _encryptCipher.key, _encryptCipher.iv) != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): EVP_EncryptInit() != 1!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to setup encrypt cipher for client ({}): EVP_EncryptInit() != 1!\n", _ipAddress));
 		EVP_CIPHER_CTX_free(_encryptCipher.ctx);
 		_encryptCipher.ctx = NULL;
 		return false;
@@ -186,7 +186,7 @@ bool TCPConnection::SetupEncryptCipher(CipherMethod method) {
 bool TCPConnection::decrypt(vector<unsigned char>& buffer) {
 	int outLen = 0;
 	if (EVP_DecryptUpdate(_decryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to decrypt packet from client ({}): EVP_DecryptUpdate() != 1!\n", _ipAddress));
 		return false;
 	}
 
@@ -232,7 +232,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 
 	if (!packet->IsValid()) {
 #ifdef _DEBUG
-		serverConsole.Log(PrintType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with invalid signature!\n", _ipAddress));
+		serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with invalid signature!\n", _ipAddress));
 #endif
 		userManager.RemoveUserByConnection(shared_from_this());
 		DisconnectClient();
@@ -240,7 +240,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	}
 	if (packet->GetSequence() != _incomingSequence) {
 #ifdef _DEBUG
-		serverConsole.Log(PrintType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _ipAddress, _incomingSequence, packet->GetSequence()));
+		serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with incorrect sequence! Expected {}, got {}\n", _ipAddress, _incomingSequence, packet->GetSequence()));
 #endif
 		userManager.RemoveUserByConnection(shared_from_this());
 		DisconnectClient();
@@ -248,7 +248,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 	}
 	if (!packet->GetLength()) {
 #ifdef _DEBUG
-		serverConsole.Log(PrintType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with length 0!\n", _ipAddress));
+		serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Client ({}) sent TCP Packet with length 0!\n", _ipAddress));
 #endif
 		userManager.RemoveUserByConnection(shared_from_this());
 		DisconnectClient();
@@ -297,10 +297,10 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 #ifdef _DEBUG
 		string bufferStr;
 		for (auto& c : buffer) {
-			bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+			bufferStr += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 		}
 
-		serverConsole.Print(PrintType::Debug, format("[ TCPConnection ] Received TCP packet from client ({}):{}\n", self->GetIPAddress(), bufferStr));
+		serverConsole.Print(PrefixType::Debug, format("[ TCPConnection ] Received TCP packet from client ({}):{}\n", self->GetIPAddress(), bufferStr));
 #endif
 
 		self->_packetHandler(packet);
@@ -311,7 +311,7 @@ void TCPConnection::onRead(boost::system::error_code ec, size_t bytesTransferred
 bool TCPConnection::encrypt(vector<unsigned char>& buffer) {
 	int outLen = 0;
 	if (EVP_EncryptUpdate(_encryptCipher.ctx, buffer.data(), &outLen, buffer.data(), (int)buffer.size()) != 1) {
-		serverConsole.Print(PrintType::Error, format("[ TCPConnection ] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1!\n", _ipAddress));
+		serverConsole.Print(PrefixType::Error, format("[ TCPConnection ] Failed to encrypt packet for client ({}): EVP_EncryptUpdate() != 1!\n", _ipAddress));
 		return false;
 	}
 
@@ -357,10 +357,10 @@ void TCPConnection::onWrite(boost::system::error_code ec, size_t bytesTransferre
 #ifdef _DEBUG
 	string bufferStr;
 	for (auto& c : buffer) {
-		bufferStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+		bufferStr += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 	}
 
-	serverConsole.Print(PrintType::Debug, format("[ TCPConnection ] Sent TCP Packet to client ({}):{}\n", GetIPAddress(), bufferStr));
+	serverConsole.Print(PrefixType::Debug, format("[ TCPConnection ] Sent TCP Packet to client ({}):{}\n", GetIPAddress(), bufferStr));
 #endif
 
 	_outgoingPackets.pop();

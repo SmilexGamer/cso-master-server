@@ -28,16 +28,24 @@ void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigne
 	}
 }
 
-char User::CreateCharacter(const string& nickName) {
+char User::CreateCharacter(const string& nickName) const noexcept {
 	return databaseManager.CreateCharacter(_userID, nickName);
 }
 
-UserCharacterResult User::GetUserCharacter(unsigned short flag) {
+UserCharacterResult User::GetUserCharacter(unsigned short flag) const noexcept {
 	return databaseManager.GetUserCharacter(_userID, flag);
 }
 
-char User::IsUserCharacterExists() {
+char User::IsUserCharacterExists() const noexcept {
 	const UserCharacterResult& userCharacterResult = GetUserCharacter(NULL);
 
 	return userCharacterResult.result;
+}
+
+bool User::SaveUserOption(const vector<unsigned char>& userOption) const noexcept {
+	return databaseManager.SaveUserOption(_userID, userOption);
+}
+
+const vector<unsigned char> User::GetUserOption() const noexcept {
+	return databaseManager.GetUserOption(_userID);
 }

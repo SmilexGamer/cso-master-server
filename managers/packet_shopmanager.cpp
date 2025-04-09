@@ -6,12 +6,12 @@ Packet_ShopManager packet_ShopManager;
 
 void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
-	if (user == NULL) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_ShopManager ] Client ({}) has sent Packet_Shop, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+	if (!userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_ShopManager ] Client ({}) has sent Packet_Shop, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_ShopManager ] Parsing Packet_Shop from client ({})\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_ShopManager ] Parsing Packet_Shop from user ({})\n", user->GetUserLogName()));
 
 	unsigned char type = packet->ReadUInt8();
 
@@ -21,7 +21,7 @@ void Packet_ShopManager::ParsePacket_Shop(TCPConnection::Packet::pointer packet)
 			break;
 		}
 		default: {
-			serverConsole.Print(PrintType::Warn, format("[ Packet_ShopManager ] Client ({}) has sent unregistered Packet_Shop type {}!\n", user->GetUserIPAddress(), type));
+			serverConsole.Print(PrefixType::Warn, format("[ Packet_ShopManager ] User ({}) has sent unregistered Packet_Shop type {}!\n", user->GetUserLogName(), type));
 			break;
 		}
 	}

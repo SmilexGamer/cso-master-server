@@ -118,7 +118,7 @@ public:
 		return _roomUsers;
 	}
 
-	void UpdateRoomSettings(const RoomSettings& newSettings) {
+	void UpdateRoomSettings(const RoomSettings& newSettings) noexcept {
 		_roomSettings = newSettings;
 	}
 

@@ -1,12 +1,17 @@
 #pragma once
+#include <thread>
 #include <string>
 
 using namespace std;
 
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
 typedef void* HANDLE;
 
-enum PrintType {
-	NoType = 0,
+enum PrefixType {
+	NoPrefix = 0,
 	Info = 1,
 	Warn = 2,
 	Error = 3,
@@ -25,19 +30,31 @@ public:
 	ServerConsole();
 	~ServerConsole();
 
+	bool Init();
 	void Start();
 	void Stop();
-	void Log(const string& text);
-	void Log(PrintType printType, const string& text);
-	void Print(PrintType printType, const string& text, bool logToFile = true);
+	void Log(PrefixType prefixType, const string& text);
+	void Print(PrefixType prefixType, const string& text, bool logToFile = true);
+	void StartRead();
+
+	unsigned long long GetCurrentTime() const noexcept {
+		return _currentTime;
+	}
 private:
 	int run();
 	int shutdown();
+	void onSecondTick();
+	void onMinuteTick();
+	void log(const string& text);
 
 private:
-	HANDLE _console;
-	string _logFile;
+	thread _serverConsoleThread;
 	bool _running;
+	time_t _currentTime;
+	string _currentTimeStr;
+	char _secondCount;
+	HANDLE _consoleOutput;
+	string _logFile;
 };
 
 extern ServerConsole serverConsole;

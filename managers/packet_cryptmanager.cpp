@@ -7,11 +7,11 @@ Packet_CryptManager packet_CryptManager;
 void Packet_CryptManager::ParsePacket_RecvCrypt(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (!userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_CryptManager ] Client ({}) has sent Packet_RecvCrypt, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_CryptManager ] Client ({}) has sent Packet_RecvCrypt, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_CryptManager ] Client ({}) has sent Packet_RecvCrypt\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_CryptManager ] User ({}) has sent Packet_RecvCrypt\n", user->GetUserLogName()));
 }
 
 void Packet_CryptManager::SendPacket_Crypt(TCPConnection::pointer connection, CipherType type, const Cipher& cipher) {

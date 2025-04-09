@@ -11,29 +11,29 @@ Packet_LoginManager packet_LoginManager;
 
 void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packet) {
 	if (!packet->GetConnection()->IsVersionReceived()) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login, but it hasn't sent Packet_Version!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login, but it hasn't sent Packet_Version!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login, but it's already logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_LoginManager ] User ({}) has sent Packet_Login, but it's already logged in!\n", user->GetUserLogName()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_LoginManager ] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_LoginManager ] Parsing Packet_Login from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
-	string userName = packet->ReadString();
-	string password = packet->ReadString();
-	vector<unsigned char> hardwareID = packet->ReadArray_UInt8(16);
+	const string& userName = packet->ReadString();
+	const string& password = packet->ReadString();
+	const vector<unsigned char>& hardwareID = packet->ReadArray_UInt8(HARDWARE_ID_SIZE);
 	unsigned long pcBang = packet->ReadUInt32_LE();
 
 	string hardwareIDStr;
 	for (auto& c : hardwareID) {
-		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0x0" : "0x", c);
+		hardwareIDStr += format(" {}{:X}", c < 0x10 ? "0" : "", c);
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login - userName: {}, password: {}, hardwareID:{}, pcBang: {}\n", packet->GetConnection()->GetIPAddress(), userName, password, hardwareIDStr, pcBang));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login - userName: {}, password: {}, hardwareID:{}, pcBang: {}\n", packet->GetConnection()->GetIPAddress(), userName, password, hardwareIDStr, pcBang));
 
 	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
 		packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::EXCEED_MAX_CONNECTION);

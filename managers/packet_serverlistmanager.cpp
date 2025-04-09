@@ -8,7 +8,7 @@ Packet_ServerListManager packet_ServerListManager;
 void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Packet::pointer packet) {
 	User* user = userManager.GetUserByConnection(packet->GetConnection());
 	if (!userManager.IsUserLoggedIn(user)) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_ServerListManager ] Client ({}) has sent Packet_RequestServerList, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_ServerListManager ] Client ({}) has sent Packet_RequestServerList, but it's not logged in!\n", packet->GetConnection()->GetIPAddress()));
 		return;
 	}
 
@@ -19,11 +19,11 @@ void Packet_ServerListManager::ParsePacket_RequestServerList(TCPConnection::Pack
 	}
 
 	if (user->GetUserStatus() != UserStatus::InServerList) {
-		serverConsole.Print(PrintType::Warn, format("[ Packet_ServerListManager ] Client ({}) has sent Packet_RequestServerList, but it's not in server list!\n", packet->GetConnection()->GetIPAddress()));
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_ServerListManager ] User ({}) has sent Packet_RequestServerList, but it's not in server list!\n", user->GetUserLogName()));
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_ServerListManager ] Client ({}) has sent Packet_RequestServerList\n", user->GetUserIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_ServerListManager ] User ({}) has sent Packet_RequestServerList\n", user->GetUserLogName()));
 
 	SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
 }

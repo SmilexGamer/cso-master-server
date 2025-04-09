@@ -11,8 +11,8 @@
 #include "packet_updateinfomanager.h"
 #include "packet_udpmanager.h"
 #include "packet_shopmanager.h"
-#include "packet_userstartmanager.h"
 #include "packet_optionmanager.h"
+#include "packet_userstartmanager.h"
 #include "serverconsole.h"
 
 PacketManager packetManager;
@@ -27,18 +27,18 @@ PacketManager::~PacketManager() {
 
 void PacketManager::Start() {
 	if (_packetThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is already running!\n");
+		serverConsole.Print(PrefixType::Warn, "[ PacketManager ] Thread is already running!\n");
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, "[ PacketManager ] Starting!\n");
+	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Starting!\n");
 
 	_packetThread = thread(&PacketManager::run, this);
 }
 
 void PacketManager::Stop() {
 	if (!_packetThread.joinable()) {
-		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is already shut down!\n");
+		serverConsole.Print(PrefixType::Warn, "[ PacketManager ] Thread is already shut down!\n");
 		return;
 	}
 
@@ -47,11 +47,11 @@ void PacketManager::Stop() {
 
 void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 	if (!_running) {
-		serverConsole.Print(PrintType::Warn, "[ PacketManager ] Thread is shut down! Please call Start() again to begin queueing!\n");
+		serverConsole.Print(PrefixType::Warn, "[ PacketManager ] Thread is shut down! Please call Start() again to begin queueing!\n");
 		return;
 	}
 
-	serverConsole.Print(PrintType::Info, format("[ PacketManager ] Queueing packet from client ({})\n", packet->GetConnection()->GetIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ PacketManager ] Queueing packet from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	_packetQueue.push_back(packet);
 }
@@ -60,7 +60,7 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_R
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Reply });
 
 	packet->WriteUInt8(type);
-	packet->WriteString("");
+	packet->WriteString(""); // "S_REPLY_OK"? TODO: research this
 	packet->WriteUInt8((unsigned char)additionalText.size());
 	for (auto& text : additionalText) {
 		packet->WriteString(text);
@@ -129,7 +129,7 @@ void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, co
 }
 
 int PacketManager::run() {
-	serverConsole.Print(PrintType::Info, "[ PacketManager ] Thread starting!\n");
+	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Thread starting!\n");
 
 	try {
 		_running = true;
@@ -144,18 +144,18 @@ int PacketManager::run() {
 		}
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ PacketManager ] Error on run: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ PacketManager ] Error on run: {}\n", e.what()));
 		return -1;
 	}
 
-	serverConsole.Print(PrintType::Info, "[ PacketManager ] Thread shutting down!\n");
+	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Thread shutting down!\n");
 	return 0;
 }
 
 int PacketManager::shutdown() {
 	try {
 		if (_packetThread.joinable()) {
-			serverConsole.Print(PrintType::Info, "[ PacketManager ] Shutting down!\n");
+			serverConsole.Print(PrefixType::Info, "[ PacketManager ] Shutting down!\n");
 
 			_running = false;
 			_packetQueue.clear();
@@ -163,7 +163,7 @@ int PacketManager::shutdown() {
 		}
 	}
 	catch (exception& e) {
-		serverConsole.Print(PrintType::Error, format("[ PacketManager ] Error on shutdown: {}\n", e.what()));
+		serverConsole.Print(PrefixType::Error, format("[ PacketManager ] Error on shutdown: {}\n", e.what()));
 		return -1;
 	}
 
@@ -235,7 +235,7 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		default: {
-			serverConsole.Print(PrintType::Warn, format("[ PacketManager ] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), packetID));
+			serverConsole.Print(PrefixType::Warn, format("[ PacketManager ] Client ({}) has sent unregistered packet ID {}!\n", packet->GetConnection()->GetIPAddress(), packetID));
 			break;
 		}
 	}

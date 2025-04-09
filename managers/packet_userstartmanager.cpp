@@ -4,13 +4,13 @@
 Packet_UserStartManager packet_UserStartManager;
 
 void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::pointer packet) {
-	serverConsole.Print(PrintType::Info, format("[ Packet_UserStartManager ] Parsing Packet_UserStart from client ({})\n", packet->GetConnection()->GetIPAddress()));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] Parsing Packet_UserStart from client ({})\n", packet->GetConnection()->GetIPAddress()));
 
 	unsigned char type = packet->ReadUInt8();
 	unsigned long unk1 = packet->ReadUInt32_LE();
-	string unk2 = packet->ReadString();
+	const string& unk2 = packet->ReadString();
 
-	serverConsole.Print(PrintType::Info, format("[ Packet_UserStartManager ] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", packet->GetConnection()->GetIPAddress(), type, unk1, unk2));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", packet->GetConnection()->GetIPAddress(), type, unk1, unk2));
 }
 
 void Packet_UserStartManager::SendPacket_UserStart(const GameUser& gameUser) {
