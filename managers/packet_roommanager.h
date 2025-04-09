@@ -10,7 +10,7 @@
 #define ROOMLIST_FLAG_CURRENTPLAYERS	0x40
 #define ROOMLIST_FLAG_MAXPLAYERS		0x80
 #define ROOMLIST_FLAG_WEAPONLIMIT		0x100
-#define ROOMLIST_FLAG_UNK200			0x200
+#define ROOMLIST_FLAG_ROOMHOST			0x200
 #define ROOMLIST_FLAG_UNK400			0x400
 #define ROOMLIST_FLAG_UNK800			0x800
 #define ROOMLIST_FLAG_UNK1000			0x1000
@@ -34,7 +34,8 @@ enum Packet_RoomType {
 enum Packet_RoomListType {
 	FullRoomList = 0,
 	AddRoom = 1,
-	RemoveRoom = 2
+	RemoveRoom = 2,
+	UpdateRoom = 3
 };
 
 class Packet_RoomManager {
@@ -43,6 +44,7 @@ public:
 	void SendPacket_RoomList_FullRoomList(TCPConnection::pointer connection, const vector<Room*>& rooms, unsigned short flag);
 	void SendPacket_RoomList_AddRoom(TCPConnection::pointer connection, Room* room, unsigned short flag);
 	void SendPacket_RoomList_RemoveRoom(TCPConnection::pointer connection, unsigned short roomID);
+	void SendPacket_RoomList_UpdateRoom(TCPConnection::pointer connection, Room* room, unsigned short flag);
 	void SendPacket_Room_UserLeave(TCPConnection::pointer connection, unsigned long userID);
 
 private:

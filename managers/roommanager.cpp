@@ -108,6 +108,26 @@ void RoomManager::SendRemoveRoomPacketToAll(unsigned short roomID) {
 	}
 }
 
+void RoomManager::SendUpdateRoomPacket(TCPConnection::pointer connection, Room* room, unsigned short flag) {
+	if (connection == NULL) {
+		return;
+	}
+
+	packet_RoomManager.SendPacket_RoomList_UpdateRoom(connection, room, flag);
+}
+
+void RoomManager::SendUpdateRoomPacketToAll(Room* room, unsigned short flag) {
+	const vector<User*>& users = userManager.GetUsers();
+
+	for (auto& user : users) {
+		if (user->GetUserStatus() != UserStatus::InLobby) {
+			continue;
+		}
+
+		packet_RoomManager.SendPacket_RoomList_UpdateRoom(user->GetConnection(), room, flag);
+	}
+}
+
 void RoomManager::SendRoomUserLeavePacket(TCPConnection::pointer connection, unsigned long userID) {
 	if (connection == NULL) {
 		return;

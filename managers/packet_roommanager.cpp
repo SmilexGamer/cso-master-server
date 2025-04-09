@@ -78,6 +78,15 @@ void Packet_RoomManager::SendPacket_RoomList_RemoveRoom(TCPConnection::pointer c
 	packet->Send();
 }
 
+void Packet_RoomManager::SendPacket_RoomList_UpdateRoom(TCPConnection::pointer connection, Room* room, unsigned short flag) {
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::RoomList });
+
+	packet->WriteUInt8(Packet_RoomListType::UpdateRoom);
+	buildRoomInfo(packet, room, flag);
+
+	packet->Send();
+}
+
 void Packet_RoomManager::SendPacket_Room_UserLeave(TCPConnection::pointer connection, unsigned long userID) {
 	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
 
@@ -161,6 +170,7 @@ void Packet_RoomManager::parsePacket_Room_RequestJoin(User* user, TCPConnection:
 	}
 
 	userManager.SendRemoveUserPacketToAll(user);
+	roomManager.SendUpdateRoomPacketToAll(room, ROOMLIST_FLAG_CURRENTPLAYERS);
 
 	const vector<User*>& users = room->GetRoomUsers();
 	vector<GameUser> gameUsers;
@@ -356,6 +366,8 @@ void Packet_RoomManager::parsePacket_Room_RequestUpdateRoomSettings(User* user, 
 
 	room->UpdateRoomSettings(newSettings);
 
+	roomManager.SendUpdateRoomPacketToAll(room, ROOMLIST_FLAG_ALL);
+
 	const vector<User*>& users = room->GetRoomUsers();
 	for (auto& u : users) {
 		sendPacket_Room_ReplyUpdateRoomSettings(u->GetConnection(), newSettings);
@@ -395,8 +407,8 @@ void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Ro
 	if (flag & ROOMLIST_FLAG_WEAPONLIMIT) {
 		packet->WriteUInt8(0); // weaponLimit
 	}
-	if (flag & ROOMLIST_FLAG_UNK200) {
-		packet->WriteUInt32_LE(0); // unk
+	if (flag & ROOMLIST_FLAG_ROOMHOST) {
+		packet->WriteUInt32_LE(room->GetRoomHostUser()->GetUserID());
 		packet->WriteUInt8(0); // unk
 	}
 	if (flag & ROOMLIST_FLAG_UNK400) {

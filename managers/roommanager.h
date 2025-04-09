@@ -18,6 +18,8 @@ public:
 	void SendFullRoomListPacket(TCPConnection::pointer connection);
 	void SendAddRoomPacketToAll(Room* room, unsigned short flag);
 	void SendRemoveRoomPacketToAll(unsigned short roomID);
+	void SendUpdateRoomPacket(TCPConnection::pointer connection, Room* room, unsigned short flag);
+	void SendUpdateRoomPacketToAll(Room* room, unsigned short flag);
 	void SendRoomUserLeavePacket(TCPConnection::pointer connection, unsigned long userID);
 
 private:

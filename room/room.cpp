@@ -1,4 +1,5 @@
 #include "roommanager.h"
+#include "packet_roommanager.h"
 #include "serverconsole.h"
 
 Room::Room(unsigned short roomID, User* roomHostUser, TCPConnection::Packet::pointer packet) : _roomID(roomID), _roomHostUser(roomHostUser) {
@@ -50,6 +51,8 @@ void Room::RemoveRoomUser(User* user) {
 
 	_roomUsers.erase(find(_roomUsers.begin(), _roomUsers.end(), user));
 
+	roomManager.SendUpdateRoomPacketToAll(this, ROOMLIST_FLAG_CURRENTPLAYERS);
+
 	user->SetUserStatus(UserStatus::InLobby);
 	user->SetCurrentRoomID(NULL);
 
@@ -75,4 +78,10 @@ void Room::UpdateRoomHostUser(User* user) {
 	}
 
 	_roomHostUser = user;
+
+	unsigned long userID = user->GetUserID();
+
+	for (auto& u : _roomUsers) {
+		roomManager.SendUpdateRoomPacket(u->GetConnection(), this, ROOMLIST_FLAG_ROOMHOST);
+	}
 }
