@@ -28,12 +28,28 @@ void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigne
 	}
 }
 
-char User::CreateCharacter(const string& nickName) const noexcept {
-	return databaseManager.CreateCharacter(_userID, nickName);
+char User::CreateUserCharacter(const string& nickName) const noexcept {
+	return databaseManager.CreateUserCharacter(_userID, nickName);
 }
 
 UserCharacterResult User::GetUserCharacter(unsigned short flag) const noexcept {
 	return databaseManager.GetUserCharacter(_userID, flag);
+}
+
+char User::AddUserSession() const noexcept {
+	return databaseManager.AddUserSession(_userID);
+}
+
+void User::RemoveUserSession() const noexcept {
+	databaseManager.RemoveUserSession(_userID);
+}
+
+char User::AddUserTransfer(unsigned char serverID, unsigned char channelID) const noexcept {
+	return databaseManager.AddUserTransfer(_userName, _connection->GetIPAddress(), serverID, channelID);
+}
+
+void User::RemoveUserTransfer() const noexcept {
+	databaseManager.RemoveUserTransfer(_userName);
 }
 
 char User::IsUserCharacterExists() const noexcept {

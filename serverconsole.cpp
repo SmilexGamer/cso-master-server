@@ -148,8 +148,20 @@ void ServerConsole::StartRead() {
 			Print(PrefixType::Info, format("[ ServerConsole ] Connected clients: {}, connected users: {}\n", tcpServer.GetConnections().size(), userManager.GetUsers().size()));
 			continue;
 		}
+		else if (command == "users") {
+			string usersList;
+			const vector<User*>& users = userManager.GetUsers();
+
+			Print(PrefixType::Info, format("[ ServerConsole ] Connected users: {}\n", users.size()));
+			Print(PrefixType::Info, "[ ServerConsole ] UserID, UserName, IP, Status\n");
+
+			for (auto& user : users) {
+				Print(PrefixType::Info, format("[ ServerConsole ] {}, {}, {}, {}\n", user->GetUserID(), user->GetUserName(), user->GetUserIPAddress(), (unsigned char)user->GetUserStatus()));
+			}
+			continue;
+		}
 		else {
-			Print(PrefixType::Info, "[ ServerConsole ] Available commands: stop, status\n");
+			Print(PrefixType::Info, "[ ServerConsole ] Available commands: stop, status, users\n");
 			continue;
 		}
 	}

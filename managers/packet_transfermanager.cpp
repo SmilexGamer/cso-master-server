@@ -42,10 +42,8 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		return;
 	}
 
-	databaseManager.RemoveUserTransfer(userName);
-
 	User* newUser = new User(packet->GetConnection(), transferLoginResult.userID, userName);
-	char userResult = userManager.AddUser(newUser);
+	char userResult = userManager.AddUser(newUser, true);
 	if (!userResult) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(packet->GetConnection(), Packet_ReplyType::SysError);
@@ -139,7 +137,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 			return;
 		}
 
-		char addUserTransferResult = databaseManager.AddUserTransfer(user->GetUserName(), user->GetUserIPAddress(), serverID, channelID);
+		char addUserTransferResult = user->AddUserTransfer(serverID, channelID);
 		if (!addUserTransferResult) {
 			if (addUserTransferResult < 0) {
 				packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);

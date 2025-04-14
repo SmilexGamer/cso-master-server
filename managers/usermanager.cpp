@@ -13,12 +13,16 @@ UserManager::~UserManager() {
 	RemoveAllUsers();
 }
 
-char UserManager::AddUser(User* user) {
+char UserManager::AddUser(User* user, bool isTransfer) {
 	if (user == NULL) {
 		return -1;
 	}
 
-	char result = databaseManager.AddUserSession(user->GetUserID());
+	if (isTransfer) {
+		user->RemoveUserTransfer();
+	}
+
+	char result = user->AddUserSession();
 	if (result) {
 		_users.push_back(user);
 
@@ -42,7 +46,7 @@ void UserManager::RemoveUser(User* user) {
 		room->RemoveRoomUser(user);
 	}
 
-	databaseManager.RemoveUserSession(user->GetUserID());
+	user->RemoveUserSession();
 	_users.erase(find(_users.begin(), _users.end(), user));
 	delete user;
 	user = NULL;

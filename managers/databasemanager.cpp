@@ -229,11 +229,11 @@ const LoginResult DatabaseManager::Login(const string& userName, const string& p
     return { userID, reply };
 }
 
-char DatabaseManager::CreateCharacter(unsigned long userID, const string& nickName) {
+char DatabaseManager::CreateUserCharacter(unsigned long userID, const string& nickName) {
     string query = format("SELECT 1 FROM user_characters WHERE nickName = '{}';", nickName);
 
     if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateCharacter: {}\n", mysql_error(_connection)));
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
         return -1;
     }
 
@@ -250,7 +250,7 @@ char DatabaseManager::CreateCharacter(unsigned long userID, const string& nickNa
     query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
 
     if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateCharacter: {}\n", mysql_error(_connection)));
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
         return -1;
     }
 

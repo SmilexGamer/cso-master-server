@@ -20,7 +20,7 @@ public:
 	char GetChannelNumPlayers(unsigned char serverID, unsigned char channelID);
 	void GetAllChannelsNumPlayers();
 	const LoginResult Login(const string& userName, const string& password);
-	char CreateCharacter(unsigned long userID, const string& nickName);
+	char CreateUserCharacter(unsigned long userID, const string& nickName);
 	const UserCharacterResult GetUserCharacter(unsigned long userID, unsigned short flag);
 	char AddUserSession(unsigned long userID);
 	void RemoveUserSession(unsigned long userID);
