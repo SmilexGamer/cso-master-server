@@ -135,7 +135,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				unsigned short localPort = ReadUInt16_LE();
 				unsigned char retryNum = ReadUInt8();
 
-				serverConsole.Print(PrefixType::Info, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}\n", user->GetUserLogName(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum));
+				serverConsole.Print(PrefixType::Info, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}, externalPort: {}\n", user->GetUserLogName(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum, _endpoint.port()));
 
 				user->SetUserNetwork(portType, localIP, localPort, _endpoint.port());
 
@@ -160,7 +160,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				unsigned char retryNum = ReadUInt8();
 
 #ifdef _DEBUG
-				serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, retryNum: {}\n", user->GetUserLogName(), userID, type, retryNum));
+				serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, retryNum: {}, externalPort: {}\n", user->GetUserLogName(), userID, type, retryNum, _endpoint.port()));
 #endif
 				startReceive();
 				break;

@@ -103,30 +103,59 @@ void Packet_RoomManager::parsePacket_Room_RequestCreate(User* user, TCPConnectio
 	}
 
 	unsigned short roomID = roomManager.GetFreeRoomID();
+	if (!roomID) {
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room RequestCreate, but there's no available roomID!\n", user->GetUserLogName()));
+		return;
+	}
 
-	if (roomID != 0) {
-		Room* room = new Room(roomID, user, packet);
-		if (room == NULL) {
-			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
-			return;
-		}
+	Room* newRoom = new Room(roomID, user);
+	if (newRoom == NULL) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+		return;
+	}
 
-		const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-		if (!userCharacterResult.result) {
-			packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+	RoomSettings roomSettings = newRoom->GetRoomSettings();
 
-			delete room;
-			room = NULL;
-			return;
-		}
+	roomSettings.roomName = packet->ReadString();
+	unsigned char unk2 = packet->ReadUInt8();
+	roomSettings.maxPlayers = packet->ReadUInt8();
+	roomSettings.gameModeID = packet->ReadUInt8();
+	roomSettings.mapID = packet->ReadUInt8();
+	roomSettings.winLimit = packet->ReadUInt8();
+	roomSettings.killLimit = packet->ReadUInt16_LE();
+	roomSettings.timeLimit = packet->ReadUInt8();
+	roomSettings.roundTime = packet->ReadUInt8();
+	roomSettings.password = packet->ReadString();
+	unsigned char unk11 = packet->ReadUInt8();
+	unsigned char unk12 = packet->ReadUInt8();
+	unsigned char fastStart = packet->ReadUInt8();
+	unsigned char unk14 = packet->ReadUInt8();
+	unsigned char unk15 = packet->ReadUInt8();
+	unsigned char unk16 = packet->ReadUInt32_LE();
 
-		room->AddRoomUser(user);
-		userManager.SendRemoveUserPacketToAll(user);
+	serverConsole.Print(PrefixType::Info, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room RequestCreate - roomName: {}, unk2: {}, maxPlayers: {}, gameModeID: {}, mapID: {}, winLimit: {}, killLimit: {}, timeLimit: {}, roundTime: {}, password: {}, unk11: {}, unk12: {}, fastStart: {}, unk14: {}, unk15: {}, unk16: {}\n", user->GetUserLogName(), roomSettings.roomName, unk2, roomSettings.maxPlayers, roomSettings.gameModeID, roomSettings.mapID, roomSettings.winLimit, roomSettings.killLimit, roomSettings.timeLimit, roomSettings.roundTime, roomSettings.password, unk11, unk12, fastStart, unk14, unk15, unk16));
 
-		roomManager.AddRoom(room);
-		roomManager.SendAddRoomPacketToAll(room, ROOMLIST_FLAG_ALL);
+	newRoom->SetRoomSettings(roomSettings);
 
-		sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), room, { { user, userCharacterResult.userCharacter } });
+	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
+	if (!userCharacterResult.result) {
+		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
+
+		delete newRoom;
+		newRoom = NULL;
+		return;
+	}
+
+	newRoom->AddRoomUser(user);
+	userManager.SendRemoveUserPacketToAll(user);
+
+	roomManager.AddRoom(newRoom);
+	roomManager.SendAddRoomPacketToAll(newRoom, ROOMLIST_FLAG_ALL);
+
+	sendPacket_Room_ReplyCreateAndJoin(user->GetConnection(), newRoom, { { user, userCharacterResult.userCharacter } });
+
+	if (fastStart) {
+		packet_HostManager.SendPacket_Host_StartGame(user);
 	}
 }
 
@@ -219,7 +248,20 @@ void Packet_RoomManager::parsePacket_Room_RequestStartGame(User* user) {
 		return;
 	}
 
-	packet_HostManager.SendPacket_Host_StartGame(user);
+	Room* room = roomManager.GetRoomByRoomID(user->GetCurrentRoomID());
+	if (room == NULL) {
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room RequestStartGame, but its room is NULL!\n", user->GetUserLogName()));
+		return;
+	}
+
+	serverConsole.Print(PrefixType::Info, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room RequestStartGame\n", user->GetUserLogName()));
+
+	if (room->GetRoomHostUser() == user) {
+		packet_HostManager.SendPacket_Host_StartGame(user);
+	}
+	else {
+		packet_HostManager.SendPacket_Host_JoinGame(user->GetConnection(), room->GetRoomHostUser()->GetUserID());
+	}
 }
 
 void Packet_RoomManager::parsePacket_Room_RequestUpdateRoomSettings(User* user, TCPConnection::Packet::pointer packet) {
@@ -239,138 +281,140 @@ void Packet_RoomManager::parsePacket_Room_RequestUpdateRoomSettings(User* user, 
 		return;
 	}
 
-	RoomSettings newSettings = room->GetRoomSettings();
+	serverConsole.Print(PrefixType::Info, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room RequestUpdateRoomSettings\n", user->GetUserLogName()));
+
+	RoomSettings roomSettings = room->GetRoomSettings();
 	unsigned long lowFlag = packet->ReadUInt32_LE();
 	unsigned char highFlag = packet->ReadUInt8();
 
 	if (lowFlag & ROOMSETTINGS_LFLAG_ROOMNAME) {
-		newSettings.roomName = packet->ReadString();
+		roomSettings.roomName = packet->ReadString();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2) {
-		newSettings.unk2 = packet->ReadUInt8();
+		roomSettings.unk2 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4) {
-		newSettings.unk4_1 = packet->ReadUInt8();
-		newSettings.unk4_2 = packet->ReadUInt8();
-		newSettings.unk4_3 = packet->ReadUInt8();
-		newSettings.unk4_4 = packet->ReadUInt32_LE();
+		roomSettings.unk4_1 = packet->ReadUInt8();
+		roomSettings.unk4_2 = packet->ReadUInt8();
+		roomSettings.unk4_3 = packet->ReadUInt8();
+		roomSettings.unk4_4 = packet->ReadUInt32_LE();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_PASSWORD) {
-		newSettings.password = packet->ReadString();
+		roomSettings.password = packet->ReadString();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10) {
-		newSettings.unk10 = packet->ReadUInt8();
+		roomSettings.unk10 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20) {
-		newSettings.unk20 = packet->ReadUInt8();
+		roomSettings.unk20 = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40) {
-		newSettings.unk40 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_GAMEMODEID) {
+		roomSettings.gameModeID = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_MAPID) {
-		newSettings.mapID = packet->ReadUInt8();
+		roomSettings.mapID = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_MAXPLAYERS) {
-		newSettings.maxPlayers = packet->ReadUInt8();
+		roomSettings.maxPlayers = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_WINLIMIT) {
-		newSettings.winLimit = packet->ReadUInt8();
+		roomSettings.winLimit = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK400) {
-		newSettings.unk400 = packet->ReadUInt16_LE();
+	if (lowFlag & ROOMSETTINGS_LFLAG_KILLLIMIT) {
+		roomSettings.killLimit = packet->ReadUInt16_LE();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_TIMELIMIT) {
-		newSettings.timeLimit = packet->ReadUInt8();
+		roomSettings.timeLimit = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_ROUNDTIME) {
-		newSettings.roundTime = packet->ReadUInt8();
+		roomSettings.roundTime = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2000) {
-		newSettings.unk2000 = packet->ReadUInt8();
+		roomSettings.unk2000 = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4000) {
-		newSettings.unk4000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_HOSTAGEPENALTY) {
+		roomSettings.hostagePenalty = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK8000) {
-		newSettings.unk8000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_FREEZETIME) {
+		roomSettings.freezeTime = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10000) {
-		newSettings.unk10000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_BUYTIME) {
+		roomSettings.buyTime = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20000) {
-		newSettings.unk20000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_NICKNAMEDISPLAY) {
+		roomSettings.nickNameDisplay = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40000) {
-		newSettings.unk40000 = packet->ReadUInt8();
+		roomSettings.unk40000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK80000) {
-		newSettings.unk80000 = packet->ReadUInt8();
+		roomSettings.unk80000 = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK100000) {
-		newSettings.unk100000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_FRIENDLYFIRE) {
+		roomSettings.friendlyFire = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK200000) {
-		newSettings.unk200000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_FLASHLIGHT) {
+		roomSettings.flashLight = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK400000) {
-		newSettings.unk400000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_FOOTSTEPS) {
+		roomSettings.footSteps = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK800000) {
-		newSettings.unk800000 = packet->ReadUInt8();
+		roomSettings.unk800000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK1000000) {
-		newSettings.unk1000000 = packet->ReadUInt8();
+		roomSettings.unk1000000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK2000000) {
-		newSettings.unk2000000 = packet->ReadUInt8();
+		roomSettings.unk2000000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK4000000) {
-		newSettings.unk4000000 = packet->ReadUInt8();
+		roomSettings.unk4000000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK8000000) {
-		newSettings.unk8000000 = packet->ReadUInt8();
+		roomSettings.unk8000000 = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK10000000) {
-		newSettings.unk10000000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_DEATHCAMERATYPE) {
+		roomSettings.deathCameraType = packet->ReadUInt8();
 	}
-	if (lowFlag & ROOMSETTINGS_LFLAG_UNK20000000) {
-		newSettings.unk20000000 = packet->ReadUInt8();
+	if (lowFlag & ROOMSETTINGS_LFLAG_VOICECHAT) {
+		roomSettings.voiceChat = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK40000000) {
-		newSettings.unk40000000 = packet->ReadUInt8();
+		roomSettings.unk40000000 = packet->ReadUInt8();
 	}
 	if (lowFlag & ROOMSETTINGS_LFLAG_UNK80000000) {
-		newSettings.unk80000000_1 = packet->ReadUInt8();
+		roomSettings.unk80000000_1 = packet->ReadUInt8();
 		for (unsigned char i = 0; i < 2; i++) {
-			newSettings.unk80000000_2[i].unk8000000_vec_1 = packet->ReadUInt32_LE();
-			newSettings.unk80000000_2[i].unk8000000_vec_2 = packet->ReadUInt32_LE();
-			newSettings.unk80000000_2[i].unk8000000_vec_3 = packet->ReadUInt8();
-			newSettings.unk80000000_2[i].unk8000000_vec_4 = packet->ReadUInt8();
-			newSettings.unk80000000_2[i].unk8000000_vec_5 = packet->ReadUInt8();
-			newSettings.unk80000000_2[i].unk8000000_vec_6 = packet->ReadUInt8();
-			newSettings.unk80000000_2[i].unk8000000_vec_7 = packet->ReadUInt16_LE();
-			newSettings.unk80000000_2[i].unk8000000_vec_8 = packet->ReadUInt8();
-			newSettings.unk80000000_2[i].unk8000000_vec_9 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_1 = packet->ReadUInt32_LE();
+			roomSettings.unk80000000_2[i].unk8000000_vec_2 = packet->ReadUInt32_LE();
+			roomSettings.unk80000000_2[i].unk8000000_vec_3 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_4 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_5 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_6 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_7 = packet->ReadUInt16_LE();
+			roomSettings.unk80000000_2[i].unk8000000_vec_8 = packet->ReadUInt8();
+			roomSettings.unk80000000_2[i].unk8000000_vec_9 = packet->ReadUInt8();
 		}
 	}
 	if (highFlag & ROOMSETTINGS_HFLAG_UNK1) {
-		newSettings.unkh1_1 = packet->ReadUInt32_LE();
-		newSettings.unkh1_2 = packet->ReadString();
-		newSettings.unkh1_3 = packet->ReadUInt8();
-		newSettings.unkh1_4 = packet->ReadUInt8();
-		newSettings.unkh1_5 = packet->ReadUInt8();
+		roomSettings.unkh1_1 = packet->ReadUInt32_LE();
+		roomSettings.unkh1_2 = packet->ReadString();
+		roomSettings.unkh1_3 = packet->ReadUInt8();
+		roomSettings.unkh1_4 = packet->ReadUInt8();
+		roomSettings.unkh1_5 = packet->ReadUInt8();
 	}
 	if (highFlag & ROOMSETTINGS_HFLAG_UNK2) {
-		newSettings.unkh2 = packet->ReadUInt8();
+		roomSettings.unkh2 = packet->ReadUInt8();
 	}
 
-	room->UpdateRoomSettings(newSettings);
+	room->SetRoomSettings(roomSettings);
 
 	roomManager.SendUpdateRoomPacketToAll(room, ROOMLIST_FLAG_ALL);
 
 	const vector<User*>& users = room->GetRoomUsers();
 	for (auto& u : users) {
-		sendPacket_Room_ReplyUpdateRoomSettings(u->GetConnection(), newSettings);
+		sendPacket_Room_ReplyUpdateRoomSettings(u->GetConnection(), roomSettings);
 	}
 }
 
@@ -393,10 +437,10 @@ void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Ro
 		packet->WriteUInt8(0); // levelLimit
 	}
 	if (flag & ROOMLIST_FLAG_GAMEMODEID) {
-		packet->WriteUInt8(0); // gamemodeID
+		packet->WriteUInt8(roomSettings.gameModeID);
 	}
 	if (flag & ROOMLIST_FLAG_MAPID) {
-		packet->WriteUInt8(roomSettings.mapID); // mapID
+		packet->WriteUInt8(roomSettings.mapID);
 	}
 	if (flag & ROOMLIST_FLAG_CURRENTPLAYERS) {
 		packet->WriteUInt8((unsigned char)room->GetRoomUsers().size());
@@ -457,8 +501,8 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK20) {
 		packet->WriteUInt8(roomSettings.unk20); // unk
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK40) {
-		packet->WriteUInt8(roomSettings.unk40); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_GAMEMODEID) {
+		packet->WriteUInt8(roomSettings.gameModeID);
 	}
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_MAPID) {
 		packet->WriteUInt8(roomSettings.mapID);
@@ -469,8 +513,8 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_WINLIMIT) {
 		packet->WriteUInt8(roomSettings.winLimit);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK400) {
-		packet->WriteUInt16_LE(roomSettings.unk400); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_KILLLIMIT) {
+		packet->WriteUInt16_LE(roomSettings.killLimit);
 	}
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_TIMELIMIT) {
 		packet->WriteUInt8(roomSettings.timeLimit);
@@ -481,17 +525,17 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK2000) {
 		packet->WriteUInt8(roomSettings.unk2000); // unk
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK4000) {
-		packet->WriteUInt8(roomSettings.unk4000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_HOSTAGEPENALTY) {
+		packet->WriteUInt8(roomSettings.hostagePenalty);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK8000) {
-		packet->WriteUInt8(roomSettings.unk8000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_FREEZETIME) {
+		packet->WriteUInt8(roomSettings.freezeTime);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK10000) {
-		packet->WriteUInt8(roomSettings.unk10000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_BUYTIME) {
+		packet->WriteUInt8(roomSettings.buyTime);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK20000) {
-		packet->WriteUInt8(roomSettings.unk20000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_NICKNAMEDISPLAY) {
+		packet->WriteUInt8(roomSettings.nickNameDisplay);
 	}
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK40000) {
 		packet->WriteUInt8(roomSettings.unk40000); // unk
@@ -499,14 +543,14 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK80000) {
 		packet->WriteUInt8(roomSettings.unk80000); // unk
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK100000) {
-		packet->WriteUInt8(roomSettings.unk100000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_FRIENDLYFIRE) {
+		packet->WriteUInt8(roomSettings.friendlyFire);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK200000) {
-		packet->WriteUInt8(roomSettings.unk200000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_FLASHLIGHT) {
+		packet->WriteUInt8(roomSettings.flashLight);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK400000) {
-		packet->WriteUInt8(roomSettings.unk400000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_FOOTSTEPS) {
+		packet->WriteUInt8(roomSettings.footSteps);
 	}
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK800000) {
 		packet->WriteUInt8(roomSettings.unk800000); // unk
@@ -523,11 +567,11 @@ void Packet_RoomManager::buildRoomSettings(TCPConnection::Packet::pointer packet
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK8000000) {
 		packet->WriteUInt8(roomSettings.unk8000000); // unk
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK10000000) {
-		packet->WriteUInt8(roomSettings.unk10000000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_DEATHCAMERATYPE) {
+		packet->WriteUInt8(roomSettings.deathCameraType);
 	}
-	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK20000000) {
-		packet->WriteUInt8(roomSettings.unk20000000); // unk
+	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_VOICECHAT) {
+		packet->WriteUInt8(roomSettings.voiceChat);
 	}
 	if (roomSettings.lowFlag & ROOMSETTINGS_LFLAG_UNK40000000) {
 		packet->WriteUInt8(roomSettings.unk40000000); // unk
@@ -566,11 +610,11 @@ void Packet_RoomManager::buildRoomUserInfo(TCPConnection::Packet::pointer packet
 	const UserNetwork& userNetwork = gameUser.user->GetUserNetwork();
 
 	packet->WriteUInt32_LE(userNetwork.externalIP);
-	packet->WriteUInt16_LE(userNetwork.externalPortType0);
 	packet->WriteUInt16_LE(userNetwork.externalPortType1);
+	packet->WriteUInt16_LE(userNetwork.externalPortType0);
 	packet->WriteUInt32_LE(userNetwork.localIP);
-	packet->WriteUInt16_LE(userNetwork.localPortType0);
 	packet->WriteUInt16_LE(userNetwork.localPortType1);
+	packet->WriteUInt16_LE(userNetwork.localPortType0);
 
 	packetManager.BuildUserCharacter(packet, gameUser.userCharacter);
 }

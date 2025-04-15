@@ -58,8 +58,8 @@ private:
 	void buildRoomUserInfo(TCPConnection::Packet::pointer packet, const GameUser& gameUser);
 	void sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<GameUser>& gameUsers);
 	void sendPacket_Room_UserJoin(TCPConnection::pointer connection, const GameUser& gameUser);
-	void sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::pointer connection);
 	void sendPacket_Room_ReplyUpdateRoomSettings(TCPConnection::pointer connection, const RoomSettings& roomSettings);
+	void sendPacket_Room_ReplyLeaveRoomInGame(TCPConnection::pointer connection);
 };
 
 extern Packet_RoomManager packet_RoomManager;

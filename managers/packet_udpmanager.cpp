@@ -22,9 +22,9 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		case 1: {
-			unsigned long unk1 = packet->ReadUInt32_LE();
+			unsigned long userID = packet->ReadUInt32_LE();
 
-			serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, unk1: {}\n", user->GetUserLogName(), type, unk1));
+			serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, userID: {}\n", user->GetUserLogName(), type, userID));
 			break;
 		}
 		case 2: {
