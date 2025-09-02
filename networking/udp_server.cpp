@@ -4,7 +4,7 @@
 
 UDPServer udpServer;
 
-UDPServer::UDPServer() : _socket(_ioService, NULL) {
+UDPServer::UDPServer() : _socket(_ioContext, NULL) {
 	_port = 0;
 	_readOffset = 0;
 	_recvBuffer = {};
@@ -17,7 +17,7 @@ UDPServer::~UDPServer() {
 bool UDPServer::Init(unsigned short port) {
 	try {
 		_port = port;
-		_socket = boost::asio::ip::udp::socket(_ioService, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), _port));
+		_socket = boost::asio::ip::udp::socket(_ioContext, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), _port));
 	}
 	catch (exception& e) {
 		serverConsole.Print(PrefixType::Error, format("[ UDPServer ] Error on Init: {}\n", e.what()));
@@ -52,7 +52,7 @@ int UDPServer::run() {
 
 	try {
 		startReceive();
-		_ioService.run();
+		_ioContext.run();
 	}
 	catch (exception& e) {
 		serverConsole.Print(PrefixType::Error, format("[ UDPServer ] Error on run: {}\n", e.what()));
@@ -68,7 +68,7 @@ int UDPServer::shutdown() {
 		if (_udpServerThread.joinable()) {
 			serverConsole.Print(PrefixType::Info, "[ UDPServer ] Shutting down!\n");
 
-			_ioService.stop();
+			_ioContext.stop();
 			_udpServerThread.detach();
 		}
 	}
@@ -137,7 +137,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 
 				serverConsole.Print(PrefixType::Info, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}, externalPort: {}\n", user->GetUserLogName(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum, _endpoint.port()));
 
-				user->SetUserNetwork(portType, localIP, localPort, _endpoint.port());
+				user->SetUserNetwork((PortType)portType, localIP, localPort, _endpoint.port());
 
 				auto message = make_shared<vector<unsigned char>>();
 				message->push_back(UDP_PACKET_SIGNATURE);

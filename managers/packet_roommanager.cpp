@@ -423,6 +423,7 @@ void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Ro
 	packet->WriteUInt16_LE(flag);
 
 	const RoomSettings& roomSettings = room->GetRoomSettings();
+	const UserNetwork& userNetwork = room->GetRoomHostUser()->GetUserNetwork();
 
 	if (flag & ROOMLIST_FLAG_ROOMNAME) {
 		packet->WriteString(roomSettings.roomName);
@@ -459,10 +460,10 @@ void Packet_RoomManager::buildRoomInfo(TCPConnection::Packet::pointer packet, Ro
 		packet->WriteUInt8(0); // unk
 	}
 	if (flag & ROOMLIST_FLAG_UNK800) {
-		packet->WriteUInt32_LE(0); // unk
-		packet->WriteUInt16_LE(0); // unk
-		packet->WriteUInt32_LE(0); // unk
-		packet->WriteUInt16_LE(0); // unk
+		packet->WriteUInt32_LE(userNetwork.externalIP); // unk
+		packet->WriteUInt16_LE(userNetwork.externalHostPort); // unk
+		packet->WriteUInt32_LE(userNetwork.localIP); // unk
+		packet->WriteUInt16_LE(userNetwork.localHostPort); // unk
 		packet->WriteUInt8(0); // unk
 	}
 	if (flag & ROOMLIST_FLAG_UNK1000) {
@@ -610,11 +611,11 @@ void Packet_RoomManager::buildRoomUserInfo(TCPConnection::Packet::pointer packet
 	const UserNetwork& userNetwork = gameUser.user->GetUserNetwork();
 
 	packet->WriteUInt32_LE(userNetwork.externalIP);
-	packet->WriteUInt16_LE(userNetwork.externalPortType1);
-	packet->WriteUInt16_LE(userNetwork.externalPortType0);
+	packet->WriteUInt16_LE(userNetwork.externalHostPort);
+	packet->WriteUInt16_LE(userNetwork.externalGuestPort);
 	packet->WriteUInt32_LE(userNetwork.localIP);
-	packet->WriteUInt16_LE(userNetwork.localPortType1);
-	packet->WriteUInt16_LE(userNetwork.localPortType0);
+	packet->WriteUInt16_LE(userNetwork.localHostPort);
+	packet->WriteUInt16_LE(userNetwork.localGuestPort);
 
 	packetManager.BuildUserCharacter(packet, gameUser.userCharacter);
 }

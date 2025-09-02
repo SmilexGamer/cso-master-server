@@ -58,13 +58,18 @@ struct UserCharacterResult {
 	char result = 0;
 };
 
+enum PortType {
+	Host = 0,
+	Guest = 1
+};
+
 struct UserNetwork {
 	unsigned long localIP = 0;
-	unsigned short localPortType0 = 0;
-	unsigned short localPortType1 = 0;
+	unsigned short localGuestPort = 0;
+	unsigned short localHostPort = 0;
 	unsigned long externalIP = 0;
-	unsigned short externalPortType0 = 0;
-	unsigned short externalPortType1 = 0;
+	unsigned short externalGuestPort = 0;
+	unsigned short externalHostPort = 0;
 };
 
 enum UserStatus {
@@ -103,7 +108,7 @@ public:
 		return _userNetwork;
 	}
 
-	void SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
+	void SetUserNetwork(PortType portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
 
 	UserStatus GetUserStatus() const noexcept {
 		return _userStatus;

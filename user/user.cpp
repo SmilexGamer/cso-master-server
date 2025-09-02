@@ -11,18 +11,18 @@ User::User(TCPConnection::pointer connection, unsigned long userID, const string
 	_currentRoomID = 0;
 }
 
-void User::SetUserNetwork(unsigned char portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort) {
+void User::SetUserNetwork(PortType portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort) {
 	_userNetwork.localIP = localIP;
 
 	switch (portType) {
-		case 0: {
-			_userNetwork.localPortType0 = localPort;
-			_userNetwork.externalPortType0 = externalPort;
+		case PortType::Guest: {
+			_userNetwork.localGuestPort = localPort;
+			_userNetwork.externalGuestPort = externalPort;
 			break;
 		}
-		case 1: {
-			_userNetwork.localPortType1 = localPort;
-			_userNetwork.externalPortType1 = externalPort;
+		case PortType::Host: {
+			_userNetwork.localHostPort = localPort;
+			_userNetwork.externalHostPort = externalPort;
 			break;
 		}
 	}

@@ -63,7 +63,7 @@ private:
 	unsigned short _port;
 
 	thread _udpServerThread;
-	boost::asio::io_service _ioService;
+	boost::asio::io_context _ioContext;
 	boost::asio::ip::udp::socket _socket;
 	boost::asio::ip::udp::endpoint _endpoint;
 	array<unsigned char, UDP_PACKET_MAX_SIZE> _recvBuffer;

@@ -22,6 +22,7 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 			break;
 		}
 		case 1: {
+			// failed to do udp holepunch, please retry
 			unsigned long userID = packet->ReadUInt32_LE();
 
 			serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, userID: {}\n", user->GetUserLogName(), type, userID));
@@ -32,6 +33,7 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 
 			switch (subType) {
 				case 0: {
+					// sent socket info sucessfully
 					unsigned long localIP = packet->ReadUInt32_LE();
 					unsigned short retryNumPortType0 = packet->ReadUInt16_LE();
 					unsigned short retryNumPortType1 = packet->ReadUInt16_LE();
@@ -48,10 +50,11 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 					break;
 				}
 				case 2: {
-					unsigned long unk1 = packet->ReadUInt32_LE();
+					// udp holepunch successful
+					unsigned long userID = packet->ReadUInt32_LE();
 					unsigned short unk2 = packet->ReadUInt16_LE();
 
-					serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, subType: {}, unk1: {}, unk2: {}\n", user->GetUserLogName(), type, subType, unk1, unk2));
+					serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, subType: {}, userID: {}, unk2: {}\n", user->GetUserLogName(), type, subType, userID, unk2));
 					break;
 				}
 				case 3: {
