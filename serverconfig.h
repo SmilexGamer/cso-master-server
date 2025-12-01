@@ -50,6 +50,7 @@ public:
 	vector<string> prohibitedNames;
 	CipherMethod decryptCipherMethod;
 	CipherMethod encryptCipherMethod;
+	vector<BuyMenu> defaultBuyMenus;
 };
 
 extern ServerConfig serverConfig;

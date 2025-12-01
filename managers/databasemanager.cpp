@@ -254,6 +254,32 @@ char DatabaseManager::CreateUserCharacter(unsigned long userID, const string& ni
         return -1;
     }
 
+    query = format("INSERT INTO user_buymenus (userID, categoryID, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9) VALUES");
+    for (auto& buyMenu : serverConfig.defaultBuyMenus) {
+        query += format(" ({}, {}", userID, buyMenu.categoryID);
+        for (unsigned char slotID = 0; slotID < BUYMENU_MAX_SLOT; slotID++) {
+            query += format(", {}", buyMenu.items[slotID]);
+        }
+        query += "),";
+    }
+    query[query.size() - 1] = ';';
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
+        return -1;
+    }
+
+    query = format("INSERT INTO user_bookmarks (userID, slotID, name, primaryItemID, primaryAmmo, secondaryItemID, secondaryAmmo, flashbang, hegrenade, smokegrenade, defusekit, nightvision, kevlar, unk1) VALUES");
+    for (unsigned char slotID = 0; slotID < BOOKMARK_MAX_SLOT; slotID++) {
+        query += format(" ({}, {}, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),", userID, slotID);
+    }
+    query[query.size() - 1] = ';';
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
+        return -1;
+    }
+
     return 1;
 }
 
@@ -599,4 +625,87 @@ const vector<unsigned char> DatabaseManager::GetUserOption(unsigned long userID)
     mysql_free_result(res);
 
     return userOption;
+}
+
+bool DatabaseManager::SaveUserBuyMenu(unsigned long userID, unsigned char categoryID, unsigned char slotID, unsigned char itemID) {
+    string query = format("UPDATE user_buymenus SET slot{} = {} WHERE userID = {} AND categoryID = {};", slotID + 1, itemID, userID, categoryID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserBuyMenu: {}\n", mysql_error(_connection)));
+        return false;
+    }
+
+    return true;
+}
+
+const vector<BuyMenu> DatabaseManager::GetUserBuyMenus(unsigned long userID) {
+    string query = format("SELECT categoryID, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9 FROM user_buymenus WHERE userID = {};", userID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserBuyMenus: {}\n", mysql_error(_connection)));
+        return {};
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = NULL;
+    vector<BuyMenu> userBuyMenus;
+
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        BuyMenu buyMenu;
+        buyMenu.categoryID = atoi(row[0]);
+
+        for (unsigned char slotID = 0; slotID < BUYMENU_MAX_SLOT; slotID++) {
+            buyMenu.items.push_back(atoi(row[slotID + 1]));
+        }
+
+        userBuyMenus.push_back(buyMenu);
+    }
+
+    mysql_free_result(res);
+
+	return userBuyMenus;
+}
+
+bool DatabaseManager::SaveUserBookMark(unsigned long userID, const BookMark& userBookMark) {
+    char* bookMarkName = new char[userBookMark.name.size() * 2 + 1];
+    mysql_real_escape_string(_connection, bookMarkName, userBookMark.name.c_str(), (unsigned long)userBookMark.name.size());
+
+    string query = format("UPDATE user_bookmarks SET name = '{}', primaryItemID = {}, primaryAmmo = {}, secondaryItemID = {}, secondaryAmmo = {}, flashbang = {}, hegrenade = {}, smokegrenade = {}, defusekit = {}, nightvision = {}, kevlar = {}, unk1 = {} WHERE userID = {} AND slotID = {};",
+        bookMarkName, userBookMark.primaryItemID, userBookMark.primaryAmmo, userBookMark.secondaryItemID, userBookMark.secondaryAmmo, userBookMark.flashbang,
+        userBookMark.hegrenade, userBookMark.smokegrenade, userBookMark.defusekit, userBookMark.nightvision, userBookMark.kevlar, userBookMark.unk1, userID, userBookMark.slotID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserBookMark: {}\n", mysql_error(_connection)));
+        return false;
+    }
+
+	delete[] bookMarkName;
+
+    return true;
+}
+
+const vector<BookMark> DatabaseManager::GetUserBookMarks(unsigned long userID) {
+    string query = format("SELECT slotID, name, primaryItemID, primaryAmmo, secondaryItemID, secondaryAmmo, flashbang, hegrenade, smokegrenade, defusekit, nightvision, kevlar, unk1 FROM user_bookmarks WHERE userID = {};", userID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserBookMarks: {}\n", mysql_error(_connection)));
+        return {};
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = NULL;
+    vector<BookMark> userBookMarks;
+
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        BookMark bookMark { (unsigned char)atoi(row[0]), row[1], (unsigned char)atoi(row[2]), (bool)atoi(row[3]), (unsigned char)atoi(row[4]), (bool)atoi(row[5]), (unsigned char)atoi(row[6]), 
+                            (bool)atoi(row[7]), (bool)atoi(row[8]), (bool)atoi(row[9]), (bool)atoi(row[10]), (unsigned char)atoi(row[11]), (unsigned char)atoi(row[12]) };
+
+        userBookMarks.push_back(bookMark);
+    }
+
+    mysql_free_result(res);
+
+    return userBookMarks;
 }

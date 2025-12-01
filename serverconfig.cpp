@@ -44,8 +44,38 @@ string defaultServerConfig = R"({
 	},
 	"ProhibitedNames": [],
 	"DecryptCipherMethod": 1,
-	"EncryptCipherMethod": 1
+	"EncryptCipherMethod": 1,
+	"DefaultBuyMenus": {
+		"Terrorist": {
+			"Pistol": [ 3, 6, 2, 4, 1 ],
+			"ShotGun": [ 7, 8, 38 ],
+			"SubMachineGun": [ 10, 12, 13, 11, 37 ],
+			"Rifle": [ 23, 21, 17, 19, 14, 22, 34, 39 ],
+			"MachineGun": [ 24, 32 ],
+			"Equipment": [ 27, 28, 30, 31, 26, 25 ],
+			"Class": [ 41, 42, 43, 40, 44, 45, 46, 47, 48 ]
+		},
+		"Counter-Terrorist": {
+			"Pistol": [ 3, 6, 2, 4, 5 ],
+			"ShotGun": [ 7, 8 ],
+			"SubMachineGun": [ 9, 12, 13, 11, 36, 37 ],
+			"Rifle": [ 20, 17, 15, 16, 18, 14, 33, 35 ],
+			"MachineGun": [ 24, 32 ],
+			"Equipment": [ 27, 28, 30, 31, 26, 25, 29 ],
+			"Class": [ 49, 50, 52, 51, 53, 54, 55, 56, 57 ]
+		}
+	}
 })";
+
+const char* buyMenuCategories[] = {
+	"Pistol",
+	"ShotGun",
+	"SubMachineGun",
+	"Rifle",
+	"MachineGun",
+	"Equipment",
+	"Class"
+};
 
 bool ServerConfig::Load() {
 	try {
@@ -57,8 +87,14 @@ bool ServerConfig::Load() {
 			serverConsole.Print(PrefixType::Warn, format("[ ServerConfig ] Couldn't open serverconfig.json, using default values!\n"));
 		}
 		else {
+			json defaultConfig = json::parse(defaultServerConfig);
 			config = json::parse(f);
+
+			defaultConfig.update(config, true);
+			config = defaultConfig;
 		}
+
+		f.close();
 
 		if (config.contains("Port")) {
 			port = config.value("Port", 8001);
@@ -137,6 +173,42 @@ bool ServerConfig::Load() {
 			}
 			else {
 				this->encryptCipherMethod = CipherMethod::Null;
+			}
+		}
+		if (config.contains("DefaultBuyMenus")) {
+			json defaultBuyMenus = config["DefaultBuyMenus"];
+			
+			if (defaultBuyMenus.contains("Terrorist")) {
+				json buyMenuT = defaultBuyMenus["Terrorist"];
+				
+				for (unsigned char categoryID = 0; categoryID < BUYMENU_MAX_CATEGORY; categoryID++) {
+					string categoryName = buyMenuCategories[categoryID];
+
+					if (buyMenuT.contains(categoryName)) {
+						BuyMenu bm;
+						bm.categoryID = categoryID;
+						bm.items = buyMenuT[categoryName].get<vector<unsigned char>>();
+						bm.items.resize(BUYMENU_MAX_SLOT);
+
+						this->defaultBuyMenus.push_back(bm);
+					}
+				}
+			}
+			if (defaultBuyMenus.contains("Counter-Terrorist")) {
+				json buyMenuCT = defaultBuyMenus["Counter-Terrorist"];
+
+				for (unsigned char categoryID = 0; categoryID < BUYMENU_MAX_CATEGORY; categoryID++) {
+					string categoryName = buyMenuCategories[categoryID];
+
+					if (buyMenuCT.contains(categoryName)) {
+						BuyMenu bm;
+						bm.categoryID = categoryID + 7;
+						bm.items = buyMenuCT[categoryName].get<vector<unsigned char>>();
+						bm.items.resize(BUYMENU_MAX_SLOT);
+
+						this->defaultBuyMenus.push_back(bm);
+					}
+				}
 			}
 		}
 

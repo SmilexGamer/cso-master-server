@@ -6,6 +6,7 @@
 #include "packet_updateinfomanager.h"
 #include "packet_userstartmanager.h"
 #include "packet_optionmanager.h"
+#include "packet_favoritemanager.h"
 
 UserManager userManager;
 
@@ -132,6 +133,23 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 		packetManager.SendPacket_Reply(user->GetConnection(), reply);
 		packet_ServerListManager.SendPacket_ServerList(user->GetConnection(), serverConfig.serverList);
+		packet_UserStartManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
+		packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, userCharacterResult.userCharacter });
+
+		const vector<unsigned char>& userOption = user->GetUserOption();
+		if (!userOption.empty()) {
+			packet_OptionManager.SendPacket_Option_UserOption(user->GetConnection(), userOption);
+		}
+
+		const vector<BuyMenu>& userBuyMenus = user->GetUserBuyMenus();
+		if (!userBuyMenus.empty()) {
+			packet_FavoriteManager.SendPacket_Favorite_UserBuyMenu(user->GetConnection(), userBuyMenus);
+		}
+
+		const vector<BookMark>& userBookMarks = user->GetUserBookMarks();
+		if (!userBookMarks.empty()) {
+			packet_FavoriteManager.SendPacket_Favorite_UserBookMark(user->GetConnection(), userBookMarks);
+		}
 	}
 	else {
 		user->SetUserStatus(UserStatus::InLobby);
@@ -139,14 +157,6 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		SendAddUserPacketToAll(user);
 		SendFullUserListPacket(user->GetConnection());
 		roomManager.SendFullRoomListPacket(user->GetConnection());
-	}
-
-	packet_UserStartManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
-	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, userCharacterResult.userCharacter });
-
-	const vector<unsigned char>& userOption = user->GetUserOption();
-	if (!userOption.empty()) {
-		packet_OptionManager.SendPacket_Option_UserOption(user->GetConnection(), userOption);
 	}
 
 	return true;

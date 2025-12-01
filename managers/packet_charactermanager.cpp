@@ -43,13 +43,13 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	if (nickName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") != string::npos) {
+	if (nickName.find_first_of("!@#$%^&*()_+-=[]{}|;':\",.<>\\/?`~ ") != string::npos) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::INVALID_CHAR);
 		return;
 	}
 
 	size_t first_number_pos = nickName.find_first_of("0123456789");
-	size_t last_char_pos = nickName.find_last_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	size_t last_char_pos = nickName.find_last_not_of("0123456789");
 
 	if (first_number_pos != string::npos && last_char_pos > first_number_pos) {
 		packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::ID_DIGIT_BEFORE_CHAR);

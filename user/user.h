@@ -135,6 +135,10 @@ public:
 	char IsUserCharacterExists() const noexcept;
 	bool SaveUserOption(const vector<unsigned char>& userOption) const noexcept;
 	const vector<unsigned char> GetUserOption() const noexcept;
+	bool SaveUserBuyMenu(unsigned char categoryID, unsigned char slotID, unsigned char itemID) const noexcept;
+	const vector<BuyMenu> GetUserBuyMenus() const noexcept;
+	bool SaveUserBookMark(const BookMark& userBookMark) const noexcept;
+	const vector<BookMark> GetUserBookMarks() const noexcept;
 
 private:
 	TCPConnection::pointer _connection;

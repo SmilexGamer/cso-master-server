@@ -65,3 +65,19 @@ bool User::SaveUserOption(const vector<unsigned char>& userOption) const noexcep
 const vector<unsigned char> User::GetUserOption() const noexcept {
 	return databaseManager.GetUserOption(_userID);
 }
+
+bool User::SaveUserBuyMenu(unsigned char categoryID, unsigned char slotID, unsigned char itemID) const noexcept {
+	return databaseManager.SaveUserBuyMenu(_userID, categoryID, slotID, itemID);
+}
+
+const vector<BuyMenu> User::GetUserBuyMenus() const noexcept {
+	return databaseManager.GetUserBuyMenus(_userID);
+}
+
+bool User::SaveUserBookMark(const BookMark& userBookMark) const noexcept {
+	return databaseManager.SaveUserBookMark(_userID, userBookMark);
+}
+
+const vector<BookMark> User::GetUserBookMarks() const noexcept {
+	return databaseManager.GetUserBookMarks(_userID);
+}

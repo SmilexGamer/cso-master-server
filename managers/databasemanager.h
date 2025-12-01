@@ -32,6 +32,10 @@ public:
 	void RemoveAllUserTransfers();
 	bool SaveUserOption(unsigned long userID, const vector<unsigned char>& userOption);
 	const vector<unsigned char> GetUserOption(unsigned long userID);
+	bool SaveUserBuyMenu(unsigned long userID, unsigned char categoryID, unsigned char slotID, unsigned char itemID);
+	const vector<BuyMenu> GetUserBuyMenus(unsigned long userID);
+	bool SaveUserBookMark(unsigned long userID, const BookMark& userBookMark);
+	const vector<BookMark> GetUserBookMarks(unsigned long userID);
 
 private:
 	MYSQL* _connection;

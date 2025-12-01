@@ -101,6 +101,31 @@ struct Cipher {
 	unsigned char iv[BLOCK_SIZE] = {};
 };
 
+#define BUYMENU_MAX_CATEGORY 7
+#define BUYMENU_MAX_SLOT 9
+#define BOOKMARK_MAX_SLOT 5
+
+struct BuyMenu {
+	unsigned char categoryID = 0;
+	vector<unsigned char> items;
+};
+
+struct BookMark {
+	unsigned char slotID = 0;
+	string name = "";
+	unsigned char primaryItemID = 0;
+	bool primaryAmmo = false;
+	unsigned char secondaryItemID = 0;
+	bool secondaryAmmo = false;
+	unsigned char flashbang = 0;
+	bool hegrenade = false;
+	bool smokegrenade = false;
+	bool defusekit = false;
+	bool nightvision = false;
+	unsigned char kevlar = 0;
+	unsigned char unk1 = 0;
+};
+
 class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
 	~TCPConnection();

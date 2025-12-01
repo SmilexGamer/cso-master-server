@@ -43,6 +43,12 @@
     <ClCompile Include="managers\packet_shopmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_optionmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\packet_favoritemanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_userstartmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
@@ -81,9 +87,6 @@
     </ClCompile>
     <ClCompile Include="thirdparty\libbcrypt\wrapper.c">
       <Filter>thirdparty\libbcrypt</Filter>
-    </ClCompile>
-    <ClCompile Include="managers\packet_optionmanager.cpp">
-      <Filter>managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +129,12 @@
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_shopmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_optionmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_favoritemanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\packet_userstartmanager.h">
@@ -175,9 +184,6 @@
     </ClInclude>
     <ClInclude Include="thirdparty\libbcrypt\winbcrypt.h">
       <Filter>thirdparty\libbcrypt</Filter>
-    </ClInclude>
-    <ClInclude Include="managers\packet_optionmanager.h">
-      <Filter>managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
