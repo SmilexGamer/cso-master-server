@@ -7,6 +7,8 @@
 #include "roommanager.h"
 #include "serverconsole.h"
 
+HANDLE hMutex;
+
 BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 	switch (CtrlType) {
 		case CTRL_CLOSE_EVENT:
@@ -19,6 +21,7 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 			databaseManager.Shutdown();
 			tcpServer.Stop();
 			udpServer.Stop();
+			ReleaseMutex(hMutex);
 			return TRUE;
 		}
 		case CTRL_C_EVENT:
@@ -50,6 +53,21 @@ int main() {
 		return -1;
 	}
 
+	string mutexName = format("cso-master-server-{}-{}", serverConfig.serverID, serverConfig.channelID);
+	hMutex = CreateMutexA(NULL, FALSE, mutexName.c_str());
+	if (hMutex) {
+		DWORD dwWaitResult = WaitForSingleObject(hMutex, 0);
+		if (!dwWaitResult || dwWaitResult == WAIT_ABANDONED) {
+			databaseManager.RemoveAllUserSessions();
+			databaseManager.RemoveAllUserTransfers();
+			databaseManager.RemoveServerChannel();
+		}
+	}
+	else {
+		serverConsole.Print(PrefixType::Fatal, "[ Main ] Failed to create mutex for server instance!\n");
+		return -1;
+	}
+
 	if (!databaseManager.AddServerChannel()) {
 		serverConsole.Print(PrefixType::Fatal, "[ DatabaseManager ] Failed to add server channel to the database!\n");
 		return -1;
@@ -76,6 +94,8 @@ int main() {
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
 	serverConsole.StartRead();
+
+	ReleaseMutex(hMutex);
 
 	return 0;
 }

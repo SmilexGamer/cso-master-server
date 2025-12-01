@@ -198,7 +198,11 @@ const LoginResult DatabaseManager::Login(const string& userName, const string& p
         return { 0, Packet_ReplyType::InvalidPassword };
     }
 
-    string query = format("SELECT userID, password FROM users WHERE userName = '{}';", userName);
+    char* userNameEscaped = new char[userName.size() * 2 + 1];
+    mysql_real_escape_string(_connection, userNameEscaped, userName.c_str(), (unsigned long)userName.size());
+
+    string query = format("SELECT userID, password FROM users WHERE userName = '{}';", userNameEscaped);
+    delete[] userNameEscaped;
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on Login: {}\n", mysql_error(_connection)));
@@ -468,10 +472,15 @@ const LoginResult DatabaseManager::TransferLogin(const string& userName, const s
         return { 0, Packet_ReplyType::INVALID_USERINFO };
     }
 
-    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}' AND userIP = '{}' AND serverID = {} AND channelID = {};", userName, userIP, serverConfig.serverID, serverConfig.channelID);
+    char* userNameEscaped = new char[userName.size() * 2 + 1];
+    mysql_real_escape_string(_connection, userNameEscaped, userName.c_str(), (unsigned long)userName.size());
+
+    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}' AND userIP = '{}' AND serverID = {} AND channelID = {};", userNameEscaped, userIP, serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on TransferLogin: {}\n", mysql_error(_connection)));
+
+        delete[] userNameEscaped;
         return { 0, Packet_ReplyType::SysError };
     }
 
@@ -487,7 +496,8 @@ const LoginResult DatabaseManager::TransferLogin(const string& userName, const s
     else {
         mysql_free_result(res);
 
-        query = format("SELECT userID FROM users WHERE userName = '{}';", userName);
+        query = format("SELECT userID FROM users WHERE userName = '{}';", userNameEscaped);
+        delete[] userNameEscaped;
 
         if (mysql_query(_connection, query.c_str())) {
             serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on TransferLogin: {}\n", mysql_error(_connection)));
@@ -674,13 +684,12 @@ bool DatabaseManager::SaveUserBookMark(unsigned long userID, const BookMark& use
     string query = format("UPDATE user_bookmarks SET name = '{}', primaryItemID = {}, primaryAmmo = {}, secondaryItemID = {}, secondaryAmmo = {}, flashbang = {}, hegrenade = {}, smokegrenade = {}, defusekit = {}, nightvision = {}, kevlar = {}, unk1 = {} WHERE userID = {} AND slotID = {};",
         bookMarkName, userBookMark.primaryItemID, userBookMark.primaryAmmo, userBookMark.secondaryItemID, userBookMark.secondaryAmmo, userBookMark.flashbang,
         userBookMark.hegrenade, userBookMark.smokegrenade, userBookMark.defusekit, userBookMark.nightvision, userBookMark.kevlar, userBookMark.unk1, userID, userBookMark.slotID);
+    delete[] bookMarkName;
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserBookMark: {}\n", mysql_error(_connection)));
         return false;
     }
-
-	delete[] bookMarkName;
 
     return true;
 }
