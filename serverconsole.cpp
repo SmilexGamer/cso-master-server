@@ -1,6 +1,7 @@
 #include "serverconsole.h"
 #include "tcp_server.h"
 #include "usermanager.h"
+#include "udp_server.h"
 #include <iostream>
 
 ServerConsole serverConsole;
@@ -213,6 +214,8 @@ void ServerConsole::onSecondTick() {
 
 	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &ts);
 	_currentTimeStr = time_buf;
+
+	udpServer.OnSecondTick();
 
 	_secondCount++;
 

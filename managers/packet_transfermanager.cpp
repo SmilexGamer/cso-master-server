@@ -7,6 +7,7 @@
 #include "serverconsole.h"
 #include "databasemanager.h"
 #include "roommanager.h"
+#include "udp_server.h"
 
 Packet_TransferManager packet_TransferManager;
 
@@ -110,13 +111,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 		}
 	}
 	else {
-		char getChannelNumPlayersResult = databaseManager.GetChannelNumPlayers(serverID, channelID);
-		if (!getChannelNumPlayersResult) {
-			if (getChannelNumPlayersResult < 0) {
-				packetManager.SendPacket_Reply(user->GetConnection(), Packet_ReplyType::SysError);
-				return;
-			}
-
+		if (!serverConfig.serverList[serverID - 1].channels[channelID - 1].isOnline || !udpServer.IsServerChannelOnline(serverID, channelID)) {
 			packet_UMsgManager.SendPacket_UMsg_ServerMessage(user->GetConnection(), Packet_UMsgType::WarningMessage, "SERVER_SELECT_FAIL_SERVER_DOWN");
 			return;
 		}

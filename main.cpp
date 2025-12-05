@@ -60,20 +60,16 @@ int main() {
 		if (!dwWaitResult || dwWaitResult == WAIT_ABANDONED) {
 			databaseManager.RemoveAllUserSessions();
 			databaseManager.RemoveAllUserTransfers();
-			databaseManager.RemoveServerChannel();
+		}
+		else {
+			serverConsole.Print(PrefixType::Fatal, "[ Main ] This server channel is already running in another process!\n");
+			return -1;
 		}
 	}
 	else {
 		serverConsole.Print(PrefixType::Fatal, "[ Main ] Failed to create mutex for server instance!\n");
 		return -1;
 	}
-
-	if (!databaseManager.AddServerChannel()) {
-		serverConsole.Print(PrefixType::Fatal, "[ DatabaseManager ] Failed to add server channel to the database!\n");
-		return -1;
-	}
-
-	databaseManager.GetAllChannelsNumPlayers();
 
 	if (!tcpServer.Init(serverConfig.port)) {
 		serverConsole.Print(PrefixType::Fatal, "[ TCPServer ] Failed to initialize TCP server!\n");

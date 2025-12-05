@@ -3,10 +3,13 @@
 #include "roommanager.h"
 #include "packetmanager.h"
 #include "packet_serverlistmanager.h"
+#include "packet_clientcheckmanager.h"
 #include "packet_updateinfomanager.h"
 #include "packet_userstartmanager.h"
 #include "packet_optionmanager.h"
 #include "packet_favoritemanager.h"
+#include "udp_server.h"
+#include "serverconfig.h"
 
 UserManager userManager;
 
@@ -150,6 +153,8 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		if (!userBookMarks.empty()) {
 			packet_FavoriteManager.SendPacket_Favorite_UserBookMark(user->GetConnection(), userBookMarks);
 		}
+
+		packet_ClientCheckManager.SendPacket_ClientCheck(user->GetConnection());
 	}
 	else {
 		user->SetUserStatus(UserStatus::InLobby);
@@ -219,12 +224,12 @@ void UserManager::SendRemoveUserPacketToAll(User* user) {
 }
 
 void UserManager::UpdateChannelNumPlayers() {
-	serverConfig.serverList[serverConfig.serverID - 1].channels[serverConfig.channelID - 1].numPlayers = (unsigned short)_users.size();
+	unsigned short numPlayers = (unsigned short)_users.size();
 
-	databaseManager.UpdateChannelNumPlayers((unsigned short)_users.size());
+	serverConfig.serverList[serverConfig.serverID - 1].channels[serverConfig.channelID - 1].numPlayers = numPlayers;
+	udpServer.SendNumPlayersPacketToAll(numPlayers);
 }
 
 void UserManager::OnMinuteTick() {
-	databaseManager.GetAllChannelsNumPlayers();
 	databaseManager.RemoveOldUserTransfers();
 }

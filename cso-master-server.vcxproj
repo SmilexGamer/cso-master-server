@@ -168,6 +168,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="managers\packet_charactermanager.cpp" />
     <ClCompile Include="managers\packet_cryptmanager.cpp" />
     <ClCompile Include="managers\packet_roommanager.cpp" />
+    <ClCompile Include="managers\packet_clientcheckmanager.cpp" />
     <ClCompile Include="managers\packet_umsgmanager.cpp" />
     <ClCompile Include="managers\packet_hostmanager.cpp" />
     <ClCompile Include="managers\packet_updateinfomanager.cpp" />
@@ -200,6 +201,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="managers\packet_charactermanager.h" />
     <ClInclude Include="managers\packet_cryptmanager.h" />
     <ClInclude Include="managers\packet_roommanager.h" />
+    <ClInclude Include="managers\packet_clientcheckmanager.h" />
     <ClInclude Include="managers\packet_umsgmanager.h" />
     <ClInclude Include="managers\packet_hostmanager.h" />
     <ClInclude Include="managers\packet_updateinfomanager.h" />

@@ -129,12 +129,12 @@ bool ServerConfig::Load() {
 						Channel ch;
 						ch.id = channelID++;
 						ch.name = channel.value("Name", format("Channel {}-{}", s.id, ch.id));
-						ch.numPlayers = 0;
 
 						if (s.id != this->serverID || s.id == this->serverID && ch.id != this->channelID) {
 							ch.maxPlayers = channel.value("MaxPlayers", 600);
 							ch.ip = channel.value("IP", "127.0.0.1");
 							ch.port = channel.value("Port", 8001);
+							ch.isOnline = false;
 						}
 
 						s.channels.push_back(ch);

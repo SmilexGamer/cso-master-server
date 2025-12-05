@@ -22,6 +22,8 @@ struct Channel {
 	unsigned short maxPlayers = 0;
 	string ip = "";
 	unsigned short port = 0;
+	bool isOnline = true;
+	unsigned long long lastHeartBeat = 0;
 };
 
 struct Server {

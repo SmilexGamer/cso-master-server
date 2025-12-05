@@ -6,6 +6,7 @@
 #include "packet_charactermanager.h"
 #include "packet_cryptmanager.h"
 #include "packet_roommanager.h"
+#include "packet_clientcheckmanager.h"
 #include "packet_umsgmanager.h"
 #include "packet_hostmanager.h"
 #include "packet_updateinfomanager.h"
@@ -205,6 +206,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::Room: {
 			packet_RoomManager.ParsePacket_Room(packet);
+			break;
+		}
+		case PacketID::ClientCheck: {
+			packet_ClientCheckManager.ParsePacket_ClientCheck(packet);
 			break;
 		}
 		case PacketID::UMsg: {

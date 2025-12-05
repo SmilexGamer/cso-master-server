@@ -4,6 +4,7 @@
 #include "mysql/mysqld_error.h"
 #include "libbcrypt/BCrypt.hpp"
 #include <tuple>
+#include "udp_server.h"
 
 DatabaseManager databaseManager;
 
@@ -36,156 +37,11 @@ void DatabaseManager::Shutdown() {
 
         RemoveAllUserSessions();
         RemoveAllUserTransfers();
-        RemoveServerChannel();
     }
 
     if (_connection) {
         mysql_close(_connection);
         _connection = NULL;
-    }
-}
-
-bool DatabaseManager::AddServerChannel() {
-    string query = format("SELECT 1 FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddServerChannel: {}\n", mysql_error(_connection)));
-        return false;
-    }
-
-    MYSQL_RES* res = mysql_use_result(_connection);
-
-    if (mysql_fetch_row(res) == NULL) {
-        mysql_free_result(res);
-
-        query = format("INSERT INTO server_channels (serverID, channelID, numPlayers) VALUES ({}, {}, 0);", serverConfig.serverID, serverConfig.channelID, 0);
-
-        if (mysql_query(_connection, query.c_str())) {
-            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddServerChannel: {}\n", mysql_error(_connection)));
-            return false;
-        }
-    }
-    else {
-        mysql_free_result(res);
-
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Server channel already present in database!\n"));
-        return false;
-    }
-
-    _addedServerChannel = true;
-    return true;
-}
-
-void DatabaseManager::RemoveServerChannel() {
-    string query = format("DELETE FROM server_channels WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveServerChannel: {}\n", mysql_error(_connection)));
-        return;
-    }
-}
-
-void DatabaseManager::UpdateChannelNumPlayers(unsigned short numPlayers) {
-    string query = format("UPDATE server_channels SET numPlayers = {} WHERE serverID = {} AND channelID = {};", numPlayers, serverConfig.serverID, serverConfig.channelID);
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on UpdateChannelNumPlayers: {}\n", mysql_error(_connection)));
-        return;
-    }
-}
-
-char DatabaseManager::GetChannelNumPlayers(unsigned char serverID, unsigned char channelID) {
-    string query = format("SELECT numPlayers FROM server_channels WHERE serverID = {} AND channelID = {};", serverID, channelID);
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetChannelNumPlayers: {}\n", mysql_error(_connection)));
-        return -1;
-    }
-
-    MYSQL_RES* res = mysql_use_result(_connection);
-    MYSQL_ROW row = mysql_fetch_row(res);
-
-    if (row == NULL) {
-        mysql_free_result(res);
-
-        return 0;
-    }
-
-    serverConfig.serverList[serverID - 1].channels[channelID - 1].numPlayers = atoi(row[0]);
-
-    mysql_free_result(res);
-
-    return 1;
-}
-
-void DatabaseManager::GetAllChannelsNumPlayers() {
-    string query;
-    MYSQL_RES* res = NULL;
-    MYSQL_ROW row = NULL;
-
-    for (auto& server : serverConfig.serverList) {
-        if (server.id == serverConfig.serverID) {
-            query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
-
-            if (mysql_query(_connection, query.c_str())) {
-                serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
-                return;
-            }
-
-            res = mysql_use_result(_connection);
-
-            while ((row = mysql_fetch_row(res)) != NULL)
-            {
-                unsigned char channelID = atoi(row[0]);
-
-                if (channelID == serverConfig.channelID) {
-                    continue;
-                }
-
-                serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = atoi(row[1]);
-            }
-
-            mysql_free_result(res);
-        }
-        else {
-            query = format("SELECT 1 FROM server_channels WHERE serverID = {};", server.id);
-
-            if (mysql_query(_connection, query.c_str())) {
-                serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
-                return;
-            }
-
-            res = mysql_use_result(_connection);
-
-            if (mysql_fetch_row(res) == NULL) {
-                mysql_free_result(res);
-
-                server.status = ServerStatus::NotReady;
-            }
-            else {
-                mysql_free_result(res);
-
-                server.status = ServerStatus::Ready;
-
-                query = format("SELECT channelID, numPlayers FROM server_channels WHERE serverID = {};", server.id);
-
-                if (mysql_query(_connection, query.c_str())) {
-                    serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetAllChannelsNumPlayers: {}\n", mysql_error(_connection)));
-                    return;
-                }
-
-                res = mysql_use_result(_connection);
-
-                while ((row = mysql_fetch_row(res)) != NULL)
-                {
-                    unsigned char channelID = atoi(row[0]);
-
-                    serverConfig.serverList[server.id - 1].channels[channelID - 1].numPlayers = atoi(row[1]);
-                }
-
-                mysql_free_result(res);
-            }
-        }
     }
 }
 
@@ -417,7 +273,7 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
 }
 
 char DatabaseManager::AddUserSession(unsigned long userID) {
-    string query = format("SELECT 1 FROM user_sessions WHERE userID = {};", userID);
+    string query = format("SELECT serverID, channelID FROM user_sessions WHERE userID = {};", userID);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddUserSession: {}\n", mysql_error(_connection)));
@@ -425,8 +281,9 @@ char DatabaseManager::AddUserSession(unsigned long userID) {
     }
 
     MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = mysql_fetch_row(res);
 
-    if (mysql_fetch_row(res) == NULL) {
+    if (row == NULL) {
         mysql_free_result(res);
 
         query = format("INSERT INTO user_sessions (userID, serverID, channelID) VALUES ({}, {}, {});", userID, serverConfig.serverID, serverConfig.channelID);
@@ -437,9 +294,38 @@ char DatabaseManager::AddUserSession(unsigned long userID) {
         }
     }
     else {
+        unsigned char serverID = atoi(row[0]);
+        unsigned char channelID = atoi(row[1]);
+
         mysql_free_result(res);
 
-        return 0;
+        if (!serverID || serverID > serverConfig.serverList.size()) {
+            return 0;
+        }
+
+        if (!channelID || channelID > serverConfig.serverList[serverID - 1].channels.size()) {
+            return 0;
+        }
+
+        if (serverID == serverConfig.serverID && channelID == serverConfig.channelID) {
+            return 0;
+        }
+
+        if (!udpServer.IsServerChannelOnline(serverID, channelID)) {
+            if (!serverConfig.serverList[serverID - 1].channels[channelID - 1].isOnline) {
+                databaseManager.RemoveAllUserSessions(serverID, channelID);
+                databaseManager.RemoveAllUserTransfers(serverID, channelID);
+            }
+
+            query = format("INSERT INTO user_sessions (userID, serverID, channelID) VALUES ({}, {}, {});", userID, serverConfig.serverID, serverConfig.channelID);
+
+            if (mysql_query(_connection, query.c_str())) {
+                serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddUserSession: {}\n", mysql_error(_connection)));
+                return -1;
+            }
+
+            return 1;
+        }
     }
 
     return 1;
@@ -454,8 +340,13 @@ void DatabaseManager::RemoveUserSession(unsigned long userID) {
     }
 }
 
-void DatabaseManager::RemoveAllUserSessions() {
-    string query = format("DELETE FROM user_sessions WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+void DatabaseManager::RemoveAllUserSessions(unsigned char serverID, unsigned char channelID) {
+    if (!serverID && !channelID) {
+        serverID = serverConfig.serverID;
+        channelID = serverConfig.channelID;
+    }
+
+    string query = format("DELETE FROM user_sessions WHERE serverID = {} AND channelID = {};", serverID, channelID);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveAllUserSessions: {}\n", mysql_error(_connection)));
@@ -521,10 +412,15 @@ const LoginResult DatabaseManager::TransferLogin(const string& userName, const s
 }
 
 char DatabaseManager::AddUserTransfer(const string& userName, const string& userIP, unsigned char serverID, unsigned char channelID) {
-    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}';", userName);
+    char* userNameEscaped = new char[userName.size() * 2 + 1];
+    mysql_real_escape_string(_connection, userNameEscaped, userName.c_str(), (unsigned long)userName.size());
+
+    string query = format("SELECT 1 FROM user_transfers WHERE userName = '{}';", userNameEscaped);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddUserTransfer: {}\n", mysql_error(_connection)));
+
+        delete[] userNameEscaped;
         return -1;
     }
 
@@ -533,7 +429,8 @@ char DatabaseManager::AddUserTransfer(const string& userName, const string& user
     if (mysql_fetch_row(res) == NULL) {
         mysql_free_result(res);
 
-        query = format("INSERT INTO user_transfers (userName, userIP, serverID, channelID, transferTime) VALUES ('{}', '{}', {}, {}, {});", userName, userIP, serverID, channelID, serverConsole.GetCurrentTime());
+        query = format("INSERT INTO user_transfers (userName, userIP, serverID, channelID, transferTime) VALUES ('{}', '{}', {}, {}, {});", userNameEscaped, userIP, serverID, channelID, serverConsole.GetCurrentTime());
+        delete[] userNameEscaped;
 
         if (mysql_query(_connection, query.c_str())) {
             serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddUserTransfer: {}\n", mysql_error(_connection)));
@@ -543,6 +440,7 @@ char DatabaseManager::AddUserTransfer(const string& userName, const string& user
     else {
         mysql_free_result(res);
 
+        delete[] userNameEscaped;
         return 0;
     }
 
@@ -550,7 +448,11 @@ char DatabaseManager::AddUserTransfer(const string& userName, const string& user
 }
 
 void DatabaseManager::RemoveUserTransfer(const string& userName) {
-    string query = format("DELETE FROM user_transfers WHERE userName = '{}';", userName);
+    char* userNameEscaped = new char[userName.size() * 2 + 1];
+    mysql_real_escape_string(_connection, userNameEscaped, userName.c_str(), (unsigned long)userName.size());
+
+    string query = format("DELETE FROM user_transfers WHERE userName = '{}';", userNameEscaped);
+    delete[] userNameEscaped;
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveUserTransfer: {}\n", mysql_error(_connection)));
@@ -567,8 +469,13 @@ void DatabaseManager::RemoveOldUserTransfers() {
     }
 }
 
-void DatabaseManager::RemoveAllUserTransfers() {
-    string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+void DatabaseManager::RemoveAllUserTransfers(unsigned char serverID, unsigned char channelID) {
+    if (!serverID && !channelID) {
+        serverID = serverConfig.serverID;
+        channelID = serverConfig.channelID;
+    }
+
+    string query = format("DELETE FROM user_transfers WHERE serverID = {} AND channelID = {};", serverID, channelID);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveAllUserTransfers: {}\n", mysql_error(_connection)));

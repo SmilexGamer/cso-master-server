@@ -2,11 +2,22 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <thread>
+#include <map>
 
 using namespace std;
 
-#define UDP_PACKET_SIGNATURE 'W'
+#define UDP_CLIENT_PACKET_SIGNATURE 'W'
+#define UDP_SERVER_PACKET_SIGNATURE 'Y'
 #define UDP_PACKET_MAX_SIZE 4010
+
+enum ServerPacketType {
+	HELLO = 0,
+	HELLO_ANSWER = 1,
+	GOODBYE = 2,
+	HEARTBEAT = 3,
+	NUMPLAYERS = 4,
+	DEADCHANNEL = 5
+};
 
 class UDPServer {
 public:
@@ -16,6 +27,9 @@ public:
 	bool Init(unsigned short port);
 	void Start();
 	void Stop();
+	bool IsServerChannelOnline(unsigned char serverID, unsigned char channelID);
+	void SendNumPlayersPacketToAll(unsigned short numPlayers);
+	void OnSecondTick();
 
 	unsigned char ReadUInt8() noexcept {
 		return ReadBytes<unsigned char>();
@@ -59,6 +73,12 @@ private:
 	void startReceive();
 	void handleReceive(const boost::system::error_code& ec, size_t bytes_transferred);
 	void handleSend(shared_ptr<vector<unsigned char>> message, const boost::system::error_code& ec, size_t bytes_transferred);
+	void handleClientPacket(size_t bytes_transferred);
+	void handleServerPacket(size_t bytes_transferred);
+	void sendHelloPacketToAll();
+	void sendGoodbytePacketToAll();
+	void sendHeartbeatPacket(unsigned char serverID, unsigned char channelID);
+	void sendDeadChannelPacketToAll(unsigned char serverID, unsigned char channelID);
 
 	unsigned short _port;
 
@@ -68,6 +88,10 @@ private:
 	boost::asio::ip::udp::endpoint _endpoint;
 	array<unsigned char, UDP_PACKET_MAX_SIZE> _recvBuffer;
 	int _readOffset;
+	mutex _heartbeatMutex;
+	map<pair<unsigned char, unsigned char>, shared_ptr<promise<bool>>> _heartbeatPromises;
+	unsigned char _heartbeatServerID = 0;
+	unsigned char _heartbeatChannelID = 0;
 };
 
 extern UDPServer udpServer;
