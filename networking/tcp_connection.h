@@ -126,6 +126,15 @@ struct BookMark {
 	unsigned char unk1 = 0;
 };
 
+struct InventoryItem {
+	unsigned char slotID = 0;
+	unsigned char itemID = 0;
+	unsigned char count = 0;
+	bool inUse = false;
+	unsigned long obtainTime = 0;
+	unsigned long expirationTime = 0;
+};
+
 class TCPConnection : public enable_shared_from_this<TCPConnection> {
 public:
 	~TCPConnection();

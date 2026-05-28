@@ -50,15 +50,15 @@ void Packet_ShopManager::sendPacket_Shop_Unk0(TCPConnection::pointer connection)
 	packet->WriteUInt8(0); // Num. of products
 
 	for (unsigned char i = 0; i < 0; i++) {
-		packet->WriteUInt32_LE(0); // unk
-		packet->WriteUInt8(0); // unk
-		packet->WriteUInt8(0); // unk
+		packet->WriteUInt32_LE(0); // itemID (actually it's productID, but most items are itemID)
+		packet->WriteUInt8(0); // currency; 0 - cash, 1 - point, 2 - clan point, 3+ - crashes client
+		packet->WriteUInt8(0); // Num. of offers
 
 		for (unsigned char j = 0; j < 0; j++) {
-			packet->WriteUInt32_LE(0); // unk
-			packet->WriteUInt16_LE(0); // unk
-			packet->WriteUInt16_LE(0); // unk
-			packet->WriteUInt32_LE(0); // unk
+			packet->WriteUInt32_LE(0); // itemID
+			packet->WriteUInt16_LE(0); // duration, 0 - permanent
+			packet->WriteUInt16_LE(0); // if permanent, this is count
+			packet->WriteUInt32_LE(0); // price
 		}
 	}
 

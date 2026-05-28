@@ -52,6 +52,9 @@
     <ClCompile Include="managers\packet_favoritemanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
+    <ClCompile Include="managers\packet_itemmanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
     <ClCompile Include="managers\packet_userstartmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
@@ -75,6 +78,12 @@
     </ClCompile>
     <ClCompile Include="room\room.cpp">
       <Filter>room</Filter>
+    </ClCompile>
+    <ClCompile Include="room\gamematch.cpp">
+      <Filter>gamematch</Filter>
+    </ClCompile>
+    <ClCompile Include="room\gamematchuser.cpp">
+      <Filter>gamematch</Filter>
     </ClCompile>
     <ClCompile Include="user\user.cpp">
       <Filter>user</Filter>
@@ -143,6 +152,9 @@
     <ClInclude Include="managers\packet_favoritemanager.h">
       <Filter>managers</Filter>
     </ClInclude>
+    <ClInclude Include="managers\packet_itemmanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
     <ClInclude Include="managers\packet_userstartmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
@@ -166,6 +178,12 @@
     </ClInclude>
     <ClInclude Include="room\room.h">
       <Filter>room</Filter>
+    </ClInclude>
+    <ClInclude Include="room\gamematch.h">
+      <Filter>gamematch</Filter>
+    </ClInclude>
+    <ClInclude Include="room\gamematchuser.h">
+      <Filter>gamematch</Filter>
     </ClInclude>
     <ClInclude Include="user\user.h">
       <Filter>user</Filter>

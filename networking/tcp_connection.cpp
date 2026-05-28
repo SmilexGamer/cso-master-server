@@ -233,7 +233,7 @@ void TCPConnection::onReadHeader(const boost::system::error_code& ec, size_t byt
 	buffer_copy(boost::asio::buffer(buffer), _streamBuf.data());
 	_streamBuf.consume(bytesTransferred);
 
-	if (_decryptCipher.ctx != NULL) {
+	if (_decryptCipher.ctx) {
 		if (_decrypt) {
 			if (!decrypt(buffer)) {
 				userManager.RemoveUserByConnection(shared_from_this());
@@ -305,7 +305,7 @@ void TCPConnection::onReadBody(const boost::system::error_code& ec, size_t bytes
 	buffer_copy(boost::asio::buffer(buffer), _streamBuf.data());
 	_streamBuf.consume(bytesTransferred);
 
-	if (_decryptCipher.ctx != NULL) {
+	if (_decryptCipher.ctx) {
 		if (_decrypt) {
 			if (!decrypt(buffer)) {
 				userManager.RemoveUserByConnection(shared_from_this());
@@ -354,7 +354,7 @@ void TCPConnection::asyncWrite() {
 	}
 
 	bool noSSL = _encrypt;
-	if (_encryptCipher.ctx != NULL) {
+	if (_encryptCipher.ctx) {
 		if (_encrypt) {
 			if (!encrypt(*buffer)) {
 				userManager.RemoveUserByConnection(shared_from_this());

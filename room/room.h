@@ -1,11 +1,12 @@
 #pragma once
 #include "user.h"
+#include "gamematch.h"
 
 #define ROOMSETTINGS_LFLAG_ROOMNAME			0x1
 #define ROOMSETTINGS_LFLAG_UNK2				0x2
 #define ROOMSETTINGS_LFLAG_UNK4				0x4
 #define ROOMSETTINGS_LFLAG_PASSWORD			0x8
-#define ROOMSETTINGS_LFLAG_UNK10			0x10
+#define ROOMSETTINGS_LFLAG_LEVELLIMIT		0x10
 #define ROOMSETTINGS_LFLAG_UNK20			0x20
 #define ROOMSETTINGS_LFLAG_GAMEMODEID		0x40
 #define ROOMSETTINGS_LFLAG_MAPID			0x80
@@ -14,7 +15,7 @@
 #define ROOMSETTINGS_LFLAG_KILLLIMIT		0x400
 #define ROOMSETTINGS_LFLAG_TIMELIMIT		0x800
 #define ROOMSETTINGS_LFLAG_ROUNDTIME		0x1000
-#define ROOMSETTINGS_LFLAG_UNK2000			0x2000
+#define ROOMSETTINGS_LFLAG_WEAPONLIMIT		0x2000
 #define ROOMSETTINGS_LFLAG_HOSTAGEPENALTY	0x4000
 #define ROOMSETTINGS_LFLAG_FREEZETIME		0x8000
 #define ROOMSETTINGS_LFLAG_BUYTIME			0x10000
@@ -31,13 +32,18 @@
 #define ROOMSETTINGS_LFLAG_UNK8000000		0x8000000
 #define ROOMSETTINGS_LFLAG_DEATHCAMERATYPE	0x10000000
 #define ROOMSETTINGS_LFLAG_VOICECHAT		0x20000000
-#define ROOMSETTINGS_LFLAG_UNK40000000		0x40000000
+#define ROOMSETTINGS_LFLAG_ROOMSTATE		0x40000000
 #define ROOMSETTINGS_LFLAG_UNK80000000		0x80000000
 #define ROOMSETTINGS_LFLAG_ALL				0xFFFFFFFF
 
 #define ROOMSETTINGS_HFLAG_UNK1			0x1
 #define ROOMSETTINGS_HFLAG_UNK2			0x2
 #define ROOMSETTINGS_HFLAG_ALL			0xFF
+
+enum class RoomState {
+	Waiting = 0,
+	Playing = 2
+};
 
 struct unk80000000_vec {
 	unsigned long unk8000000_vec_1 = 0;
@@ -61,7 +67,7 @@ struct RoomSettings {
 	unsigned char unk4_3 = 0;
 	unsigned long unk4_4 = 0;
 	string password = "";
-	unsigned char unk10 = 0;
+	unsigned char levelLimit = 0;
 	unsigned char unk20 = 0;
 	unsigned char gameModeID = 0;
 	unsigned char mapID = 0;
@@ -70,24 +76,24 @@ struct RoomSettings {
 	unsigned short killLimit = 0;
 	unsigned char timeLimit = 0;
 	unsigned char roundTime = 0;
-	unsigned char unk2000 = 0;
+	unsigned char weaponLimit = 0;
 	unsigned char hostagePenalty = 0;
 	unsigned char freezeTime = 0;
 	unsigned char buyTime = 0;
 	unsigned char nickNameDisplay = 0;
 	unsigned char unk40000 = 0;
 	unsigned char unk80000 = 0;
-	unsigned char friendlyFire = 0;
-	unsigned char flashLight = 0;
-	unsigned char footSteps = 0;
+	bool friendlyFire = false;
+	bool flashLight = false;
+	bool footSteps = false;
 	unsigned char unk800000 = 0;
 	unsigned char unk1000000 = 0;
 	unsigned char unk2000000 = 0;
 	unsigned char unk4000000 = 0;
 	unsigned char unk8000000 = 0;
 	unsigned char deathCameraType = 0;
-	unsigned char voiceChat = 0;
-	unsigned char unk40000000 = 0;
+	bool voiceChat = false;
+	RoomState roomState = RoomState::Waiting;
 	unsigned char unk80000000_1 = 0;
 	unk80000000_vec unk80000000_2[2];
 	unsigned long unkh1_1 = 0;
@@ -122,13 +128,23 @@ public:
 		return _roomUsers;
 	}
 
+	GameMatch* GetGameMatch() const noexcept {
+		return _gameMatch;
+	}
+
+	void SetGameMatch(GameMatch* gameMatch) noexcept {
+		_gameMatch = gameMatch;
+	}
+
 	char AddRoomUser(User* user);
 	void RemoveRoomUser(User* user);
 	void UpdateRoomHostUser(User* user);
+	void UpdateRoomSettings(const RoomSettings& roomSettings);
 
 private:
 	unsigned short _roomID;
 	User* _roomHostUser;
 	RoomSettings _roomSettings;
 	vector<User*> _roomUsers;
+	GameMatch* _gameMatch;
 };

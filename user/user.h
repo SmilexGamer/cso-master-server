@@ -19,7 +19,7 @@
 #define USERCHARACTER_FLAG_LOCATION		0x200
 #define USERCHARACTER_FLAG_UNK400		0x400
 #define USERCHARACTER_FLAG_UNK800		0x800
-#define USERCHARACTER_FLAG_UNK1000		0x1000
+#define USERCHARACTER_FLAG_CLAN			0x1000
 #define USERCHARACTER_FLAG_ALL			0xFFFF
 
 struct UserCharacter {
@@ -45,12 +45,12 @@ struct UserCharacter {
 	string unk200_5 = "";
 	unsigned long unk400 = 0;
 	unsigned char unk800 = 0;
-	unsigned long unk1000_1 = 0;
-	unsigned long unk1000_2 = 0;
-	string unk1000_3 = "";
-	unsigned char unk1000_4 = 0;
-	unsigned char unk1000_5 = 0;
-	unsigned char unk1000_6 = 0;
+	unsigned long clanID = 0;
+	unsigned long clanMarkID = 0;
+	string clanName = "";
+	unsigned char clanUnk4 = 0;
+	unsigned char clanUnk5 = 0;
+	unsigned char clanUnk6 = 0;
 };
 
 struct UserCharacterResult {
@@ -59,17 +59,17 @@ struct UserCharacterResult {
 };
 
 enum PortType {
-	Host = 0,
-	Guest = 1
+	Guest = 0,
+	Host = 1
 };
 
 struct UserNetwork {
-	unsigned long localIP = 0;
-	unsigned short localGuestPort = 0;
-	unsigned short localHostPort = 0;
 	unsigned long externalIP = 0;
-	unsigned short externalGuestPort = 0;
 	unsigned short externalHostPort = 0;
+	unsigned short externalGuestPort = 0;
+	unsigned long localIP = 0;
+	unsigned short localHostPort = 0;
+	unsigned short localGuestPort = 0;
 };
 
 enum UserStatus {
@@ -82,7 +82,7 @@ enum UserStatus {
 
 class User {
 public:
-	User(TCPConnection::pointer connection, unsigned long userID, const string& userName);
+	User(TCPConnection::pointer connection, unsigned long userID, const string& userName, const UserNetwork& userNetwork = {});
 
 	TCPConnection::pointer GetConnection() const noexcept {
 		return _connection;
@@ -108,7 +108,7 @@ public:
 		return _userNetwork;
 	}
 
-	void SetUserNetwork(PortType portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort);
+	void SetUserNetwork(PortType portType, unsigned long externalIP, unsigned short externalPort, unsigned long localIP, unsigned short localPort);
 
 	UserStatus GetUserStatus() const noexcept {
 		return _userStatus;
@@ -130,6 +130,7 @@ public:
 	UserCharacterResult GetUserCharacter(unsigned short flag) const noexcept;
 	char CreateUserBuymenus() const noexcept;
 	char CreateUserBookmarks() const noexcept;
+	char CreateUserInventory() const noexcept;
 	char AddUserSession() const noexcept;
 	void RemoveUserSession() const noexcept;
 	char AddUserTransfer(const string& authToken, unsigned char serverID, unsigned char channelID) const noexcept;
@@ -141,6 +142,7 @@ public:
 	const vector<BuyMenu> GetUserBuyMenus() const noexcept;
 	bool SaveUserBookMark(const BookMark& userBookMark) const noexcept;
 	const vector<BookMark> GetUserBookMarks() const noexcept;
+	const vector<InventoryItem> GetUserInventory() const noexcept;
 
 private:
 	TCPConnection::pointer _connection;

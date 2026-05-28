@@ -10,6 +10,7 @@ public:
 	void Stop();
 	void QueuePacket(TCPConnection::Packet::pointer packet);
 	void SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, const vector<string>& additionalText = {});
+	void SendPacket_Inventory(TCPConnection::pointer connection, const vector<InventoryItem>& userInventory);
 	void BuildUserCharacter(TCPConnection::Packet::pointer packet, const UserCharacter& userCharacter);
 
 private:

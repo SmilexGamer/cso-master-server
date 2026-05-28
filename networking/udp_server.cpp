@@ -276,7 +276,10 @@ void UDPServer::handleIncomingClientPacket(UDPPacket* packet) {
 
 			serverConsole.Print(PrefixType::Info, format("[ UDPServer ] User ({}) sent UDP packet - userID: {}, type: {}, portType: {}, localIP: {}.{}.{}.{}, localPort: {}, retryNum: {}, externalPort: {}\n", user->GetUserLogName(), userID, type, portType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), localPort, retryNum, packet->GetEndpoint().port()));
 
-			user->SetUserNetwork((PortType)portType, localIP, localPort, packet->GetEndpoint().port());
+			struct sockaddr_in addr {};
+			inet_pton(AF_INET, packet->GetEndpoint().address().to_string().c_str(), &(addr.sin_addr));
+
+			user->SetUserNetwork((PortType)portType, addr.sin_addr.S_un.S_addr, packet->GetEndpoint().port(), localIP, localPort);
 
 			sendClientPacket(packet->GetEndpoint(), user->GetUserLogName());
 			break;

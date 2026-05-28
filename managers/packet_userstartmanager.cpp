@@ -1,4 +1,5 @@
 #include "packet_userstartmanager.h"
+#include "usermanager.h"
 #include "serverconsole.h"
 
 Packet_UserStartManager packet_UserStartManager;
@@ -13,13 +14,19 @@ void Packet_UserStartManager::ParsePacket_UserStart(TCPConnection::Packet::point
 		return;
 	}
 
-	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] Parsing Packet_UserStart from client ({})\n", connection->GetIPAddress()));
+	User* user = userManager.GetUserByConnection(connection);
+	if (!userManager.IsUserLoggedIn(user)) {
+		serverConsole.Print(PrefixType::Warn, format("[ Packet_UserStartManager ] Client ({}) has sent Packet_UserStart, but it's not logged in!\n", connection->GetIPAddress()));
+		return;
+	}
+
+	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] Parsing Packet_UserStart from user ({})\n", user->GetUserLogName()));
 
 	unsigned char type = packet->ReadUInt8();
 	unsigned long unk1 = packet->ReadUInt32_LE();
 	const string& unk2 = packet->ReadString();
 
-	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] Client ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", connection->GetIPAddress(), type, unk1, unk2));
+	serverConsole.Print(PrefixType::Info, format("[ Packet_UserStartManager ] User ({}) has sent Packet_UserStart - type: {}, unk1: {}, unk2: {}\n", connection->GetIPAddress(), type, unk1, unk2));
 }
 
 void Packet_UserStartManager::SendPacket_UserStart(const GameUser& gameUser) {

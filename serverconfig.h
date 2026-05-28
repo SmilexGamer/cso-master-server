@@ -53,6 +53,7 @@ public:
 	CipherMethod decryptCipherMethod;
 	CipherMethod encryptCipherMethod;
 	vector<BuyMenu> defaultBuyMenus;
+	vector<unsigned char> defaultInventory;
 };
 
 extern ServerConfig serverConfig;

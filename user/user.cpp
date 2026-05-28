@@ -1,6 +1,6 @@
 #include "databasemanager.h"
 
-User::User(TCPConnection::pointer connection, unsigned long userID, const string& userName) : _connection(connection), _userID(userID), _userName(userName) {
+User::User(TCPConnection::pointer connection, unsigned long userID, const string& userName, const UserNetwork& userNetwork) : _connection(connection), _userID(userID), _userName(userName), _userNetwork(userNetwork) {
 	if (_connection == NULL) {
 		delete this;
 		return;
@@ -16,18 +16,19 @@ User::User(TCPConnection::pointer connection, unsigned long userID, const string
 	_currentRoomID = 0;
 }
 
-void User::SetUserNetwork(PortType portType, unsigned long localIP, unsigned short localPort, unsigned short externalPort) {
+void User::SetUserNetwork(PortType portType, unsigned long externalIP, unsigned short externalPort, unsigned long localIP, unsigned short localPort) {
+	_userNetwork.externalIP = externalIP;
 	_userNetwork.localIP = localIP;
 
 	switch (portType) {
 		case PortType::Guest: {
-			_userNetwork.localGuestPort = localPort;
 			_userNetwork.externalGuestPort = externalPort;
+			_userNetwork.localGuestPort = localPort;
 			break;
 		}
 		case PortType::Host: {
-			_userNetwork.localHostPort = localPort;
 			_userNetwork.externalHostPort = externalPort;
+			_userNetwork.localHostPort = localPort;
 			break;
 		}
 	}
@@ -49,6 +50,10 @@ char User::CreateUserBookmarks() const noexcept {
 	return databaseManager.CreateUserBookmarks(_userID);
 }
 
+char User::CreateUserInventory() const noexcept {
+	return databaseManager.CreateUserInventory(_userID);
+}
+
 char User::AddUserSession() const noexcept {
 	return databaseManager.AddUserSession(_userID);
 }
@@ -58,7 +63,7 @@ void User::RemoveUserSession() const noexcept {
 }
 
 char User::AddUserTransfer(const string& authToken, unsigned char serverID, unsigned char channelID) const noexcept {
-	return databaseManager.AddUserTransfer(_userID, authToken, serverID, channelID);
+	return databaseManager.AddUserTransfer(_userID, authToken, serverID, channelID, _userNetwork);
 }
 
 void User::RemoveUserTransfer() const noexcept {
@@ -93,4 +98,8 @@ bool User::SaveUserBookMark(const BookMark& userBookMark) const noexcept {
 
 const vector<BookMark> User::GetUserBookMarks() const noexcept {
 	return databaseManager.GetUserBookMarks(_userID);
+}
+
+const vector<InventoryItem> User::GetUserInventory() const noexcept {
+	return databaseManager.GetUserInventory(_userID);
 }

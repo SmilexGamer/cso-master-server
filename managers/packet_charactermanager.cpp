@@ -105,6 +105,17 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
+	char createUserInventoryResult = user->CreateUserInventory();
+	if (!createUserInventoryResult) {
+		if (createUserInventoryResult < 0) {
+			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
+			return;
+		}
+
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::ALREADY_EXIST);
+		return;
+	}
+
 	char createUserCharacterResult = user->CreateUserCharacter(nickName);
 	if (!createUserCharacterResult) {
 		if (createUserCharacterResult < 0) {
@@ -116,7 +127,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess) && connection != NULL) {
+	if (!userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess) && connection) {
 		connection->DisconnectClient();
 		return;
 	}

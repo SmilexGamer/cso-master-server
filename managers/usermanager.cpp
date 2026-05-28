@@ -47,7 +47,7 @@ void UserManager::RemoveUser(User* user) {
 	}
 
 	Room* room = roomManager.GetRoomByRoomID(user->GetCurrentRoomID());
-	if (room != NULL) {
+	if (room) {
 		room->RemoveRoomUser(user);
 	}
 
@@ -82,7 +82,7 @@ User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
 }
 
 User* UserManager::GetUserByUserID(unsigned long userID) {
-	if (!userID) {
+	if (userID == NULL) {
 		return NULL;
 	}
 
@@ -126,6 +126,7 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 	auto connection = user->GetConnection();
 	if (connection == NULL) {
+		RemoveUser(user);
 		return false;
 	}
 
@@ -168,6 +169,11 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 			packet_FavoriteManager.SendPacket_Favorite_UserBookMark(connection, userBookMarks);
 		}
 
+		const vector<InventoryItem>& userInventory = user->GetUserInventory();
+		if (!userInventory.empty()) {
+			packetManager.SendPacket_Inventory(connection, userInventory);
+		}
+
 		packet_ClientCheckManager.SendPacket_ClientCheck(connection);
 	}
 	else {
@@ -186,13 +192,17 @@ void UserManager::SendFullUserListPacket(TCPConnection::pointer connection) {
 		return;
 	}
 
-	vector<GameUser> gameUsers;
-	for (auto& user : _users) {
-		if (user == NULL || user->GetUserStatus() != UserStatus::InLobby) {
-			continue;
-		}
+	vector<User*> users = _users;
 
-		const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
+	users.erase(remove_if(users.begin(), users.end(), [](User* user) {
+		return (user == NULL || user->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
+
+	vector<GameUser> gameUsers;
+	UserCharacterResult userCharacterResult;
+
+	for (auto& user : users) {
+		userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
 		if (userCharacterResult.result) {
 			gameUsers.push_back({ user, userCharacterResult.userCharacter });
 		}
@@ -211,11 +221,13 @@ void UserManager::SendAddUserPacketToAll(User* user) {
 		return;
 	}
 
-	for (auto& u : _users) {
-		if (u == NULL || u == user || u->GetUserStatus() != UserStatus::InLobby || u->GetConnection() == NULL) {
-			continue;
-		}
+	vector<User*> users = _users;
 
+	users.erase(remove_if(users.begin(), users.end(), [user](User* u) {
+		return (u == NULL || u == user || u->GetConnection() == NULL || u->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
+
+	for (auto& u : users) {
 		packet_ServerListManager.SendPacket_Lobby_AddUser(u->GetConnection(), { user, userCharacterResult.userCharacter });
 	}
 }
@@ -225,13 +237,15 @@ void UserManager::SendRemoveUserPacketToAll(User* user) {
 		return;
 	}
 
+	vector<User*> users = _users;
+
+	users.erase(remove_if(users.begin(), users.end(), [user](User* u) {
+		return (u == NULL || u == user || u->GetConnection() == NULL || u->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
+
 	unsigned long userID = user->GetUserID();
 
-	for (auto& u : _users) {
-		if (u == NULL || u == user || u->GetUserStatus() != UserStatus::InLobby || u->GetConnection() == NULL) {
-			continue;
-		}
-
+	for (auto& u : users) {
 		packet_ServerListManager.SendPacket_Lobby_RemoveUser(u->GetConnection(), userID);
 	}
 }

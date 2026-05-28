@@ -52,7 +52,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		return;
 	}
 
-	User* newUser = new User(connection, transferLoginResult.userID, transferLoginResult.userName);
+	User* newUser = new User(connection, transferLoginResult.userID, transferLoginResult.userName, transferLoginResult.userNetwork);
 	char userResult = userManager.AddUser(newUser, true);
 	if (!userResult) {
 		if (userResult < 0) {
@@ -70,7 +70,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(newUser) && connection != NULL) {
+	if (!userManager.SendLoginPackets(newUser) && connection) {
 		connection->DisconnectClient();
 		return;
 	}

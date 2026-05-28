@@ -44,10 +44,10 @@ void Packet_UdpManager::ParsePacket_Udp(TCPConnection::Packet::pointer packet) {
 				case 0: {
 					// sent socket info sucessfully
 					unsigned long localIP = packet->ReadUInt32_LE();
-					unsigned short retryNumPortType0 = packet->ReadUInt16_LE();
-					unsigned short retryNumPortType1 = packet->ReadUInt16_LE();
+					unsigned short retryNumHost = packet->ReadUInt16_LE();
+					unsigned short retryNumGuest = packet->ReadUInt16_LE();
 
-					serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, subType: {}, localIP: {}.{}.{}.{}, retryNumPortType0: {}, retryNumPortType1: {}\n", user->GetUserLogName(), type, subType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), retryNumPortType0, retryNumPortType1));
+					serverConsole.Print(PrefixType::Info, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp - type: {}, subType: {}, localIP: {}.{}.{}.{}, retryNumHost: {}, retryNumGuest: {}\n", user->GetUserLogName(), type, subType, (unsigned char)localIP, (unsigned char)(localIP >> 8), (unsigned char)(localIP >> 16), (unsigned char)(localIP >> 24), retryNumHost, retryNumGuest));
 					break;
 				}
 				case 1: {

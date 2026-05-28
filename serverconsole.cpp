@@ -160,11 +160,9 @@ void ServerConsole::StartRead() {
 			string usersList;
 			vector<User*> users = userManager.GetUsers();
 
-			users.erase(remove_if(
-				users.begin(), users.end(),
-				[](User* user) {
-					return (user == NULL || user->GetConnection() == NULL);
-				}), users.end());
+			users.erase(remove_if(users.begin(), users.end(), [](User* user) {
+				return (user == NULL);
+			}), users.end());
 
 			Print(PrefixType::Info, format("[ ServerConsole ] Connected users: {}\n", users.size()));
 			Print(PrefixType::Info, "[ ServerConsole ] UserID, UserName, IP, Status\n");

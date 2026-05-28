@@ -14,6 +14,7 @@
 #include "packet_shopmanager.h"
 #include "packet_optionmanager.h"
 #include "packet_favoritemanager.h"
+#include "packet_itemmanager.h"
 #include "packet_userstartmanager.h"
 #include "serverconsole.h"
 
@@ -91,6 +92,30 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_R
 	packet->Send();
 }
 
+void PacketManager::SendPacket_Inventory(TCPConnection::pointer connection, const vector<InventoryItem>& userInventory) {
+	if (connection == NULL) {
+		return;
+	}
+
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Inventory });
+	if (packet == NULL) {
+		return;
+	}
+
+	packet->WriteUInt8((unsigned char)userInventory.size());
+	for (auto& item : userInventory) {
+		packet->WriteUInt8(item.slotID);
+		packet->WriteUInt8(1); // unk, 0 - crash
+		packet->WriteUInt8(item.itemID);
+		packet->WriteUInt8(item.count);
+		packet->WriteBool(item.inUse);
+		packet->WriteUInt32_LE(item.obtainTime);
+		packet->WriteUInt32_LE(item.expirationTime); // not in use - days, inUse - unix timestamp ; if 0, permanent
+	}
+
+	packet->Send();
+}
+
 void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, const UserCharacter& userCharacter) {
 	if (packet == NULL) {
 		return;
@@ -144,13 +169,13 @@ void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, co
 	if (userCharacter.flag & USERCHARACTER_FLAG_UNK800) {
 		packet->WriteUInt8(userCharacter.unk800);
 	}
-	if (userCharacter.flag & USERCHARACTER_FLAG_UNK1000) {
-		packet->WriteUInt32_LE(userCharacter.unk1000_1);
-		packet->WriteUInt32_LE(userCharacter.unk1000_2);
-		packet->WriteString(userCharacter.unk1000_3);
-		packet->WriteUInt8(userCharacter.unk1000_4);
-		packet->WriteUInt8(userCharacter.unk1000_5);
-		packet->WriteUInt8(userCharacter.unk1000_6);
+	if (userCharacter.flag & USERCHARACTER_FLAG_CLAN) {
+		packet->WriteUInt32_LE(userCharacter.clanID);
+		packet->WriteUInt32_LE(userCharacter.clanMarkID);
+		packet->WriteString(userCharacter.clanName);
+		packet->WriteUInt8(userCharacter.clanUnk4);
+		packet->WriteUInt8(userCharacter.clanUnk5);
+		packet->WriteUInt8(userCharacter.clanUnk6);
 	}
 }
 
@@ -282,6 +307,10 @@ void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
 		}
 		case PacketID::Favorite: {
 			packet_FavoriteManager.ParsePacket_Favorite(packet);
+			break;
+		}
+		case PacketID::Item: {
+			packet_ItemManager.ParsePacket_Item(packet);
 			break;
 		}
 		case PacketID::UserStart: {

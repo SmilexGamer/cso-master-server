@@ -25,12 +25,25 @@ void RoomManager::RemoveRoom(Room* room) {
 
 	roomManager.SendRemoveRoomPacketToAll(room->GetRoomID());
 	_rooms.erase(find(_rooms.begin(), _rooms.end(), room));
+
+	GameMatch* gameMatch = room->GetGameMatch();
+	if (gameMatch) {
+		delete gameMatch;
+		room->SetGameMatch(NULL);
+	}
+
 	delete room;
 	room = NULL;
 }
 
 void RoomManager::RemoveAllRooms() {
 	for (auto& room : _rooms) {
+		GameMatch* gameMatch = room->GetGameMatch();
+		if (gameMatch) {
+			delete gameMatch;
+			room->SetGameMatch(NULL);
+		}
+
 		delete room;
 		room = NULL;
 	}
@@ -66,7 +79,7 @@ void RoomManager::RemoveRoomByRoomID(unsigned short roomID) {
 
 unsigned short RoomManager::GetFreeRoomID() {
 	for (unsigned short roomID = 1; roomID < UINT16_MAX; roomID++) {
-		if (GetRoomByRoomID(roomID) != NULL) {
+		if (GetRoomByRoomID(roomID)) {
 			continue;
 		}
 
@@ -89,25 +102,25 @@ void RoomManager::SendAddRoomPacketToAll(Room* room, unsigned short flag) {
 		return;
 	}
 
-	const vector<User*>& users = userManager.GetUsers();
+	vector<User*> users = userManager.GetUsers();
+
+	users.erase(remove_if(users.begin(), users.end(), [](User* user) {
+		return (user == NULL || user->GetConnection() == NULL || user->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
 
 	for (auto& user : users) {
-		if (user == NULL || user->GetUserStatus() != UserStatus::InLobby || user->GetConnection() == NULL) {
-			continue;
-		}
-
 		packet_RoomManager.SendPacket_RoomList_AddRoom(user->GetConnection(), room, flag);
 	}
 }
 
 void RoomManager::SendRemoveRoomPacketToAll(unsigned short roomID) {
-	const vector<User*>& users = userManager.GetUsers();
+	vector<User*> users = userManager.GetUsers();
+
+	users.erase(remove_if(users.begin(), users.end(), [](User* user) {
+		return (user == NULL || user->GetConnection() == NULL || user->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
 
 	for (auto& user : users) {
-		if (user == NULL || user->GetUserStatus() != UserStatus::InLobby || user->GetConnection() == NULL) {
-			continue;
-		}
-
 		packet_RoomManager.SendPacket_RoomList_RemoveRoom(user->GetConnection(), roomID);
 	}
 }
@@ -125,13 +138,13 @@ void RoomManager::SendUpdateRoomPacketToAll(Room* room, unsigned short flag) {
 		return;
 	}
 
-	const vector<User*>& users = userManager.GetUsers();
+	vector<User*> users = userManager.GetUsers();
+
+	users.erase(remove_if(users.begin(), users.end(), [](User* user) {
+		return (user == NULL || user->GetConnection() == NULL || user->GetUserStatus() != UserStatus::InLobby);
+	}), users.end());
 
 	for (auto& user : users) {
-		if (user == NULL || user->GetUserStatus() != UserStatus::InLobby || user->GetConnection() == NULL) {
-			continue;
-		}
-
 		packet_RoomManager.SendPacket_RoomList_UpdateRoom(user->GetConnection(), room, flag);
 	}
 }

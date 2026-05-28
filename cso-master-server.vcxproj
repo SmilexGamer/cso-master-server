@@ -176,6 +176,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="managers\packet_shopmanager.cpp" />
     <ClCompile Include="managers\packet_optionmanager.cpp" />
     <ClCompile Include="managers\packet_favoritemanager.cpp" />
+    <ClCompile Include="managers\packet_itemmanager.cpp" />
     <ClCompile Include="managers\packet_userstartmanager.cpp" />
     <ClCompile Include="managers\usermanager.cpp" />
     <ClCompile Include="managers\databasemanager.cpp" />
@@ -184,6 +185,8 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="networking\tcp_server.cpp" />
     <ClCompile Include="networking\udp_server.cpp" />
     <ClCompile Include="room\room.cpp" />
+    <ClCompile Include="room\gamematch.cpp" />
+    <ClCompile Include="room\gamematchuser.cpp" />
     <ClCompile Include="user\user.cpp" />
     <ClCompile Include="thirdparty\libbcrypt\bcrypt.c" />
     <ClCompile Include="thirdparty\libbcrypt\crypt_blowfish.c" />
@@ -209,6 +212,7 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="managers\packet_shopmanager.h" />
     <ClInclude Include="managers\packet_optionmanager.h" />
     <ClInclude Include="managers\packet_favoritemanager.h" />
+    <ClInclude Include="managers\packet_itemmanager.h" />
     <ClInclude Include="managers\packet_userstartmanager.h" />
     <ClInclude Include="managers\usermanager.h" />
     <ClInclude Include="managers\databasemanager.h" />
@@ -217,6 +221,8 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="networking\tcp_server.h" />
     <ClInclude Include="networking\udp_server.h" />
     <ClInclude Include="room\room.h" />
+    <ClInclude Include="room\gamematch.h" />
+    <ClInclude Include="room\gamematchuser.h" />
     <ClInclude Include="user\user.h" />
     <ClInclude Include="thirdparty\libbcrypt\bcrypt.h" />
     <ClInclude Include="thirdparty\libbcrypt\BCrypt.hpp" />

@@ -4,6 +4,7 @@
 #include "mysql/mysqld_error.h"
 #include "libbcrypt/bcrypt.h"
 #include <tuple>
+#include <ctime>
 #include "udp_server.h"
 
 DatabaseManager databaseManager;
@@ -183,8 +184,8 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
         if (flag & USERCHARACTER_FLAG_UNK800) {
             info += " unk800,";
         }
-        if (flag & USERCHARACTER_FLAG_UNK1000) {
-            info += " unk1000_1, unk1000_2, unk1000_3, unk1000_4, unk1000_5, unk1000_6,";
+        if (flag & USERCHARACTER_FLAG_CLAN) {
+            info += " clanID, clanMarkID, clanName, clanUnk4, clanUnk5, clanUnk6,";
         }
         info[info.size() - 1] = ' ';
     }
@@ -204,7 +205,7 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
         return { userCharacter, 0 };
     }
 
-    if (flag != NULL) {
+    if (flag) {
         char index = 0;
         if (flag & USERCHARACTER_FLAG_UNK1) {
             userCharacter.unk1 = atoi(row[index++]);
@@ -251,13 +252,13 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
         if (flag & USERCHARACTER_FLAG_UNK800) {
             userCharacter.unk800 = atoi(row[index++]);
         }
-        if (flag & USERCHARACTER_FLAG_UNK1000) {
-            userCharacter.unk1000_1 = atoi(row[index++]);
-            userCharacter.unk1000_2 = atoi(row[index++]);
-            userCharacter.unk1000_3 = row[index++];
-            userCharacter.unk1000_4 = atoi(row[index++]);
-            userCharacter.unk1000_5 = atoi(row[index++]);
-            userCharacter.unk1000_6 = atoi(row[index++]);
+        if (flag & USERCHARACTER_FLAG_CLAN) {
+            userCharacter.clanID = atoi(row[index++]);
+            userCharacter.clanMarkID = atoi(row[index++]);
+            userCharacter.clanName = row[index++];
+            userCharacter.clanUnk4 = atoi(row[index++]);
+            userCharacter.clanUnk5 = atoi(row[index++]);
+            userCharacter.clanUnk6 = atoi(row[index++]);
         }
     }
 
@@ -276,7 +277,7 @@ bool DatabaseManager::CreateUserBuymenus(unsigned long userID) {
 
     MYSQL_RES* res = mysql_use_result(_connection);
 
-    if (mysql_fetch_row(res) != NULL) {
+    if (mysql_fetch_row(res)) {
         mysql_free_result(res);
     }
     else {
@@ -311,7 +312,7 @@ bool DatabaseManager::CreateUserBookmarks(unsigned long userID) {
 
     MYSQL_RES* res = mysql_use_result(_connection);
 
-    if (mysql_fetch_row(res) != NULL) {
+    if (mysql_fetch_row(res)) {
         mysql_free_result(res);
     }
     else {
@@ -325,6 +326,41 @@ bool DatabaseManager::CreateUserBookmarks(unsigned long userID) {
 
         if (mysql_query(_connection, query.c_str())) {
             serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserBookmarks: {}\n", mysql_error(_connection)));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool DatabaseManager::CreateUserInventory(unsigned long userID) {
+    string query = format("SELECT 1 FROM user_inventory WHERE userID = {};", userID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserInventory: {}\n", mysql_error(_connection)));
+        return false;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+
+    if (mysql_fetch_row(res)) {
+        mysql_free_result(res);
+    }
+    else {
+        mysql_free_result(res);
+
+        time_t now;
+        time(&now);
+        unsigned char slotID = 1;
+
+        string query = format("INSERT INTO user_inventory (userID, slotID, itemID, count, inUse, obtainTime, expirationTime) VALUES");
+        for (auto& itemID : serverConfig.defaultInventory) {
+            query += format(" ({}, {}, {}, 1, 1, {}, 0),", userID, slotID++, itemID, now);
+        }
+        query[query.size() - 1] = ';';
+
+        if (mysql_query(_connection, query.c_str())) {
+            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserInventory: {}\n", mysql_error(_connection)));
             return false;
         }
     }
@@ -423,7 +459,7 @@ const TransferLoginResult DatabaseManager::TransferLogin(const string& authToken
         return { 0, "", Packet_ReplyType::INVALID_USERINFO };
     }
 
-    string query = format("SELECT userID FROM user_transfers WHERE authToken = '{}' AND serverID = {} AND channelID = {};", authToken, serverConfig.serverID, serverConfig.channelID);
+    string query = format("SELECT userID, externalIP, externalHostPort, externalGuestPort, localIP, localHostPort, localGuestPort FROM user_transfers WHERE authToken = '{}' AND serverID = {} AND channelID = {};", authToken, serverConfig.serverID, serverConfig.channelID);
 
     if (mysql_query(_connection, query.c_str())) {
         serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on TransferLogin: {}\n", mysql_error(_connection)));
@@ -440,6 +476,8 @@ const TransferLoginResult DatabaseManager::TransferLogin(const string& authToken
     }
     else {
         transferLoginResult.userID = atoi(row[0]);
+        transferLoginResult.userNetwork = { (unsigned long)atoi(row[1]), (unsigned short)atoi(row[2]), (unsigned short)atoi(row[3]), 
+                                            (unsigned long)atoi(row[4]), (unsigned short)atoi(row[5]), (unsigned short)atoi(row[6]) };
 
         mysql_free_result(res);
 
@@ -466,8 +504,9 @@ const TransferLoginResult DatabaseManager::TransferLogin(const string& authToken
     return transferLoginResult;
 }
 
-char DatabaseManager::AddUserTransfer(unsigned long userID, const string& authToken, unsigned char serverID, unsigned char channelID) {
-    string query = format("INSERT INTO user_transfers (userID, authToken, serverID, channelID, transferTime) VALUES ({}, '{}', {}, {}, {});", userID, authToken, serverID, channelID, serverConsole.GetCurrentTime());
+char DatabaseManager::AddUserTransfer(unsigned long userID, const string& authToken, unsigned char serverID, unsigned char channelID, const UserNetwork& userNetwork) {
+    string query = format("INSERT INTO user_transfers (userID, authToken, serverID, channelID, externalIP, externalHostPort, externalGuestPort, localIP, localHostPort, localGuestPort, transferTime) VALUES ({}, '{}', {}, {}, {}, {}, {}, {}, {}, {}, {});", 
+        userID, authToken, serverID, channelID, userNetwork.externalIP, userNetwork.externalHostPort, userNetwork.externalGuestPort, userNetwork.localIP, userNetwork.localHostPort, userNetwork.localGuestPort, serverConsole.GetCurrentTime());
 
     if (mysql_query(_connection, query.c_str())) {
         if (mysql_errno(_connection) == ER_DUP_ENTRY) {
@@ -542,7 +581,7 @@ const vector<unsigned char> DatabaseManager::GetUserOption(unsigned long userID)
 
     vector<unsigned char> userOption;
 
-    if (row != NULL) {
+    if (row) {
         unsigned long* lengths = mysql_fetch_lengths(res);
 
         if (lengths == NULL) {
@@ -581,7 +620,7 @@ const vector<BuyMenu> DatabaseManager::GetUserBuyMenus(unsigned long userID) {
     MYSQL_ROW row = NULL;
     vector<BuyMenu> userBuyMenus;
 
-    while ((row = mysql_fetch_row(res)) != NULL)
+    while ((row = mysql_fetch_row(res)))
     {
         BuyMenu buyMenu;
         buyMenu.categoryID = atoi(row[0]);
@@ -627,7 +666,7 @@ const vector<BookMark> DatabaseManager::GetUserBookMarks(unsigned long userID) {
     MYSQL_ROW row = NULL;
     vector<BookMark> userBookMarks;
 
-    while ((row = mysql_fetch_row(res)) != NULL)
+    while ((row = mysql_fetch_row(res)))
     {
         BookMark bookMark { (unsigned char)atoi(row[0]), row[1], (unsigned char)atoi(row[2]), (bool)atoi(row[3]), (unsigned char)atoi(row[4]), (bool)atoi(row[5]), (unsigned char)atoi(row[6]), 
                             (bool)atoi(row[7]), (bool)atoi(row[8]), (bool)atoi(row[9]), (bool)atoi(row[10]), (unsigned char)atoi(row[11]), (unsigned char)atoi(row[12]) };
@@ -638,4 +677,28 @@ const vector<BookMark> DatabaseManager::GetUserBookMarks(unsigned long userID) {
     mysql_free_result(res);
 
     return userBookMarks;
+}
+
+const vector<InventoryItem> DatabaseManager::GetUserInventory(unsigned long userID) {
+    string query = format("SELECT slotID, itemID, count, inUse, obtainTime, expirationTime FROM user_inventory WHERE userID = {};", userID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserInventory: {}\n", mysql_error(_connection)));
+        return {};
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+    MYSQL_ROW row = NULL;
+    vector<InventoryItem> userInventory;
+
+    while ((row = mysql_fetch_row(res)))
+    {
+        InventoryItem item{ (unsigned char)atoi(row[0]), (unsigned char)atoi(row[1]), (unsigned char)atoi(row[2]), (bool)atoi(row[3]), (unsigned long)atoi(row[4]), (unsigned long)atoi(row[5]) };
+
+        userInventory.push_back(item);
+    }
+
+    mysql_free_result(res);
+
+    return userInventory;
 }
