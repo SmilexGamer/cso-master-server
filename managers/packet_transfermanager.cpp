@@ -53,7 +53,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 	}
 
 	User* newUser = new User(connection, transferLoginResult.userID, transferLoginResult.userName, transferLoginResult.userNetwork);
-	char userResult = userManager.AddUser(newUser, true);
+	char userResult = userManager.AddUser(newUser);
 	if (!userResult) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);

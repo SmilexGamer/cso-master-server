@@ -9,7 +9,7 @@ public:
 		return _users;
 	}
 
-	char AddUser(User* user, bool isTransfer = false);
+	char AddUser(User* user);
 	void RemoveUser(User* user);
 	void RemoveAllUsers();
 	User* GetUserByConnection(TCPConnection::pointer connection);

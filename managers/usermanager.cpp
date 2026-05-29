@@ -18,19 +18,16 @@ UserManager::~UserManager() {
 	RemoveAllUsers();
 }
 
-char UserManager::AddUser(User* user, bool isTransfer) {
+char UserManager::AddUser(User* user) {
 	if (user == NULL) {
 		return -1;
-	}
-
-	if (isTransfer) {
-		user->RemoveUserTransfer();
 	}
 
 	char result = user->AddUserSession();
 	if (result) {
 		_users.push_back(user);
 
+		user->RemoveUserTransfer();
 		UpdateChannelNumPlayers();
 	}
 
