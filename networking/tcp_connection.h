@@ -164,6 +164,9 @@ public:
 			return _signature == TCP_PACKET_SIGNATURE;
 		}
 
+		void SetSequence(unsigned char sequence) noexcept {
+			_sequence = sequence;
+		}
 		unsigned char GetSequence() const noexcept {
 			return _sequence;
 		}
@@ -427,11 +430,7 @@ public:
 				return;
 			}
 
-			_sequence = _connection->GetOutgoingSequence();
-			_connection->SetOutgoingSequence(++_sequence);
-
-			WriteHeader();
-			_connection->WritePacket(_buffer);
+			_connection->WritePacket(shared_from_this());
 		}
 
 	private:
@@ -506,7 +505,7 @@ public:
 	}
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
-	void WritePacket(const vector<unsigned char>& buffer);
+	void WritePacket(TCPConnection::Packet::pointer packet);
 	void DisconnectClient(bool eraseConnection = true);
 	void DisconnectClient(boost::system::error_code ec);
 	bool SetupDecryptCipher(CipherMethod method);

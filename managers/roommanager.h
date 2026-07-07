@@ -13,7 +13,6 @@ public:
 	void RemoveRoom(Room* room);
 	void RemoveAllRooms();
 	Room* GetRoomByRoomID(unsigned short roomID);
-	void RemoveRoomByRoomID(unsigned short roomID);
 	unsigned short GetFreeRoomID();
 	void SendFullRoomListPacket(TCPConnection::pointer connection);
 	void SendAddRoomPacketToAll(Room* room, unsigned short flag);

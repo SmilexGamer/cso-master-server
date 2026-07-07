@@ -43,11 +43,6 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 
 	serverConsole.Print(PrefixType::Info, format("[ Packet_LoginManager ] Client ({}) has sent Packet_Login - userName: {}, password: {}, hardwareID:{}, pcBang: {}\n", connection->GetLogEndpoint(), userName, password, hardwareIDStr, pcBang));
 
-	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
-		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
-		return;
-	}
-
 	const LoginResult& loginResult = databaseManager.Login(userName, password);
 	if (loginResult.reply > Packet_ReplyType::LoginSuccess) {
 		packetManager.SendPacket_Reply(connection, loginResult.reply);
@@ -66,6 +61,14 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		}
 
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::Playing);
+
+		delete newUser;
+		newUser = NULL;
+		return;
+	}
+
+	if (userResult == Packet_ReplyType::EXCEED_MAX_CONNECTION) {
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
 
 		delete newUser;
 		newUser = NULL;

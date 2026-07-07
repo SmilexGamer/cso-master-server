@@ -23,6 +23,10 @@ char UserManager::AddUser(User* user) {
 		return -1;
 	}
 
+	if (_users.size() >= serverConfig.maxPlayers) {
+		return Packet_ReplyType::EXCEED_MAX_CONNECTION;
+	}
+
 	char result = user->AddUserSession();
 	if (result) {
 		_users.push_back(user);
@@ -61,12 +65,13 @@ void UserManager::DisconnectUser(User* user, const boost::system::error_code& ec
 		return;
 	}
 
+	RemoveUser(user);
+
 	auto& connection = user->GetConnection();
 	if (connection == NULL) {
 		return;
 	}
 
-	RemoveUser(user);
 	ec ? connection->DisconnectClient(ec) : connection->DisconnectClient();
 }
 
@@ -111,11 +116,10 @@ void UserManager::DisconnectUserByConnection(TCPConnection::pointer connection, 
 	}
 
 	User* user = GetUserByConnection(connection);
-	if (user == NULL) {
-		return;
+	if (user) {
+		RemoveUser(user);
 	}
 
-	RemoveUser(user);
 	ec ? connection->DisconnectClient(ec) : connection->DisconnectClient();
 }
 

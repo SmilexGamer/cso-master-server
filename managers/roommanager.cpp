@@ -64,19 +64,6 @@ Room* RoomManager::GetRoomByRoomID(unsigned short roomID) {
 	return NULL;
 }
 
-void RoomManager::RemoveRoomByRoomID(unsigned short roomID) {
-	if (!roomID) {
-		return;
-	}
-
-	Room* room = GetRoomByRoomID(roomID);
-	if (room == NULL) {
-		return;
-	}
-
-	RemoveRoom(room);
-}
-
 unsigned short RoomManager::GetFreeRoomID() {
 	for (unsigned short roomID = 1; roomID < UINT16_MAX; roomID++) {
 		if (GetRoomByRoomID(roomID)) {

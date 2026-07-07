@@ -412,7 +412,7 @@ void Packet_HostManager::parsePacket_Host_EndGame(User* user, TCPConnection::Pac
 		User* u = gameMatchUser->GetUser();
 
 		u->SetUserStatus(UserStatus::InRoom);
-		sendPacket_Host_ExitGame(u->GetConnection());
+		sendPacket_Host_HostEndSession(u->GetConnection());
 		packet_RoomManager.SendPacket_Room_GameResult(u->GetConnection());
 	}
 
@@ -660,7 +660,7 @@ void Packet_HostManager::parsePacket_Host_SelectTeam(User* user, TCPConnection::
 	gameMatchUser->SetTeam((Team)team);
 }
 
-void Packet_HostManager::sendPacket_Host_ExitGame(TCPConnection::pointer connection) {
+void Packet_HostManager::sendPacket_Host_HostEndSession(TCPConnection::pointer connection) {
 	if (connection == NULL) {
 		return;
 	}
@@ -670,7 +670,7 @@ void Packet_HostManager::sendPacket_Host_ExitGame(TCPConnection::pointer connect
 		return;
 	}
 
-	packet->WriteUInt8(Packet_HostType::ExitGame);
+	packet->WriteUInt8(Packet_HostType::HostEndSession);
 
 	packet->Send();
 }

@@ -11,7 +11,7 @@ enum Packet_HostType {
 	SaveData = 1,
 	HostRestart = 2,
 	SendUserStatus = 2,
-	ExitGame = 3,
+	HostEndSession = 3,
 	PlayerKilled = 3,
 	ResultClose = 4,
 	EndGame = 5,
@@ -41,7 +41,7 @@ private:
 	void parsePacket_Host_EndGame(User* user, TCPConnection::Packet::pointer packet);
 	void parsePacket_Host_RejoinFail(User* user, TCPConnection::Packet::pointer packet);
 	void parsePacket_Host_SelectTeam(User* user, TCPConnection::Packet::pointer packet);
-	void sendPacket_Host_ExitGame(TCPConnection::pointer connection);
+	void sendPacket_Host_HostEndSession(TCPConnection::pointer connection);
 };
 
 extern Packet_HostManager packet_HostManager;

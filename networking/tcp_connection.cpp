@@ -91,17 +91,31 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 	});
 }
 
-void TCPConnection::WritePacket(const vector<unsigned char>& buffer) {
-	if (buffer.size() > TCP_PACKET_MAX_SIZE) {
-#ifdef _DEBUG
-		serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _ipAddress, buffer.size(), TCP_PACKET_MAX_SIZE));
-#endif
+void TCPConnection::WritePacket(TCPConnection::Packet::pointer packet) {
+	if (packet == NULL) {
 		return;
 	}
 
 	bool queueIdle = false;
 	{
 		lock_guard<mutex> lock(_outgoingMutex);
+
+		unsigned char sequence = GetOutgoingSequence();
+		packet->SetSequence(++sequence);
+
+		packet->WriteHeader();
+
+		const vector<unsigned char>& buffer = packet->GetBuffer();
+
+		if (buffer.size() > TCP_PACKET_MAX_SIZE) {
+#ifdef _DEBUG
+			serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Packet not sent to client ({}) because buffer size ({}) > TCP_PACKET_MAX_SIZE ({})!\n", _ipAddress, buffer.size(), TCP_PACKET_MAX_SIZE));
+#endif
+			return;
+		}
+
+		SetOutgoingSequence(sequence);
+
 		queueIdle = _outgoingPackets.empty();
 		_outgoingPackets.push(buffer);
 	}
@@ -331,6 +345,11 @@ void TCPConnection::asyncWrite() {
 	shared_ptr<vector<unsigned char>> originalBuffer, buffer;
 	{
 		lock_guard<mutex> lock(_outgoingMutex);
+
+		if (_outgoingPackets.empty()) {
+			return;
+		}
+
 		originalBuffer = make_shared<vector<unsigned char>>(_outgoingPackets.front());
 		buffer = make_shared<vector<unsigned char>>(_outgoingPackets.front());
 	}

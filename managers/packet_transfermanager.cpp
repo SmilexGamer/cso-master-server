@@ -41,11 +41,6 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 
 	serverConsole.Print(PrefixType::Info, format("[ Packet_TransferManager ] Client ({}) has sent Packet_TransferLogin - authToken: {}, hardwareID:{}, pcBang: {}, unk: {}\n", connection->GetLogEndpoint(), authToken, hardwareIDStr, pcBang, unk));
 
-	if (userManager.GetUsers().size() >= serverConfig.maxPlayers) {
-		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
-		return;
-	}
-
 	const TransferLoginResult& transferLoginResult = databaseManager.TransferLogin(authToken);
 	if (transferLoginResult.reply > Packet_ReplyType::LoginSuccess) {
 		packetManager.SendPacket_Reply(connection, transferLoginResult.reply);
@@ -64,6 +59,14 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		}
 
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::Playing);
+
+		delete newUser;
+		newUser = NULL;
+		return;
+	}
+
+	if (userResult == Packet_ReplyType::EXCEED_MAX_CONNECTION) {
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
 
 		delete newUser;
 		newUser = NULL;
