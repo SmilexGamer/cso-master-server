@@ -285,12 +285,6 @@ void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::
 		return;
 	}
 
-	const UserNetwork& userNetwork = user->GetUserNetwork();
-	if (userNetwork.networkSet != 0x3) {
-		packet_UMsgManager.SendPacket_UMsg_ServerMessage(connection, Packet_UMsgType::WarningMessage, "ROOM_OPEN_FAILED_INVALID_GAME_IP");
-		return;
-	}
-
 	if (user->GetUserStatus() == UserStatus::InRoom) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room CreateRoom, but it's already in a room!\n", user->GetUserLogName()));
 		return;
@@ -366,7 +360,17 @@ void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::
 	newRoom->AddRoomUser(user);
 	userManager.SendRemoveUserPacketToAll(user);
 
-	roomManager.AddRoom(newRoom);
+	if (!roomManager.AddRoom(newRoom)) {
+		user->SetUserStatus(UserStatus::InLobby);
+		user->SetCurrentRoomID(NULL);
+		userManager.SendAddUserPacketToAll(user);
+
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
+
+		delete newRoom;
+		newRoom = NULL;
+		return;
+	}
 	roomManager.SendAddRoomPacketToAll(newRoom, ROOMLIST_FLAG_ALL);
 
 	sendPacket_Room_ReplyCreateAndJoin(connection, newRoom, { { user, userCharacterResult.userCharacter } });
@@ -383,12 +387,6 @@ void Packet_RoomManager::parsePacket_Room_JoinRoom(User* user, TCPConnection::Pa
 
 	auto& connection = user->GetConnection();
 	if (connection == NULL) {
-		return;
-	}
-
-	const UserNetwork& userNetwork = user->GetUserNetwork();
-	if (userNetwork.networkSet != 0x3) {
-		packet_UMsgManager.SendPacket_UMsg_ServerMessage(connection, Packet_UMsgType::WarningMessage, "ROOM_JOIN_FAILED_INVALID_GAME_IP");
 		return;
 	}
 
@@ -429,6 +427,8 @@ void Packet_RoomManager::parsePacket_Room_JoinRoom(User* user, TCPConnection::Pa
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room JoinRoom, but it's already in the room!\n", user->GetUserLogName()));
 		return;
 	}
+
+	roomManager.UpdateRoom(room);
 
 	userManager.SendRemoveUserPacketToAll(user);
 	roomManager.SendUpdateRoomPacketToAll(room, ROOMLIST_FLAG_CURRENTPLAYERS);
@@ -510,6 +510,12 @@ void Packet_RoomManager::parsePacket_Room_StartGame(User* user) {
 	Room* room = roomManager.GetRoomByRoomID(user->GetCurrentRoomID());
 	if (room == NULL) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_RoomManager ] User ({}) has sent Packet_Room StartGame, but its room is NULL!\n", user->GetUserLogName()));
+		return;
+	}
+
+	const UserNetwork& userNetwork = user->GetUserNetwork();
+	if (userNetwork.networkSet != 0x3) {
+		packet_UMsgManager.SendPacket_UMsg_ServerMessage(connection, Packet_UMsgType::WarningMessage, "ROOM_JOIN_FAILED_INVALID_GAME_IP");
 		return;
 	}
 
@@ -687,6 +693,7 @@ void Packet_RoomManager::parsePacket_Room_UpdateRoomSettings(User* user, TCPConn
 	}
 
 	room->UpdateRoomSettings(roomSettings);
+	roomManager.UpdateRoom(room);
 
 	roomManager.SendUpdateRoomPacketToAll(room, roomListFlag);
 

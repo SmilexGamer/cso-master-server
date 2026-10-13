@@ -327,8 +327,39 @@ void TCPConnection::onReadBody(const boost::system::error_code& ec, size_t bytes
 	serverConsole.Log(PrefixType::Debug, format("[ TCPConnection ] Received TCP packet from client ({}):{}\n", GetLogEndpoint(), bufferStr));
 #endif
 
-	_packetHandler(packet);
+	bool queueIdle = false;
+	{
+		lock_guard<mutex> lock(_incomingMutex);
+		queueIdle = _outgoingPackets.empty();
+		_incomingPackets.push(packet);
+	}
+
 	asyncRead();
+
+	if (queueIdle) {
+		processPacket();
+	}
+}
+
+void TCPConnection::processPacket() {
+	TCPConnection::Packet::pointer packet;
+	while (true) {
+		{
+			lock_guard<mutex> lock(_incomingMutex);
+
+			if (_incomingPackets.empty()) {
+				return;
+			}
+
+			packet = _incomingPackets.front();
+		}
+
+		_packetHandler(packet);
+		{
+			lock_guard<mutex> lock(_incomingMutex);
+			_incomingPackets.pop();
+		}
+	}
 }
 
 bool TCPConnection::encrypt(vector<unsigned char>& buffer) {

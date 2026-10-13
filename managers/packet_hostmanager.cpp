@@ -297,7 +297,7 @@ void Packet_HostManager::parsePacket_Host_SendUserStatus(User* user, TCPConnecti
 
 	unsigned char status = packet->ReadUInt8();
 
-	if (status != 1) {
+	if (status != USERSTATUS_INGAME) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host SendUserStatus, but status is invalid: {}!\n", user->GetUserLogName(), status));
 		return;
 	}

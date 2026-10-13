@@ -85,34 +85,19 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 
 	char createUserBuymenusResult = user->CreateUserBuymenus();
 	if (!createUserBuymenusResult) {
-		if (createUserBuymenusResult < 0) {
-			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
-			return;
-		}
-
-		packetManager.SendPacket_Reply(connection, Packet_ReplyType::ALREADY_EXIST);
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 
 	char createUserBookmarksResult = user->CreateUserBookmarks();
 	if (!createUserBookmarksResult) {
-		if (createUserBookmarksResult < 0) {
-			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
-			return;
-		}
-
-		packetManager.SendPacket_Reply(connection, Packet_ReplyType::ALREADY_EXIST);
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 
 	char createUserInventoryResult = user->CreateUserInventory();
 	if (!createUserInventoryResult) {
-		if (createUserInventoryResult < 0) {
-			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
-			return;
-		}
-
-		packetManager.SendPacket_Reply(connection, Packet_ReplyType::ALREADY_EXIST);
+		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 

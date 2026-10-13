@@ -46,6 +46,7 @@ enum class PacketID {
 	SearchRoom = 80,
 	Report = 83,
 	UserStart = 150,
+	RecvReport = 150,
 	RoomList = 151,
 	Lobby = 153,
 	Inventory = 154,
@@ -519,6 +520,7 @@ private:
 	void asyncRead();
 	void onReadHeader(const boost::system::error_code& ec, size_t bytesTransferred);
 	void onReadBody(const boost::system::error_code& ec, size_t bytesTransferred, TCPConnection::Packet::pointer packet);
+	void processPacket();
 
 	bool encrypt(vector<unsigned char>& buffer);
 
@@ -533,7 +535,10 @@ private:
 	mutex _outgoingMutex;
 	queue<vector<unsigned char>> _outgoingPackets;
 	unsigned char _outgoingSequence = 0;
+
 	boost::asio::streambuf _streamBuf { PACKET_HEADER_SIZE + UINT16_MAX };
+	mutex _incomingMutex;
+	queue<TCPConnection::Packet::pointer> _incomingPackets;
 	unsigned char _incomingSequence = 0;
 
 	bool _versionReceived = false;

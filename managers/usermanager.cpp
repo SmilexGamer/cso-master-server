@@ -6,7 +6,6 @@
 #include "packet_cryptmanager.h"
 #include "packet_clientcheckmanager.h"
 #include "packet_updateinfomanager.h"
-#include "packet_userstartmanager.h"
 #include "packet_optionmanager.h"
 #include "packet_favoritemanager.h"
 #include "udp_server.h"
@@ -166,7 +165,7 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		packetManager.SendPacket_Reply(connection, reply);
 	}
 
-	packet_UserStartManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
+	packetManager.SendPacket_UserStart({ user, userCharacterResult.userCharacter });
 	packet_UpdateInfoManager.SendPacket_UpdateInfo({ user, userCharacterResult.userCharacter });
 
 	const vector<InventoryItem>& userInventory = user->GetUserInventory();
@@ -181,10 +180,12 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 		packet_ServerListManager.SendPacket_ServerList(connection, serverConfig.serverList);
 
-		const vector<unsigned char>& userOption = user->GetUserOption();
-		if (!userOption.empty()) {
-			packet_OptionManager.SendPacket_Option_UserOption(connection, userOption);
+		const vector<unsigned char>& userConfig = user->GetUserConfig();
+		if (!userConfig.empty()) {
+			packet_OptionManager.SendPacket_Option_UserConfig(connection, userConfig);
 		}
+
+		packet_OptionManager.SendPacket_Option_UserQuickStart(connection, user->GetUserQuickStart());
 
 		const vector<BuyMenu>& userBuyMenus = user->GetUserBuyMenus();
 		if (!userBuyMenus.empty()) {

@@ -147,8 +147,8 @@ void Packet_FavoriteManager::parsePacket_Favorite_UserBookMark(User* user, TCPCo
 	bool secondaryAmmo = packet->ReadBool();
 	unsigned char flashbang = packet->ReadUInt8();
 
-	if (flashbang > 2) {
-		flashbang = 2;
+	if (flashbang > BOOKMARK_FLASHBANG_MAX) {
+		flashbang = BOOKMARK_FLASHBANG_MAX;
 	}
 
 	bool hegrenade = packet->ReadBool();
@@ -157,8 +157,8 @@ void Packet_FavoriteManager::parsePacket_Favorite_UserBookMark(User* user, TCPCo
 	bool nightvision = packet->ReadBool();
 	unsigned char kevlar = packet->ReadUInt8();
 
-	if (kevlar > 2) {
-		kevlar = 2;
+	if (kevlar > BOOKMARK_KEVLAR_MAX) {
+		kevlar = BOOKMARK_KEVLAR_MAX;
 	}
 
 	unsigned char unk1 = packet->ReadUInt8();

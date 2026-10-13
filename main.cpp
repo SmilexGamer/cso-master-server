@@ -1,7 +1,6 @@
 #include "serverconfig.h"
 #include "tcp_server.h"
 #include "udp_server.h"
-#include "packetmanager.h"
 #include "databasemanager.h"
 #include "usermanager.h"
 #include "roommanager.h"
@@ -17,7 +16,6 @@ static BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 			serverConsole.Stop();
 			roomManager.RemoveAllRooms();
 			userManager.RemoveAllUsers();
-			packetManager.Stop();
 			databaseManager.Shutdown();
 			tcpServer.Stop();
 			udpServer.Stop();
@@ -59,6 +57,7 @@ int main() {
 
 			databaseManager.RemoveAllUserSessions();
 			databaseManager.RemoveAllUserTransfers();
+			databaseManager.RemoveAllRooms();
 		}
 		else {
 			serverConsole.Print(PrefixType::Fatal, "[ Main ] This server channel is already running in another process!\n");
@@ -83,8 +82,6 @@ int main() {
 	}
 
 	udpServer.Start();
-
-	packetManager.Start();
 	
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 	string consoleTitle = format("cso-master-server | Server Channel {}-{}", serverConfig.serverID, serverConfig.channelID);

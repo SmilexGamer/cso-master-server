@@ -9,7 +9,9 @@ public:
 		return _rooms;
 	}
 
-	bool AddRoom(Room* room);
+	char AddRoom(Room* room);
+	void UpdateRoom(Room* room);
+	SearchRoomResult SearchRoom(unsigned char level, unsigned char gameModeID, unsigned char mapID, unsigned char levelLimit, unsigned char clanBattle);
 	void RemoveRoom(Room* room);
 	void RemoveAllRooms();
 	Room* GetRoomByRoomID(unsigned short roomID);

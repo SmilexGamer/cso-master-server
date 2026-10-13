@@ -15,44 +15,13 @@
 #include "packet_optionmanager.h"
 #include "packet_favoritemanager.h"
 #include "packet_itemmanager.h"
-#include "packet_userstartmanager.h"
+#include "packet_searchroommanager.h"
+#include "packet_reportmanager.h"
 #include "serverconsole.h"
 
 PacketManager packetManager;
 
-PacketManager::PacketManager() {
-	_running = false;
-}
-
-PacketManager::~PacketManager() {
-	shutdown();
-}
-
-void PacketManager::Start() {
-	if (_packetThread.joinable()) {
-		serverConsole.Print(PrefixType::Warn, "[ PacketManager ] Thread is already running!\n");
-		return;
-	}
-
-	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Starting!\n");
-
-	_packetThread = thread(&PacketManager::run, this);
-}
-
-void PacketManager::Stop() {
-	if (!_packetThread.joinable()) {
-		serverConsole.Print(PrefixType::Warn, "[ PacketManager ] Thread is already shut down!\n");
-		return;
-	}
-
-	shutdown();
-}
-
-void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
-	if (!_running) {
-		return;
-	}
-
+void PacketManager::ParsePacket(TCPConnection::Packet::pointer packet) {
 	if (packet == NULL) {
 		return;
 	}
@@ -62,13 +31,92 @@ void PacketManager::QueuePacket(TCPConnection::Packet::pointer packet) {
 		return;
 	}
 
-	serverConsole.Print(PrefixType::Info, format("[ PacketManager ] Queueing packet from client ({})\n", connection->GetLogEndpoint()));
+	serverConsole.Print(PrefixType::Info, format("[ PacketManager ] Parsing packet from client ({})\n", connection->GetLogEndpoint()));
 
-	{
-		lock_guard<mutex> lock(_queueMutex);
-		_packetQueue.push_back(packet);
+	unsigned char packetID = packet->ReadUInt8();
+
+	switch ((PacketID)packetID) {
+		case PacketID::Version: {
+			packet_VersionManager.ParsePacket_Version(packet);
+			break;
+		}
+		case PacketID::RecvCharacter: {
+			packet_CharacterManager.ParsePacket_RecvCharacter(packet);
+			break;
+		}
+		case PacketID::Login: {
+			packet_LoginManager.ParsePacket_Login(packet);
+			break;
+		}
+		case PacketID::TransferLogin: {
+			packet_TransferManager.ParsePacket_TransferLogin(packet);
+			break;
+		}
+		case PacketID::RequestTransfer: {
+			packet_TransferManager.ParsePacket_RequestTransfer(packet);
+			break;
+		}
+		case PacketID::RequestServerList: {
+			packet_ServerListManager.ParsePacket_RequestServerList(packet);
+			break;
+		}
+		case PacketID::RecvCrypt: {
+			packet_CryptManager.ParsePacket_RecvCrypt(packet);
+			break;
+		}
+		case PacketID::Room: {
+			packet_RoomManager.ParsePacket_Room(packet);
+			break;
+		}
+		case PacketID::ClientCheck: {
+			packet_ClientCheckManager.ParsePacket_ClientCheck(packet);
+			break;
+		}
+		case PacketID::UMsg: {
+			packet_UMsgManager.ParsePacket_UMsg(packet);
+			break;
+		}
+		case PacketID::Host: {
+			packet_HostManager.ParsePacket_Host(packet);
+			break;
+		}
+		case PacketID::UpdateInfo: {
+			packet_UpdateInfoManager.ParsePacket_UpdateInfo(packet);
+			break;
+		}
+		case PacketID::Udp: {
+			packet_UdpManager.ParsePacket_Udp(packet);
+			break;
+		}
+		case PacketID::Shop: {
+			packet_ShopManager.ParsePacket_Shop(packet);
+			break;
+		}
+		case PacketID::Option: {
+			packet_OptionManager.ParsePacket_Option(packet);
+			break;
+		}
+		case PacketID::Favorite: {
+			packet_FavoriteManager.ParsePacket_Favorite(packet);
+			break;
+		}
+		case PacketID::Item: {
+			packet_ItemManager.ParsePacket_Item(packet);
+			break;
+		}
+		case PacketID::SearchRoom: {
+			packet_SearchRoomManager.ParsePacket_SearchRoom(packet);
+			break;
+		}
+		case PacketID::RecvReport: {
+			packet_ReportManager.ParsePacket_RecvReport(packet);
+			break;
+		}
+		default: {
+			serverConsole.Print(PrefixType::Warn, format("[ PacketManager ] Client ({}) has sent unregistered packet ID {}!\n", connection->GetLogEndpoint(), packetID));
+			break;
+		}
 	}
-	_cv.notify_one();
 }
 
 void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_ReplyType type, const vector<string>& additionalText) {
@@ -87,6 +135,28 @@ void PacketManager::SendPacket_Reply(TCPConnection::pointer connection, Packet_R
 	for (auto& text : additionalText) {
 		packet->WriteString(text);
 	}
+
+	packet->Send();
+}
+
+void PacketManager::SendPacket_UserStart(const GameUser& gameUser) {
+	if (gameUser.user == NULL) {
+		return;
+	}
+
+	auto& connection = gameUser.user->GetConnection();
+	if (connection == NULL) {
+		return;
+	}
+
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::UserStart });
+	if (packet == NULL) {
+		return;
+	}
+
+	packet->WriteUInt32_LE(gameUser.user->GetUserID());
+	packet->WriteString(gameUser.user->GetUserName());
+	packet->WriteString(gameUser.userCharacter.nickName);
 
 	packet->Send();
 }
@@ -175,150 +245,5 @@ void PacketManager::BuildUserCharacter(TCPConnection::Packet::pointer packet, co
 		packet->WriteUInt8(userCharacter.clanUnk4);
 		packet->WriteUInt8(userCharacter.clanUnk5);
 		packet->WriteUInt8(userCharacter.clanUnk6);
-	}
-}
-
-int PacketManager::run() {
-	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Thread starting!\n");
-
-	try {
-		_running = true;
-		while (_running) {
-			vector<TCPConnection::Packet::pointer> packets;
-			{
-				unique_lock<mutex> lock(_queueMutex);
-				_cv.wait(lock, [this] { return !_packetQueue.empty() || !_running; });
-
-				if (!_running) {
-					break;
-				}
-
-				while (!_packetQueue.empty()) {
-					packets.push_back(_packetQueue.front());
-					_packetQueue.pop_front();
-				}
-			}
-
-			for (auto& packet : packets) {
-				parsePacket(packet);
-			}
-		}
-	}
-	catch (exception& e) {
-		serverConsole.Print(PrefixType::Error, format("[ PacketManager ] Error on run: {}\n", e.what()));
-		return -1;
-	}
-
-	serverConsole.Print(PrefixType::Info, "[ PacketManager ] Thread shutting down!\n");
-	return 0;
-}
-
-int PacketManager::shutdown() {
-	try {
-		if (_packetThread.joinable()) {
-			serverConsole.Print(PrefixType::Info, "[ PacketManager ] Shutting down!\n");
-
-			_running = false;
-			_packetQueue.clear();
-			_packetThread.detach();
-		}
-	}
-	catch (exception& e) {
-		serverConsole.Print(PrefixType::Error, format("[ PacketManager ] Error on shutdown: {}\n", e.what()));
-		return -1;
-	}
-
-	return 0;
-}
-
-void PacketManager::parsePacket(TCPConnection::Packet::pointer packet) {
-	if (packet == NULL) {
-		return;
-	}
-
-	auto& connection = packet->GetConnection();
-	if (connection == NULL) {
-		return;
-	}
-
-	unsigned char packetID = packet->ReadUInt8();
-
-	switch ((PacketID)packetID) {
-		case PacketID::Version: {
-			packet_VersionManager.ParsePacket_Version(packet);
-			break;
-		}
-		case PacketID::RecvCharacter: {
-			packet_CharacterManager.ParsePacket_RecvCharacter(packet);
-			break;
-		}
-		case PacketID::Login: {
-			packet_LoginManager.ParsePacket_Login(packet);
-			break;
-		}
-		case PacketID::TransferLogin: {
-			packet_TransferManager.ParsePacket_TransferLogin(packet);
-			break;
-		}
-		case PacketID::RequestTransfer: {
-			packet_TransferManager.ParsePacket_RequestTransfer(packet);
-			break;
-		}
-		case PacketID::RequestServerList: {
-			packet_ServerListManager.ParsePacket_RequestServerList(packet);
-			break;
-		}
-		case PacketID::RecvCrypt: {
-			packet_CryptManager.ParsePacket_RecvCrypt(packet);
-			break;
-		}
-		case PacketID::Room: {
-			packet_RoomManager.ParsePacket_Room(packet);
-			break;
-		}
-		case PacketID::ClientCheck: {
-			packet_ClientCheckManager.ParsePacket_ClientCheck(packet);
-			break;
-		}
-		case PacketID::UMsg: {
-			packet_UMsgManager.ParsePacket_UMsg(packet);
-			break;
-		}
-		case PacketID::Host: {
-			packet_HostManager.ParsePacket_Host(packet);
-			break;
-		}
-		case PacketID::UpdateInfo: {
-			packet_UpdateInfoManager.ParsePacket_UpdateInfo(packet);
-			break;
-		}
-		case PacketID::Udp: {
-			packet_UdpManager.ParsePacket_Udp(packet);
-			break;
-		}
-		case PacketID::Shop: {
-			packet_ShopManager.ParsePacket_Shop(packet);
-			break;
-		}
-		case PacketID::Option: {
-			packet_OptionManager.ParsePacket_Option(packet);
-			break;
-		}
-		case PacketID::Favorite: {
-			packet_FavoriteManager.ParsePacket_Favorite(packet);
-			break;
-		}
-		case PacketID::Item: {
-			packet_ItemManager.ParsePacket_Item(packet);
-			break;
-		}
-		case PacketID::UserStart: {
-			packet_UserStartManager.ParsePacket_UserStart(packet);
-			break;
-		}
-		default: {
-			serverConsole.Print(PrefixType::Warn, format("[ PacketManager ] Client ({}) has sent unregistered packet ID {}!\n", connection->GetLogEndpoint(), packetID));
-			break;
-		}
 	}
 }

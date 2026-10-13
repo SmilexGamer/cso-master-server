@@ -1,5 +1,7 @@
 #include "roommanager.h"
 #include "usermanager.h"
+#include "databasemanager.h"
+#include "serverconfig.h"
 #include "packet_roommanager.h"
 
 RoomManager roomManager;
@@ -8,14 +10,40 @@ RoomManager::~RoomManager() {
 	RemoveAllRooms();
 }
 
-bool RoomManager::AddRoom(Room* room) {
+char RoomManager::AddRoom(Room* room) {
 	if (room == NULL) {
 		return false;
 	}
 
-	_rooms.push_back(room);
+	const RoomSettings& roomSettings = room->GetRoomSettings();
 
-	return true;
+	char result = databaseManager.AddRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers);
+	if (result) {
+		_rooms.push_back(room);
+	}
+
+	return result;
+}
+
+void RoomManager::UpdateRoom(Room* room) {
+	const RoomSettings& roomSettings = room->GetRoomSettings();
+	databaseManager.UpdateRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers);
+}
+
+SearchRoomResult RoomManager::SearchRoom(unsigned char level, unsigned char gameModeID, unsigned char mapID, unsigned char levelLimit, unsigned char clanBattle) {
+	auto it = find_if(_rooms.begin(), _rooms.end(), [gameModeID, mapID, levelLimit, clanBattle](Room*& room) {
+		const RoomSettings& roomSettings = room->GetRoomSettings();
+		if (!roomSettings.password.empty() || room->GetRoomUsers().size() >= roomSettings.maxPlayers || roomSettings.gameModeID != 99 && roomSettings.gameModeID != gameModeID || mapID != 99 && roomSettings.mapID != mapID || roomSettings.levelLimit != levelLimit) {
+			return false;
+		}
+
+		return true;
+	});
+	if (it != _rooms.end()) {
+		return { serverConfig.serverID, serverConfig.channelID, _rooms.at(distance(_rooms.begin(), it))->GetRoomID() };
+	}
+
+	return databaseManager.SearchRoom(level, gameModeID, mapID, levelLimit, clanBattle);
 }
 
 void RoomManager::RemoveRoom(Room* room) {
@@ -23,7 +51,11 @@ void RoomManager::RemoveRoom(Room* room) {
 		return;
 	}
 
-	roomManager.SendRemoveRoomPacketToAll(room->GetRoomID());
+	unsigned short roomID = room->GetRoomID();
+
+	roomManager.SendRemoveRoomPacketToAll(roomID);
+	databaseManager.RemoveRoom(roomID);
+
 	_rooms.erase(find(_rooms.begin(), _rooms.end(), room));
 
 	GameMatch* gameMatch = room->GetGameMatch();

@@ -138,7 +138,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 			return;
 		}
 
-		if (serverConfig.serverList[(unsigned char)(serverID - 1)].type == ServerType::Newbie && userCharacterResult.userCharacter.level >= 9) {
+		if (serverConfig.serverList[(unsigned char)(serverID - 1)].type == ServerType::Newbie && userCharacterResult.userCharacter.level >= LIMIT_NEWBIE_LEVEL) {
 			packet_UMsgManager.SendPacket_UMsg_ServerMessage(connection, Packet_UMsgType::WarningMessage, "SERVER_SELECT_FAIL_LEVEL_LIMIT");
 			return;
 		}

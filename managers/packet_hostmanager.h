@@ -3,6 +3,7 @@
 #include "gamematchuser.h"
 
 constexpr auto SAVEDATA_MAX_SIZE = 51200;
+constexpr auto USERSTATUS_INGAME = 1;
 
 enum Packet_HostType {
 	HostStart = 0,

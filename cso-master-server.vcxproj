@@ -177,7 +177,8 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClCompile Include="managers\packet_optionmanager.cpp" />
     <ClCompile Include="managers\packet_favoritemanager.cpp" />
     <ClCompile Include="managers\packet_itemmanager.cpp" />
-    <ClCompile Include="managers\packet_userstartmanager.cpp" />
+    <ClCompile Include="managers\packet_searchroommanager.cpp" />
+    <ClCompile Include="managers\packet_reportmanager.cpp" />
     <ClCompile Include="managers\usermanager.cpp" />
     <ClCompile Include="managers\databasemanager.cpp" />
     <ClCompile Include="managers\roommanager.cpp" />
@@ -213,7 +214,8 @@ copy /Y "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)bin\$(ProjectName).pdb"<
     <ClInclude Include="managers\packet_optionmanager.h" />
     <ClInclude Include="managers\packet_favoritemanager.h" />
     <ClInclude Include="managers\packet_itemmanager.h" />
-    <ClInclude Include="managers\packet_userstartmanager.h" />
+    <ClInclude Include="managers\packet_searchroommanager.h" />
+    <ClInclude Include="managers\packet_reportmanager.h" />
     <ClInclude Include="managers\usermanager.h" />
     <ClInclude Include="managers\databasemanager.h" />
     <ClInclude Include="managers\roommanager.h" />

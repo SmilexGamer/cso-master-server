@@ -53,15 +53,15 @@ UserCharacterResult User::GetUserCharacter(unsigned short flag) const noexcept {
 	return databaseManager.GetUserCharacter(_userID, flag);
 }
 
-char User::CreateUserBuymenus() const noexcept {
+bool User::CreateUserBuymenus() const noexcept {
 	return databaseManager.CreateUserBuymenus(_userID);
 }
 
-char User::CreateUserBookmarks() const noexcept {
+bool User::CreateUserBookmarks() const noexcept {
 	return databaseManager.CreateUserBookmarks(_userID);
 }
 
-char User::CreateUserInventory() const noexcept {
+bool User::CreateUserInventory() const noexcept {
 	return databaseManager.CreateUserInventory(_userID);
 }
 
@@ -87,12 +87,20 @@ char User::IsUserCharacterExists() const noexcept {
 	return userCharacterResult.result;
 }
 
-bool User::SaveUserOption(const vector<unsigned char>& userOption) const noexcept {
-	return databaseManager.SaveUserOption(_userID, userOption);
+bool User::SaveUserConfig(const vector<unsigned char>& userConfig) const noexcept {
+	return databaseManager.SaveUserConfig(_userID, userConfig);
 }
 
-const vector<unsigned char> User::GetUserOption() const noexcept {
-	return databaseManager.GetUserOption(_userID);
+const vector<unsigned char> User::GetUserConfig() const noexcept {
+	return databaseManager.GetUserConfig(_userID);
+}
+
+bool User::SaveUserQuickStart(unsigned long userQuickStart) const noexcept {
+	return databaseManager.SaveUserQuickStart(_userID, userQuickStart);
+}
+
+unsigned long User::GetUserQuickStart() const noexcept {
+	return databaseManager.GetUserQuickStart(_userID);
 }
 
 bool User::SaveUserBuyMenu(unsigned char categoryID, unsigned char slotID, unsigned char itemID) const noexcept {

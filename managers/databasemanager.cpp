@@ -35,6 +35,7 @@ void DatabaseManager::Shutdown() {
     if (_connection) {
         RemoveAllUserSessions();
         RemoveAllUserTransfers();
+        RemoveAllRooms();
 
         mysql_close(_connection);
         _connection = NULL;
@@ -93,41 +94,32 @@ const LoginResult DatabaseManager::Login(const string& userName, const string& p
 }
 
 char DatabaseManager::CreateUserCharacter(unsigned long userID, const string& nickName) {
-    string query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
+    string query = format("SELECT 1 FROM user_characters WHERE nickName = '{}';", nickName);
 
     if (mysql_query(_connection, query.c_str())) {
-        if (mysql_errno(_connection) == ER_DUP_ENTRY) {
-            return 0;
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+
+    if (mysql_fetch_row(res)) {
+        mysql_free_result(res);
+        return 0;
+    }
+    else {
+        mysql_free_result(res);
+
+        query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
+
+        if (mysql_query(_connection, query.c_str())) {
+            if (mysql_errno(_connection) == ER_DUP_ENTRY) {
+                return 0;
+            }
+
+            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
+            return -1;
         }
-
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
-        return -1;
-    }
-
-    query = format("INSERT INTO user_buymenus (userID, categoryID, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9) VALUES");
-    for (auto& buyMenu : serverConfig.defaultBuyMenus) {
-        query += format(" ({}, {}", userID, buyMenu.categoryID);
-        for (unsigned char slotID = 0; slotID < BUYMENU_MAX_SLOT; slotID++) {
-            query += format(", {}", buyMenu.items[slotID]);
-        }
-        query += "),";
-    }
-    query[query.size() - 1] = ';';
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
-        return -1;
-    }
-
-    query = format("INSERT INTO user_bookmarks (userID, slotID, name, primaryItemID, primaryAmmo, secondaryItemID, secondaryAmmo, flashbang, hegrenade, smokegrenade, defusekit, nightvision, kevlar, unk1) VALUES");
-    for (unsigned char slotID = 0; slotID < BOOKMARK_MAX_SLOT; slotID++) {
-        query += format(" ({}, {}, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),", userID, slotID);
-    }
-    query[query.size() - 1] = ';';
-
-    if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
-        return -1;
     }
 
     return 1;
@@ -203,22 +195,22 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
     if (flag) {
         char index = 0;
         if (flag & USERCHARACTER_FLAG_UNK1) {
-            userCharacter.unk1 = atoi(row[index++]);
+            userCharacter.unk1 = (unsigned char)atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_NICKNAME) {
             userCharacter.nickName = row[index++];
         }
         if (flag & USERCHARACTER_FLAG_UNK4) {
             userCharacter.unk4_1 = row[index++];
-            userCharacter.unk4_2 = atoi(row[index++]);
-            userCharacter.unk4_3 = atoi(row[index++]);
-            userCharacter.unk4_4 = atoi(row[index++]);
+            userCharacter.unk4_2 = (unsigned char)atoi(row[index++]);
+            userCharacter.unk4_3 = (unsigned char)atoi(row[index++]);
+            userCharacter.unk4_4 = (unsigned char)atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_LEVEL) {
-            userCharacter.level = atoi(row[index++]);
+            userCharacter.level = (unsigned char)atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_UNK10) {
-            userCharacter.unk10 = atoi(row[index++]);
+            userCharacter.unk10 = (unsigned char)atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_EXP) {
             userCharacter.exp = atoll(row[index++]);
@@ -236,24 +228,24 @@ const UserCharacterResult DatabaseManager::GetUserCharacter(unsigned long userID
             userCharacter.deaths = atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_LOCATION) {
-            userCharacter.city = atoi(row[index++]);
-            userCharacter.county = atoi(row[index++]);
-            userCharacter.neighborhood = atoi(row[index++]);
+            userCharacter.city = (unsigned short)atoi(row[index++]);
+            userCharacter.county = (unsigned short)atoi(row[index++]);
+            userCharacter.neighborhood = (unsigned short)atoi(row[index++]);
             userCharacter.unk200_5 = row[index++];
         }
         if (flag & USERCHARACTER_FLAG_UNK400) {
             userCharacter.unk400 = atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_UNK800) {
-            userCharacter.unk800 = atoi(row[index++]);
+            userCharacter.unk800 = (unsigned char)atoi(row[index++]);
         }
         if (flag & USERCHARACTER_FLAG_CLAN) {
             userCharacter.clanID = atoi(row[index++]);
             userCharacter.clanMarkID = atoi(row[index++]);
             userCharacter.clanName = row[index++];
-            userCharacter.clanUnk4 = atoi(row[index++]);
-            userCharacter.clanUnk5 = atoi(row[index++]);
-            userCharacter.clanUnk6 = atoi(row[index++]);
+            userCharacter.clanUnk4 = (unsigned char)atoi(row[index++]);
+            userCharacter.clanUnk5 = (unsigned char)atoi(row[index++]);
+            userCharacter.clanUnk6 = (unsigned char)atoi(row[index++]);
         }
     }
 
@@ -389,8 +381,8 @@ char DatabaseManager::AddUserSession(unsigned long userID) {
         }
     }
     else {
-        unsigned char serverID = atoi(row[0]);
-        unsigned char channelID = atoi(row[1]);
+        unsigned char serverID = (unsigned char)atoi(row[0]);
+        unsigned char channelID = (unsigned char)atoi(row[1]);
 
         mysql_free_result(res);
 
@@ -454,8 +446,8 @@ char DatabaseManager::IsUserSessionAdded(unsigned long userID) {
         return 0;
     }
     else {
-        unsigned char serverID = atoi(row[0]);
-        unsigned char channelID = atoi(row[1]);
+        unsigned char serverID = (unsigned char)atoi(row[0]);
+        unsigned char channelID = (unsigned char)atoi(row[1]);
 
         mysql_free_result(res);
 
@@ -574,49 +566,87 @@ void DatabaseManager::RemoveAllUserTransfers() {
     }
 }
 
-bool DatabaseManager::SaveUserOption(unsigned long userID, const vector<unsigned char>& userOption) {
-    string userOptionHex;
-    for (auto& c : userOption) {
-        userOptionHex += format("{:02X}", c);
+bool DatabaseManager::SaveUserConfig(unsigned long userID, const vector<unsigned char>& userConfig) {
+    string userConfigHex;
+    for (auto& c : userConfig) {
+        userConfigHex += format("{:02X}", c);
     }
 
-    string query = format("INSERT INTO user_options (userID, userOption) VALUES ({}, 0x{}) ON DUPLICATE KEY UPDATE userOption = 0x{};", userID, userOptionHex, userOptionHex);
+    string query = format("INSERT INTO user_configs (userID, userConfig) VALUES ({}, 0x{}) ON DUPLICATE KEY UPDATE userConfig = 0x{};", userID, userConfigHex, userConfigHex);
 
     if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserOption: {}\n", mysql_error(_connection)));
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserConfig: {}\n", mysql_error(_connection)));
         return false;
     }
 
     return true;
 }
 
-const vector<unsigned char> DatabaseManager::GetUserOption(unsigned long userID) {
-    string query = format("SELECT userOption FROM user_options WHERE userID = {};", userID);
+const vector<unsigned char> DatabaseManager::GetUserConfig(unsigned long userID) {
+    string query = format("SELECT userConfig FROM user_configs WHERE userID = {};", userID);
 
     if (mysql_query(_connection, query.c_str())) {
-        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserOption: {}\n", mysql_error(_connection)));
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserConfig: {}\n", mysql_error(_connection)));
         return {};
     }
 
     MYSQL_RES* res = mysql_use_result(_connection);
     MYSQL_ROW row = mysql_fetch_row(res);
 
-    vector<unsigned char> userOption;
+    vector<unsigned char> userConfig;
 
     if (row) {
         unsigned long* lengths = mysql_fetch_lengths(res);
 
         if (lengths == NULL) {
-            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Fetch lengths error on GetUserOption: {}\n", mysql_error(_connection)));
+            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Fetch lengths error on GetUserConfig: {}\n", mysql_error(_connection)));
         }
         else {
-            userOption.insert(userOption.begin(), row[0], row[0] + lengths[0]);
+            userConfig.insert(userConfig.begin(), row[0], row[0] + lengths[0]);
         }
     }
 
     mysql_free_result(res);
 
-    return userOption;
+    return userConfig;
+}
+
+bool DatabaseManager::SaveUserQuickStart(unsigned long userID, unsigned long userQuickStart) {
+    unsigned char gameModeID = (unsigned char)(userQuickStart / 10000);
+    unsigned char mapID = (unsigned char)((userQuickStart - (gameModeID * 10000)) / 100);
+    unsigned char levelLimit = (unsigned char)((userQuickStart - (gameModeID * 10000 + mapID * 100)) / 10);
+    unsigned char clanBattle = (unsigned char)(userQuickStart - (gameModeID * 10000 + mapID * 100 + levelLimit * 10));
+
+    string query = format("INSERT INTO user_quickstarts (userID, gameModeID, mapID, levelLimit, clanBattle) VALUES ({}, {}, {}, {}, {}) ON DUPLICATE KEY UPDATE gameModeID = {}, mapID = {}, levelLimit = {}, clanBattle = {};", userID, gameModeID, mapID, levelLimit, clanBattle, gameModeID, mapID, levelLimit, clanBattle);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SaveUserQuickStart: {}\n", mysql_error(_connection)));
+        return false;
+    }
+
+    return true;
+}
+
+unsigned long DatabaseManager::GetUserQuickStart(unsigned long userID) {
+    string query = format("SELECT gameModeID, mapID, levelLimit, clanBattle FROM user_quickstarts WHERE userID = {};", userID);
+
+    unsigned long userQuickStart = DEFAULT_USER_QUICKSTART;
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on GetUserQuickStart: {}\n", mysql_error(_connection)));
+    }
+    else {
+        MYSQL_RES* res = mysql_use_result(_connection);
+        MYSQL_ROW row = mysql_fetch_row(res);
+
+        if (row) {
+            userQuickStart = atoi(row[0]) * 10000 + atoi(row[1]) * 100 + atoi(row[2]) * 10 + atoi(row[3]);
+        }
+
+        mysql_free_result(res);
+    }
+
+    return userQuickStart;
 }
 
 bool DatabaseManager::SaveUserBuyMenu(unsigned long userID, unsigned char categoryID, unsigned char slotID, unsigned char itemID) {
@@ -645,10 +675,10 @@ const vector<BuyMenu> DatabaseManager::GetUserBuyMenus(unsigned long userID) {
     while ((row = mysql_fetch_row(res)))
     {
         BuyMenu buyMenu;
-        buyMenu.categoryID = atoi(row[0]);
+        buyMenu.categoryID = (unsigned char)atoi(row[0]);
 
         for (unsigned char slotID = 0; slotID < BUYMENU_MAX_SLOT; slotID++) {
-            buyMenu.items.push_back(atoi(row[slotID + 1]));
+            buyMenu.items.push_back((unsigned char)atoi(row[slotID + 1]));
         }
 
         userBuyMenus.push_back(buyMenu);
@@ -723,4 +753,98 @@ const vector<InventoryItem> DatabaseManager::GetUserInventory(unsigned long user
     mysql_free_result(res);
 
     return userInventory;
+}
+
+char DatabaseManager::AddRoom(unsigned short roomID, bool clanBattle, bool isPassworded, unsigned char levelLimit, unsigned char gameModeID, unsigned char mapID, unsigned char currentPlayers, unsigned char maxPlayers) {
+    string query = format("SELECT 1 FROM rooms WHERE serverID = {} AND channelID = {} AND roomID = {};", serverConfig.serverID, serverConfig.channelID, roomID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddRoom: {}\n", mysql_error(_connection)));
+        return -1;
+    }
+
+    MYSQL_RES* res = mysql_use_result(_connection);
+
+    if (mysql_fetch_row(res)) {
+        mysql_free_result(res);
+        return 0;
+    }
+    else {
+        mysql_free_result(res);
+
+        query = format("INSERT INTO rooms (serverID, channelID, roomID, clanBattle, isPassworded, levelLimit, gameModeID, mapID, currentPlayers, maxPlayers) VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {});", serverConfig.serverID, serverConfig.channelID, roomID, clanBattle, isPassworded, levelLimit, gameModeID, mapID, currentPlayers, maxPlayers);
+
+        if (mysql_query(_connection, query.c_str())) {
+            serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on AddRoom: {}\n", mysql_error(_connection)));
+            return -1;
+        }
+    }
+
+    return 1;
+}
+
+bool DatabaseManager::UpdateRoom(unsigned short roomID, bool clanBattle, bool isPassworded, unsigned char levelLimit, unsigned char gameModeID, unsigned char mapID, unsigned char currentPlayers, unsigned char maxPlayers) {
+    string query = format("UPDATE rooms SET clanBattle = {}, isPassworded = {}, levelLimit = {}, gameModeID = {}, mapID = {}, currentPlayers = {}, maxPlayers = {} WHERE serverID = {} AND channelID = {} AND roomID = {};",
+        clanBattle, isPassworded, levelLimit, gameModeID, mapID, currentPlayers, maxPlayers, serverConfig.serverID, serverConfig.channelID, roomID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on UpdateRoom: {}\n", mysql_error(_connection)));
+        return false;
+    }
+    
+    return true;
+}
+
+SearchRoomResult DatabaseManager::SearchRoom(unsigned char level, unsigned char gameModeID, unsigned char mapID, unsigned char levelLimit, unsigned char clanBattle) {
+    string query = format("SELECT serverID, channelID, roomID FROM rooms WHERE NOT (serverID = {} AND channelID = {}) AND isPassworded = 0 AND currentPlayers < maxPlayers AND levelLimit = {} AND clanBattle = {} ", serverConfig.serverID, serverConfig.channelID, levelLimit, clanBattle);
+    if (gameModeID != 99) {
+        query += format("AND gameModeID = {} ", gameModeID);
+    }
+    if (mapID != 99) {
+        query += format("AND mapID = {} ", mapID);
+    }
+    query[query.size() - 1] = ';';
+
+    SearchRoomResult searchRoomResult;
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on SearchRoom: {}\n", mysql_error(_connection)));
+    }
+    else {
+        MYSQL_RES* res = mysql_use_result(_connection);
+        MYSQL_ROW row = NULL;
+
+        while ((row = mysql_fetch_row(res)))
+        {
+            if (!serverConfig.serverList[(unsigned char)(atoi(row[0]) - 1)].channels[(unsigned char)(atoi(row[1]) - 1)].isOnline || serverConfig.serverList[(unsigned char)(atoi(row[0]) - 1)].type == ServerType::Newbie && level >= LIMIT_NEWBIE_LEVEL) {
+                continue;
+            }
+
+            searchRoomResult.serverID = (unsigned char)atoi(row[0]);
+            searchRoomResult.channelID = (unsigned char)atoi(row[1]);
+            searchRoomResult.roomID = (unsigned short)atoi(row[2]);
+        }
+
+        mysql_free_result(res);
+    }
+
+    return searchRoomResult;
+}
+
+void DatabaseManager::RemoveRoom(unsigned short roomID) {
+    string query = format("DELETE FROM rooms WHERE serverID = {} AND channelID = {} AND roomID = {};", serverConfig.serverID, serverConfig.channelID, roomID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveRoom: {}\n", mysql_error(_connection)));
+        return;
+    }
+}
+
+void DatabaseManager::RemoveAllRooms() {
+    string query = format("DELETE FROM rooms WHERE serverID = {} AND channelID = {};", serverConfig.serverID, serverConfig.channelID);
+
+    if (mysql_query(_connection, query.c_str())) {
+        serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on RemoveAllRooms: {}\n", mysql_error(_connection)));
+        return;
+    }
 }

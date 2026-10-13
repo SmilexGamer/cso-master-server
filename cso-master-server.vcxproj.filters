@@ -55,7 +55,10 @@
     <ClCompile Include="managers\packet_itemmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
-    <ClCompile Include="managers\packet_userstartmanager.cpp">
+    <ClCompile Include="managers\packet_searchroommanager.cpp">
+      <Filter>managers</Filter>
+    </ClCompile>
+    <ClCompile Include="managers\packet_reportmanager.cpp">
       <Filter>managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\usermanager.cpp">
@@ -155,7 +158,10 @@
     <ClInclude Include="managers\packet_itemmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
-    <ClInclude Include="managers\packet_userstartmanager.h">
+    <ClInclude Include="managers\packet_searchroommanager.h">
+      <Filter>managers</Filter>
+    </ClInclude>
+    <ClInclude Include="managers\packet_reportmanager.h">
       <Filter>managers</Filter>
     </ClInclude>
     <ClInclude Include="managers\usermanager.h">

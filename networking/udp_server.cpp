@@ -127,6 +127,18 @@ void UDPServer::OnSecondTick() {
 				}
 			}
 		}
+
+		databaseManager.RemoveAllRooms();
+
+		vector<Room*> rooms = roomManager.GetRooms();
+
+		rooms.erase(remove_if(rooms.begin(), rooms.end(), [](Room* room) {
+			return (room == NULL);
+		}), rooms.end());
+
+		for (auto& room : rooms) {
+			roomManager.AddRoom(room);
+		}
 	}
 
 	_currentTime = serverConsole.GetCurrentTime();
@@ -243,7 +255,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				}
 
 				if (queueIdle) {
-					handleIncomingClientPacket(packet);
+					handleIncomingClientPacket();
 				}
 				break;
 			}
@@ -256,7 +268,7 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				}
 
 				if (queueIdle) {
-					handleIncomingServerPacket(packet);
+					handleIncomingServerPacket();
 				}
 				break;
 			}
@@ -275,12 +287,23 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 	}
 }
 
-void UDPServer::handleIncomingClientPacket(UDPPacket* packet) {
+void UDPServer::handleIncomingClientPacket() {
 	if (_isShuttingDown) {
 		return;
 	}
 
-	if (packet) {
+	UDPPacket* packet;
+	while (true) {
+		{
+			lock_guard<mutex> lock(_clientIncomingMutex);
+
+			if (_clientIncomingQueue.empty()) {
+				return;
+			}
+
+			packet = _clientIncomingQueue.front();
+		}
+
 #ifdef _DEBUG
 		vector<unsigned char> buffer(packet->GetBuffer());
 		string bufferStr;
@@ -479,29 +502,30 @@ void UDPServer::handleIncomingClientPacket(UDPPacket* packet) {
 		}
 
 		delete packet;
-		packet = NULL;
-	}
-
-	UDPPacket* nextPacket = NULL;
-	{
-		lock_guard<mutex> lock(_clientIncomingMutex);
-		_clientIncomingQueue.pop();
-		if (!_clientIncomingQueue.empty()) {
-			nextPacket = _clientIncomingQueue.front();
+		{
+			lock_guard<mutex> lock(_clientIncomingMutex);
+			_clientIncomingQueue.pop();
 		}
-	}
-
-	if (nextPacket) {
-		handleIncomingClientPacket(nextPacket);
 	}
 }
 
-void UDPServer::handleIncomingServerPacket(UDPPacket* packet) {
+void UDPServer::handleIncomingServerPacket() {
 	if (_isShuttingDown) {
 		return;
 	}
 
-	if (packet) {
+	UDPPacket* packet;
+	while (true) {
+		{
+			lock_guard<mutex> lock(_serverIncomingMutex);
+
+			if (_serverIncomingQueue.empty()) {
+				return;
+			}
+
+			packet = _serverIncomingQueue.front();
+		}
+
 		const string& authKey = packet->ReadString();
 		if (authKey == serverConfig.udpAuthKey) {
 			unsigned char serverID = packet->ReadUInt8();
@@ -571,70 +595,66 @@ void UDPServer::handleIncomingServerPacket(UDPPacket* packet) {
 
 DeletePacket:
 		delete packet;
-		packet = NULL;
-	}
-
-	UDPPacket* nextPacket = NULL;
-	{
-		lock_guard<mutex> lock(_serverIncomingMutex);
-		_serverIncomingQueue.pop();
-		if (!_serverIncomingQueue.empty()) {
-			nextPacket = _serverIncomingQueue.front();
+		{
+			lock_guard<mutex> lock(_serverIncomingMutex);
+			_serverIncomingQueue.pop();
 		}
-	}
-
-	if (nextPacket) {
-		handleIncomingServerPacket(nextPacket);
 	}
 }
 
-void UDPServer::handleOutgoingClientPacket(UDPPacket* packet) {
+void UDPServer::handleOutgoingClientPacket() {
 	if (_isShuttingDown) {
 		return;
 	}
 
-	if (packet) {
+	while (true) {
+		UDPPacket* packet;
+		{
+			lock_guard<mutex> lock(_clientOutgoingMutex);
+
+			if (_clientOutgoingQueue.empty()) {
+				return;
+			}
+
+			packet = _clientOutgoingQueue.front();
+		}
+
 		_socket.async_send_to(boost::asio::buffer(packet->GetBuffer()), packet->GetEndpoint(), [packet](const boost::system::error_code& ec, size_t bytesTransferred) {
 			delete packet;
 		});
-	}
 
-	UDPPacket* nextPacket = NULL;
-	{
-		lock_guard<mutex> lock(_clientOutgoingMutex);
-		_clientOutgoingQueue.pop();
-		if (!_clientOutgoingQueue.empty()) {
-			nextPacket = _clientOutgoingQueue.front();
+		{
+			lock_guard<mutex> lock(_clientOutgoingMutex);
+			_clientOutgoingQueue.pop();
 		}
-	}
-
-	if (nextPacket) {
-		handleOutgoingClientPacket(nextPacket);
 	}
 }
 
-void UDPServer::handleOutgoingServerPacket(UDPPacket* packet) {
+void UDPServer::handleOutgoingServerPacket() {
 	if (_isShuttingDown) {
 		return;
 	}
 
-	if (packet) {
+	while (true) {
+		UDPPacket* packet;
+		{
+			lock_guard<mutex> lock(_serverOutgoingMutex);
+
+			if (_serverOutgoingQueue.empty()) {
+				return;
+			}
+
+			packet = _serverOutgoingQueue.front();
+		}
+
 		_socket.async_send_to(boost::asio::buffer(packet->GetBuffer()), packet->GetEndpoint(), [packet](const boost::system::error_code& ec, size_t bytesTransferred) {
 			delete packet;
 		});
-	}
 
-	UDPPacket* nextPacket = NULL;
-	{
-		lock_guard<mutex> lock(_serverOutgoingMutex);
-		_serverOutgoingQueue.pop();
-		if (!_serverOutgoingQueue.empty()) {
-			nextPacket = _serverOutgoingQueue.front();
+		{
+			lock_guard<mutex> lock(_serverOutgoingMutex);
+			_serverOutgoingQueue.pop();
 		}
-	}
-
-	if (nextPacket) {
-		handleOutgoingServerPacket(nextPacket);
 	}
 }
 
@@ -656,7 +676,7 @@ void UDPServer::sendPacket(UDPPacket* packet, bool isServer) {
 	}
 
 	if (queueIdle) {
-		isServer ? handleOutgoingServerPacket(packet) : handleOutgoingClientPacket(packet);
+		isServer ? handleOutgoingServerPacket() : handleOutgoingClientPacket();
 	}
 }
 

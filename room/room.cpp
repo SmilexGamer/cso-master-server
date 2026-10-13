@@ -55,6 +55,8 @@ void Room::RemoveRoomUser(User* user) {
 		roomManager.RemoveRoom(this);
 	}
 	else {
+		roomManager.UpdateRoom(this);
+
 		vector<User*> roomUsers = _roomUsers;
 
 		roomUsers.erase(remove_if(roomUsers.begin(), roomUsers.end(), [](User* u) {

@@ -2,6 +2,8 @@
 #include "user.h"
 
 constexpr auto BOOKMARK_NAME_MAX_SIZE = 12;
+constexpr auto BOOKMARK_FLASHBANG_MAX = 2;
+constexpr auto BOOKMARK_KEVLAR_MAX = 2;
 
 enum Packet_FavoriteType {
 	UserBuyMenu = 0,

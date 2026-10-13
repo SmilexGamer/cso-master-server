@@ -17,7 +17,7 @@ TCPServer::TCPServer() : _sslContext(boost::asio::ssl::context::sslv23), _accept
 	};
 
 	OnClientPacket = [](TCPConnection::Packet::pointer packet) {
-		packetManager.QueuePacket(packet);
+		packetManager.ParsePacket(packet);
 	};
 }
 

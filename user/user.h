@@ -6,6 +6,7 @@
 #endif
 
 constexpr auto HARDWARE_ID_SIZE = 16;
+constexpr auto DEFAULT_USER_QUICKSTART = 9900;
 
 constexpr auto USERCHARACTER_FLAG_UNK1 =		0x1;
 constexpr auto USERCHARACTER_FLAG_NICKNAME =	0x2;
@@ -56,6 +57,12 @@ struct UserCharacter {
 struct UserCharacterResult {
 	UserCharacter userCharacter;
 	char result = 0;
+};
+
+struct SearchRoomResult {
+	unsigned char serverID = 0;
+	unsigned char channelID = 0;
+	unsigned short roomID = 0;
 };
 
 enum PortType {
@@ -132,16 +139,18 @@ public:
 
 	char CreateUserCharacter(const string& nickName) const noexcept;
 	UserCharacterResult GetUserCharacter(unsigned short flag) const noexcept;
-	char CreateUserBuymenus() const noexcept;
-	char CreateUserBookmarks() const noexcept;
-	char CreateUserInventory() const noexcept;
+	bool CreateUserBuymenus() const noexcept;
+	bool CreateUserBookmarks() const noexcept;
+	bool CreateUserInventory() const noexcept;
 	char AddUserSession() const noexcept;
 	void RemoveUserSession() const noexcept;
 	char AddUserTransfer(const string& authToken, unsigned char serverID, unsigned char channelID) const noexcept;
 	void RemoveUserTransfer() const noexcept;
 	char IsUserCharacterExists() const noexcept;
-	bool SaveUserOption(const vector<unsigned char>& userOption) const noexcept;
-	const vector<unsigned char> GetUserOption() const noexcept;
+	bool SaveUserConfig(const vector<unsigned char>& userConfig) const noexcept;
+	const vector<unsigned char> GetUserConfig() const noexcept;
+	bool SaveUserQuickStart(unsigned long userQuickStart) const noexcept;
+	unsigned long GetUserQuickStart() const noexcept;
 	bool SaveUserBuyMenu(unsigned char categoryID, unsigned char slotID, unsigned char itemID) const noexcept;
 	const vector<BuyMenu> GetUserBuyMenus() const noexcept;
 	bool SaveUserBookMark(const BookMark& userBookMark) const noexcept;

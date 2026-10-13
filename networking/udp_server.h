@@ -329,10 +329,10 @@ private:
 	int shutdown();
 	void startReceive();
 	void handleReceive(const boost::system::error_code& ec, size_t bytes_transferred);
-	void handleIncomingClientPacket(UDPPacket* packet);
-	void handleIncomingServerPacket(UDPPacket* packet);
-	void handleOutgoingClientPacket(UDPPacket* packet);
-	void handleOutgoingServerPacket(UDPPacket* packet);
+	void handleIncomingClientPacket();
+	void handleIncomingServerPacket();
+	void handleOutgoingClientPacket();
+	void handleOutgoingServerPacket();
 	void sendPacket(UDPPacket* packet, bool isServer = false);
 	void sendClientPacket(const boost::asio::ip::udp::endpoint& endpoint, const string& userLogName);
 	void sendRelayPacket(const boost::asio::ip::udp::endpoint& endpoint, vector<unsigned char> buffer, const string& userLogName);

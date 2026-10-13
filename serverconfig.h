@@ -5,6 +5,8 @@
 
 using namespace std;
 
+constexpr auto LIMIT_NEWBIE_LEVEL = 9;
+
 enum ServerType {
 	Normal = 0,
 	Newbie = 1
