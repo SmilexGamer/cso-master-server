@@ -137,7 +137,8 @@ void UDPServer::OnSecondTick() {
 		}), rooms.end());
 
 		for (auto& room : rooms) {
-			roomManager.AddRoom(room);
+			const RoomSettings& roomSettings = room->GetRoomSettings();
+	        databaseManager.AddRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers);
 		}
 	}
 
