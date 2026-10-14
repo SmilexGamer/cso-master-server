@@ -330,7 +330,7 @@ void TCPConnection::onReadBody(const boost::system::error_code& ec, size_t bytes
 	bool queueIdle = false;
 	{
 		lock_guard<mutex> lock(_incomingMutex);
-		queueIdle = _outgoingPackets.empty();
+		queueIdle = _incomingPackets.empty();
 		_incomingPackets.push(packet);
 	}
 
