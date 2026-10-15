@@ -11,8 +11,8 @@ public:
 
 	char AddUser(User* user);
 	void RemoveUser(User* user);
-	void DisconnectUser(User* user, const boost::system::error_code& ec = {});
-	void RemoveAllUsers();
+	void DisconnectUser(User* user);
+	void DisconnectAllUsers();
 	User* GetUserByConnection(TCPConnection::pointer connection);
 	User* GetUserByUserID(unsigned long userID);
 	void DisconnectUserByConnection(TCPConnection::pointer connection, const boost::system::error_code& ec = {});

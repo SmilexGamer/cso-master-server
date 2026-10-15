@@ -49,19 +49,17 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 
 	User* newUser = new User(connection, transferLoginResult.userID, transferLoginResult.userName);
 	char userResult = userManager.AddUser(newUser);
-	if (!userResult) {
+	if (userResult <= 0) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
 			delete newUser;
-			newUser = NULL;
 			return;
 		}
 
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::Playing);
 
 		delete newUser;
-		newUser = NULL;
 		return;
 	}
 
@@ -69,12 +67,10 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
 
 		delete newUser;
-		newUser = NULL;
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(newUser) && connection) {
-		connection->DisconnectClient();
+	if (!userManager.SendLoginPackets(newUser)) {
 		return;
 	}
 }
@@ -133,7 +129,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 		}
 
 		const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_LEVEL);
-		if (!userCharacterResult.result) {
+		if (userCharacterResult.result <= 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 			return;
 		}
@@ -151,7 +147,7 @@ void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::
 		}
 
 		char addUserTransferResult = user->AddUserTransfer(string{ authToken }, serverID, channelID);
-		if (!addUserTransferResult) {
+		if (addUserTransferResult <= 0) {
 			if (addUserTransferResult < 0) {
 				packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 				return;

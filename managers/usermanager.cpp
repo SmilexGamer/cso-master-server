@@ -14,7 +14,7 @@
 UserManager userManager;
 
 UserManager::~UserManager() {
-	RemoveAllUsers();
+	DisconnectAllUsers();
 }
 
 char UserManager::AddUser(User* user) {
@@ -27,7 +27,7 @@ char UserManager::AddUser(User* user) {
 	}
 
 	char result = user->AddUserSession();
-	if (result) {
+	if (result > 0) {
 		_users.push_back(user);
 
 		user->RemoveUserTransfer();
@@ -54,33 +54,27 @@ void UserManager::RemoveUser(User* user) {
 	user->RemoveUserSession();
 	_users.erase(find(_users.begin(), _users.end(), user));
 	delete user;
-	user = NULL;
 
 	UpdateChannelNumPlayers();
 }
 
-void UserManager::DisconnectUser(User* user, const boost::system::error_code& ec) {
+void UserManager::DisconnectUser(User* user) {
 	if (user == NULL) {
 		return;
 	}
 
-	RemoveUser(user);
-
 	auto& connection = user->GetConnection();
-	if (connection == NULL) {
-		return;
+	if (connection) {
+		connection->DisconnectClient();
 	}
-
-	ec ? connection->DisconnectClient(ec) : connection->DisconnectClient();
 }
 
-void UserManager::RemoveAllUsers() {
-	for (auto& user : _users) {
-		delete user;
-		user = NULL;
-	}
+void UserManager::DisconnectAllUsers() {
+	vector<User*> users = _users;
 
-	_users.clear();
+	for (auto& user : users) {
+		DisconnectUser(user);
+	}
 }
 
 User* UserManager::GetUserByConnection(TCPConnection::pointer connection) {
@@ -141,15 +135,15 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 
 	auto& connection = user->GetConnection();
 	if (connection == NULL) {
-		RemoveUser(user);
+		DisconnectUser(user);
 		return false;
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
-		RemoveUser(user);
+		DisconnectUser(user);
 		return false;
 	}
 
@@ -224,7 +218,7 @@ void UserManager::SendFullUserListPacket(TCPConnection::pointer connection) cons
 
 	for (auto& user : users) {
 		userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-		if (userCharacterResult.result) {
+		if (userCharacterResult.result > 0) {
 			gameUsers.push_back({ user, userCharacterResult.userCharacter });
 		}
 	}
@@ -238,7 +232,7 @@ void UserManager::SendAddUserPacketToAll(User* user) const noexcept {
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		return;
 	}
 

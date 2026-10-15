@@ -51,19 +51,17 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 
 	User* newUser = new User(connection, loginResult.userID, userName);
 	char userResult = userManager.AddUser(newUser);
-	if (!userResult) {
+	if (userResult <= 0) {
 		if (userResult < 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
 			delete newUser;
-			newUser = NULL;
 			return;
 		}
 
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::Playing);
 
 		delete newUser;
-		newUser = NULL;
 		return;
 	}
 
@@ -71,12 +69,11 @@ void Packet_LoginManager::ParsePacket_Login(TCPConnection::Packet::pointer packe
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::EXCEED_MAX_CONNECTION);
 
 		delete newUser;
-		newUser = NULL;
 		return;
 	}
 
 	char userCharacterExistsResult = newUser->IsUserCharacterExists();
-	if (!userCharacterExistsResult) {
+	if (userCharacterExistsResult <= 0) {
 		if (userCharacterExistsResult < 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 

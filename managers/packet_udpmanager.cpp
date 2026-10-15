@@ -87,7 +87,7 @@ void Packet_UdpManager::parsePacket_Udp_HolepunchFail(User* user, TCPConnection:
 	unsigned long userID = packet->ReadUInt32_LE();
 
 	User* targetUser = userManager.GetUserByUserID(userID);
-	if (!targetUser) {
+	if (targetUser == NULL) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_UdpManager ] User ({}) has sent Packet_Udp HolepunchFail, but targetUser is not logged in!\n", user->GetUserLogName()));
 		return;
 	}

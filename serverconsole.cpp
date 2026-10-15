@@ -1,6 +1,8 @@
 #include "serverconsole.h"
 #include "tcp_server.h"
 #include "usermanager.h"
+#include "roommanager.h"
+#include "databasemanager.h"
 #include "udp_server.h"
 #include <iostream>
 #include <mutex>
@@ -153,27 +155,60 @@ void ServerConsole::StartRead() {
 			break;
 		}
 		else if (command == "status") {
-			Print(PrefixType::Info, format("[ ServerConsole ] Connected clients: {}, connected users: {}\n", tcpServer.GetConnections().size(), userManager.GetUsers().size()));
+			size_t connectionsCount = tcpServer.GetConnections().size();
+			size_t usersCount = userManager.GetUsers().size();
+
+			Print(PrefixType::Info, format("[ ServerConsole ] Clients: {} ({} logged-in, {} not logged-in), rooms: {}\n", connectionsCount, usersCount, connectionsCount - usersCount, roomManager.GetRooms().size()));
 			continue;
 		}
-		else if (command == "users") {
-			string usersList;
-			vector<User*> users = userManager.GetUsers();
+		else if (command == "clients") {
+			auto connections = tcpServer.GetConnections();
+			size_t usersCount = userManager.GetUsers().size();
 
-			users.erase(remove_if(users.begin(), users.end(), [](User* user) {
-				return (user == NULL);
-			}), users.end());
+			Print(PrefixType::Info, format("[ ServerConsole ] Clients: {} ({} logged-in, {} not logged-in)\n", connections.size(), usersCount, connections.size() - usersCount));
 
-			Print(PrefixType::Info, format("[ ServerConsole ] Connected users: {}\n", users.size()));
-			Print(PrefixType::Info, "[ ServerConsole ] UserID, UserName, IP, Status\n");
+			if (connections.size()) {
+				Print(PrefixType::Info, "[ ServerConsole ] UserID, UserName, IP, Status\n");
+			}
 
-			for (auto& user : users) {
-				Print(PrefixType::Info, format("[ ServerConsole ] {}, {}, {}, {}\n", user->GetUserID(), user->GetUserName(), user->GetUserIPAddress(), (unsigned char)user->GetUserStatus()));
+			for (auto& connection : connections) {
+				User* user = userManager.GetUserByConnection(connection);
+				Print(PrefixType::Info, user ? format("[ ServerConsole ] {}, {}, {}, {}\n", user->GetUserID(), user->GetUserName(), user->GetUserIPAddress(), (unsigned char)user->GetUserStatus()) : format("[ ServerConsole ] 0, Not logged-in, {}, -1\n", connection->GetIPAddress()));
 			}
 			continue;
 		}
+		else if (command == "disconnectallclients") {
+			auto connections = tcpServer.GetConnections();
+			if (connections.size()) {
+				if (roomManager.GetRooms().size()) {
+					roomManager.RemoveAllRooms();
+					databaseManager.RemoveAllRooms();
+				}
+
+				for (auto& connection : connections) {
+					if (userManager.GetUserByConnection(connection) == NULL) {
+						connection->DisconnectClient(true);
+					}
+				}
+
+				userManager.DisconnectAllUsers();
+			}
+
+			Print(PrefixType::Info, connections.size() ? format("[ ServerConsole ] Disconnected {} client{}\n", connections.size(), connections.size() > 1 ? "s" : "") : "[ ServerConsole ] There are no clients to disconnect\n");
+			continue;
+		}
+		else if (command == "removeallrooms") {
+			size_t roomsCount = roomManager.GetRooms().size();
+			if (roomsCount) {
+				roomManager.RemoveAllRooms();
+				databaseManager.RemoveAllRooms();
+			}
+
+			Print(PrefixType::Info, roomsCount ? format("[ ServerConsole ] Removed {} room{}\n", roomsCount, roomsCount > 1 ? "s" : "") : "[ ServerConsole ] There are no rooms to remove\n");
+			continue;
+		}
 		else {
-			Print(PrefixType::Info, "[ ServerConsole ] Available commands: stop, status, users\n");
+			Print(PrefixType::Info, "[ ServerConsole ] Available commands: stop, status, clients, disconectallclients, removeallrooms\n");
 			continue;
 		}
 	}

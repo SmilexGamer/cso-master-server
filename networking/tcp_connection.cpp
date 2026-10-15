@@ -92,7 +92,7 @@ void TCPConnection::Start(PacketHandler&& packetHandler, ErrorHandler&& errorHan
 }
 
 void TCPConnection::WritePacket(TCPConnection::Packet::pointer packet) {
-	if (packet == NULL) {
+	if (packet == NULL || !_sslStream.next_layer().is_open()) {
 		return;
 	}
 

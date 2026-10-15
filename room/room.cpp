@@ -1,4 +1,5 @@
 #include "roommanager.h"
+#include "usermanager.h"
 #include "packet_roommanager.h"
 #include "packet_hostmanager.h"
 #include "serverconsole.h"
@@ -12,6 +13,32 @@ Room::Room(unsigned short roomID, User* roomHostUser) : _roomID(roomID), _roomHo
 	_roomSettings.lowFlag = ROOMSETTINGS_LFLAG_ALL;
 	_roomSettings.highFlag = ROOMSETTINGS_HFLAG_ALL;
 	SetGameMatch(NULL);
+}
+
+Room::~Room() {
+	if (_gameMatch) {
+		delete _gameMatch;
+		SetGameMatch(NULL);
+	}
+
+	for (auto& roomUser : _roomUsers) {
+		auto& connection = roomUser->GetConnection();
+		if (connection == NULL) {
+			continue;
+		}
+
+		roomUser->SetUserStatus(UserStatus::InLobby);
+		roomUser->SetCurrentRoomID(NULL);
+
+		userManager.SendAddUserPacketToAll(roomUser);
+
+		packet_RoomManager.SendPacket_Room_LeaveRoomInGame(connection);
+
+		userManager.SendFullUserListPacket(connection);
+		roomManager.SendFullRoomListPacket(connection);
+	}
+
+	_roomUsers.clear();
 }
 
 char Room::AddRoomUser(User* user) {

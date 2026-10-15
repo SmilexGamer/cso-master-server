@@ -107,6 +107,7 @@ struct RoomSettings {
 class Room {
 public:
 	Room(unsigned short roomID, User* roomHostUser);
+	~Room();
 
 	unsigned short GetRoomID() const noexcept {
 		return _roomID;

@@ -11,7 +11,6 @@ GameMatch::GameMatch(unsigned short roomID) : _roomID(roomID) {
 GameMatch::~GameMatch() {
 	for (auto& gameMatchUser : _gameMatchUsers) {
 		delete gameMatchUser;
-		gameMatchUser = NULL;
 	}
 
 	_gameMatchUsers.clear();
@@ -33,7 +32,6 @@ void GameMatch::RemoveGameMatchUser(GameMatchUser* gameMatchUser) {
 
 	_gameMatchUsers.erase(find(_gameMatchUsers.begin(), _gameMatchUsers.end(), gameMatchUser));
 	delete gameMatchUser;
-	gameMatchUser = NULL;
 }
 
 GameMatchUser* GameMatch::GetGameMatchUserByUser(User* user) {

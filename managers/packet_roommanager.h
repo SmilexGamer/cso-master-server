@@ -63,6 +63,7 @@ public:
 	void SendPacket_Room_UserLeave(TCPConnection::pointer connection, unsigned long userID);
 	void SendPacket_Room_ReplyUpdateRoomSettings(TCPConnection::pointer connection, const RoomSettings& roomSettings);
 	void SendPacket_Room_GameResult(TCPConnection::pointer connection);
+	void SendPacket_Room_LeaveRoomInGame(TCPConnection::pointer connection);
 
 private:
 	void parsePacket_Room_CreateRoom(User* user, TCPConnection::Packet::pointer packet);
@@ -78,7 +79,6 @@ private:
 	void sendPacket_Room_ReplyCreateAndJoin(TCPConnection::pointer connection, Room* room, const vector<GameUser>& gameUsers);
 	void sendPacket_Room_UserJoin(TCPConnection::pointer connection, const GameUser& gameUser);
 	void sendPacket_Room_UserReady(TCPConnection::pointer connection, unsigned long userID, unsigned char ready);
-	void sendPacket_Room_LeaveRoomInGame(TCPConnection::pointer connection);
 };
 
 extern Packet_RoomManager packet_RoomManager;

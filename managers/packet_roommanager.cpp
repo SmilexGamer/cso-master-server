@@ -275,6 +275,21 @@ void Packet_RoomManager::SendPacket_Room_GameResult(TCPConnection::pointer conne
 	packet->Send();
 }
 
+void Packet_RoomManager::SendPacket_Room_LeaveRoomInGame(TCPConnection::pointer connection) {
+	if (connection == NULL) {
+		return;
+	}
+
+	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
+	if (packet == NULL) {
+		return;
+	}
+
+	packet->WriteUInt8(Packet_RoomType::LeaveRoomInGame);
+
+	packet->Send();
+}
+
 void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::Packet::pointer packet) {
 	if (user == NULL || packet == NULL) {
 		return;
@@ -303,11 +318,10 @@ void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
 		delete newRoom;
-		newRoom = NULL;
 		return;
 	}
 
@@ -360,7 +374,7 @@ void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::
 	newRoom->AddRoomUser(user);
 	userManager.SendRemoveUserPacketToAll(user);
 
-	if (!roomManager.AddRoom(newRoom)) {
+	if (roomManager.AddRoom(newRoom) <= 0) {
 		user->SetUserStatus(UserStatus::InLobby);
 		user->SetCurrentRoomID(NULL);
 		userManager.SendAddUserPacketToAll(user);
@@ -368,7 +382,6 @@ void Packet_RoomManager::parsePacket_Room_CreateRoom(User* user, TCPConnection::
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
 		delete newRoom;
-		newRoom = NULL;
 		return;
 	}
 	roomManager.SendAddRoomPacketToAll(newRoom, ROOMLIST_FLAG_ALL);
@@ -418,7 +431,7 @@ void Packet_RoomManager::parsePacket_Room_JoinRoom(User* user, TCPConnection::Pa
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
@@ -445,7 +458,7 @@ void Packet_RoomManager::parsePacket_Room_JoinRoom(User* user, TCPConnection::Pa
 
 	for (auto& u : roomUsers) {
 		uCharacterResult = u->GetUserCharacter(USERCHARACTER_FLAG_ALL);
-		if (uCharacterResult.result) {
+		if (uCharacterResult.result > 0) {
 			gameUsers.push_back({ u, uCharacterResult.userCharacter });
 		}
 
@@ -486,7 +499,7 @@ void Packet_RoomManager::parsePacket_Room_LeaveRoom(User* user, TCPConnection::P
 	room->RemoveRoomUser(user);
 	userManager.SendAddUserPacketToAll(user);
 
-	sendPacket_Room_LeaveRoomInGame(connection);
+	SendPacket_Room_LeaveRoomInGame(connection);
 
 	userManager.SendFullUserListPacket(connection);
 	roomManager.SendFullRoomListPacket(connection);
@@ -1101,21 +1114,6 @@ void Packet_RoomManager::sendPacket_Room_UserReady(TCPConnection::pointer connec
 	packet->WriteUInt8(Packet_RoomType::UserReady);
 	packet->WriteUInt32_LE(userID);
 	packet->WriteUInt8(ready);
-
-	packet->Send();
-}
-
-void Packet_RoomManager::sendPacket_Room_LeaveRoomInGame(TCPConnection::pointer connection) {
-	if (connection == NULL) {
-		return;
-	}
-
-	auto packet = TCPConnection::Packet::Create(PacketSource::Server, connection, { (unsigned char)PacketID::Room });
-	if (packet == NULL) {
-		return;
-	}
-
-	packet->WriteUInt8(Packet_RoomType::LeaveRoomInGame);
 
 	packet->Send();
 }

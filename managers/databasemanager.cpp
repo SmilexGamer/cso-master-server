@@ -113,10 +113,6 @@ char DatabaseManager::CreateUserCharacter(unsigned long userID, const string& ni
         query = format("INSERT INTO user_characters (userID, nickName) VALUES ({}, '{}');", userID, nickName);
 
         if (mysql_query(_connection, query.c_str())) {
-            if (mysql_errno(_connection) == ER_DUP_ENTRY) {
-                return 0;
-            }
-
             serverConsole.Print(PrefixType::Error, format("[ DatabaseManager ] Query error on CreateUserCharacter: {}\n", mysql_error(_connection)));
             return -1;
         }

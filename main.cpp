@@ -15,7 +15,7 @@ static BOOL WINAPI ConsoleCtrlHandler(DWORD CtrlType) {
 		case CTRL_SHUTDOWN_EVENT: {
 			serverConsole.Stop();
 			roomManager.RemoveAllRooms();
-			userManager.RemoveAllUsers();
+			userManager.DisconnectAllUsers();
 			databaseManager.Shutdown();
 			tcpServer.Stop();
 			udpServer.Stop();

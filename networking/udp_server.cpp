@@ -122,7 +122,7 @@ void UDPServer::OnSecondTick() {
 				userManager.DisconnectUser(user);
 			}
 			else if (isUserSessionAddedResult == 0) {
-				if (!user->AddUserSession()) {
+				if (user->AddUserSession() <= 0) {
 					userManager.DisconnectUser(user);
 				}
 			}
@@ -138,7 +138,10 @@ void UDPServer::OnSecondTick() {
 
 		for (auto& room : rooms) {
 			const RoomSettings& roomSettings = room->GetRoomSettings();
-	        databaseManager.AddRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers);
+
+			if (databaseManager.AddRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers) <= 0) {
+				roomManager.RemoveRoom(room);
+			}
 		}
 	}
 
@@ -278,7 +281,6 @@ void UDPServer::handleReceive(const boost::system::error_code& ec, size_t bytes_
 				serverConsole.Log(PrefixType::Debug, format("[ UDPServer ] Client ({}:{}) sent UDP packet with invalid signature!\n", packet->GetEndpoint().address().to_string(), packet->GetEndpoint().port()));
 #endif
 				delete packet;
-				packet = NULL;
 				break;
 			}
 		}

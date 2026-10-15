@@ -92,11 +92,11 @@ int TCPServer::shutdown() {
 
 			_ioContext.stop();
 
-			for (auto& connection : _connections) {
-				connection->DisconnectClient(false);
+			auto connections = _connections;
+			for (auto& connection : connections) {
+				connection->DisconnectClient(true);
 			}
 
-			_connections.clear();
 			_tcpServerThread.detach();
 		}
 	}
@@ -128,10 +128,10 @@ void TCPServer::startAccept() {
 					if (auto shared = weak.lock(); shared) {
 						if (eraseConnection) {
 							_connections.erase(shared);
-						}
 
-						if (OnDisconnect) {
-							OnDisconnect(shared);
+							if (OnDisconnect) {
+								OnDisconnect(shared);
+							}
 						}
 					}
 				}

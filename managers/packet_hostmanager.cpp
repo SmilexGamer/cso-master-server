@@ -181,8 +181,7 @@ void Packet_HostManager::parsePacket_Host_ServerIsActivated(User* user) {
 
 	serverConsole.Print(PrefixType::Info, format("[ Packet_HostManager ] User ({}) has sent Packet_Host ServerIsActivated\n", user->GetUserLogName()));
 
-	GameMatch* gameMatch = room->GetGameMatch();
-	if (gameMatch == NULL) {
+	if (room->GetGameMatch() == NULL) {
 		GameMatch* newGameMatch = new GameMatch(room->GetRoomID());
 		if (newGameMatch == NULL) {
 			return;
@@ -280,7 +279,7 @@ void Packet_HostManager::parsePacket_Host_SendUserStatus(User* user, TCPConnecti
 	unsigned long userID = packet->ReadUInt32_LE();
 
 	User* targetUser = userManager.GetUserByUserID(userID);
-	if (!targetUser) {
+	if (targetUser == NULL) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host SendUserStatus, but targetUser is not logged in!\n", user->GetUserLogName()));
 		return;
 	}
@@ -309,8 +308,8 @@ void Packet_HostManager::parsePacket_Host_SendUserStatus(User* user, TCPConnecti
 
 	serverConsole.Print(PrefixType::Info, format("[ Packet_HostManager ] User ({}) has sent Packet_Host SendUserStatus - userID: {}, status: {}\n", user->GetUserLogName(), userID, status));
 
-	GameMatchUser* gameMatchUser = new GameMatchUser(targetUser);
-	if (!gameMatch->AddGameMatchUser(gameMatchUser)) {
+	GameMatchUser* newGameMatchUser = new GameMatchUser(targetUser);
+	if (!gameMatch->AddGameMatchUser(newGameMatchUser)) {
 		return;
 	}
 
@@ -348,7 +347,7 @@ void Packet_HostManager::parsePacket_Host_PlayerKilled(User* user, TCPConnection
 
 	if (attackerUserID) {
 		User* targetUser = userManager.GetUserByUserID(attackerUserID);
-		if (!targetUser) {
+		if (targetUser == NULL) {
 			serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host PlayerKilled, but targetUser is not logged in!\n", user->GetUserLogName()));
 			return;
 		}
@@ -508,7 +507,7 @@ void Packet_HostManager::parsePacket_Host_AddKill(User* user, TCPConnection::Pac
 
 	if (userID) {
 		User* targetUser = userManager.GetUserByUserID(userID);
-		if (!targetUser) {
+		if (targetUser == NULL) {
 			serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host AddKill, but targetUser is not logged in!\n", user->GetUserLogName()));
 			return;
 		}
@@ -556,7 +555,7 @@ void Packet_HostManager::parsePacket_Host_AddDeath(User* user, TCPConnection::Pa
 	unsigned long userID = packet->ReadUInt32_LE();
 
 	User* targetUser = userManager.GetUserByUserID(userID);
-	if (!targetUser) {
+	if (targetUser == NULL) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host AddDeath, but targetUser is not logged in!\n", user->GetUserLogName()));
 		return;
 	}
@@ -637,7 +636,7 @@ void Packet_HostManager::parsePacket_Host_SelectTeam(User* user, TCPConnection::
 	unsigned long userID = packet->ReadUInt32_LE();
 
 	User* targetUser = userManager.GetUserByUserID(userID);
-	if (!targetUser) {
+	if (targetUser == NULL) {
 		serverConsole.Print(PrefixType::Warn, format("[ Packet_HostManager ] User ({}) has sent Packet_Host SelectTeam, but targetUser is not logged in!\n", user->GetUserLogName()));
 		return;
 	}

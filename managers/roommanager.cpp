@@ -12,13 +12,13 @@ RoomManager::~RoomManager() {
 
 char RoomManager::AddRoom(Room* room) {
 	if (room == NULL) {
-		return false;
+		return -1;
 	}
 
 	const RoomSettings& roomSettings = room->GetRoomSettings();
 
 	char result = databaseManager.AddRoom(room->GetRoomID(), false, !roomSettings.password.empty(), roomSettings.levelLimit, roomSettings.gameModeID, roomSettings.mapID, (unsigned char)room->GetRoomUsers().size(), roomSettings.maxPlayers);
-	if (result) {
+	if (result > 0) {
 		_rooms.push_back(room);
 	}
 
@@ -58,29 +58,21 @@ void RoomManager::RemoveRoom(Room* room) {
 
 	_rooms.erase(find(_rooms.begin(), _rooms.end(), room));
 
-	GameMatch* gameMatch = room->GetGameMatch();
-	if (gameMatch) {
-		delete gameMatch;
-		room->SetGameMatch(NULL);
-	}
-
 	delete room;
-	room = NULL;
 }
 
 void RoomManager::RemoveAllRooms() {
-	for (auto& room : _rooms) {
-		GameMatch* gameMatch = room->GetGameMatch();
-		if (gameMatch) {
-			delete gameMatch;
-			room->SetGameMatch(NULL);
-		}
-
-		delete room;
-		room = NULL;
-	}
+	vector<Room*> rooms = _rooms;
 
 	_rooms.clear();
+
+	for (auto& room : rooms) {
+		unsigned short roomID = room->GetRoomID();
+
+		roomManager.SendRemoveRoomPacketToAll(roomID);
+
+		delete room;
+	}
 }
 
 Room* RoomManager::GetRoomByRoomID(unsigned short roomID) {

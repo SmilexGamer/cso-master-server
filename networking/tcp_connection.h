@@ -507,7 +507,7 @@ public:
 
 	void Start(PacketHandler&& packetHandler, ErrorHandler&& errorHandler);
 	void WritePacket(TCPConnection::Packet::pointer packet);
-	void DisconnectClient(bool eraseConnection = true);
+	void DisconnectClient(bool eraseConnection = false);
 	void DisconnectClient(boost::system::error_code ec);
 	bool SetupDecryptCipher(CipherMethod method);
 	bool SetupEncryptCipher(CipherMethod method);

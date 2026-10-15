@@ -83,26 +83,26 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		}
 	}
 
-	char createUserBuymenusResult = user->CreateUserBuymenus();
+	bool createUserBuymenusResult = user->CreateUserBuymenus();
 	if (!createUserBuymenusResult) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 
-	char createUserBookmarksResult = user->CreateUserBookmarks();
+	bool createUserBookmarksResult = user->CreateUserBookmarks();
 	if (!createUserBookmarksResult) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 
-	char createUserInventoryResult = user->CreateUserInventory();
+	bool createUserInventoryResult = user->CreateUserInventory();
 	if (!createUserInventoryResult) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
 
 	char createUserCharacterResult = user->CreateUserCharacter(nickName);
-	if (!createUserCharacterResult) {
+	if (createUserCharacterResult <= 0) {
 		if (createUserCharacterResult < 0) {
 			packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 			return;
@@ -112,8 +112,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess) && connection) {
-		connection->DisconnectClient();
+	if (!userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess)) {
 		return;
 	}
 }

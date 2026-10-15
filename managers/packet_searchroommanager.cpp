@@ -32,7 +32,7 @@ void Packet_SearchRoomManager::ParsePacket_SearchRoom(TCPConnection::Packet::poi
 	serverConsole.Print(PrefixType::Info, format("[ Packet_SearchRoomManager ] User ({}) has sent Packet_SearchRoom - gameModeID: {}, mapID: {}, levelLimit: {}, clanBattle: {}\n", connection->GetLogEndpoint(), gameModeID, mapID, levelLimit, clanBattle));
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_LEVEL);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}

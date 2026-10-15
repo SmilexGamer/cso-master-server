@@ -98,7 +98,7 @@ void Packet_UMsgManager::parsePacket_UMsg_WhisperChat(User* user, TCPConnection:
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_NICKNAME);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
@@ -119,7 +119,7 @@ void Packet_UMsgManager::parsePacket_UMsg_WhisperChat(User* user, TCPConnection:
 
 	for (auto& u : users) {
 		uCharacterResult = u->GetUserCharacter(USERCHARACTER_FLAG_NICKNAME);
-		if (uCharacterResult.result && uCharacterResult.userCharacter.nickName == receiverNickName) {
+		if (uCharacterResult.result > 0 && uCharacterResult.userCharacter.nickName == receiverNickName) {
 			packet_UMsgManager.SendPacket_UMsg_ServerMessage(connection, Packet_UMsgType::InfoMessage, "MSG_TELL_OK", { receiverNickName });
 			packet_UMsgManager.sendPacket_UMsg_Chat(u->GetConnection(), Packet_UMsgType::WhisperChat, userCharacterResult.userCharacter.nickName, text);
 
@@ -149,7 +149,7 @@ void Packet_UMsgManager::parsePacket_UMsg_ChannelChat(User* user, TCPConnection:
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_NICKNAME);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
@@ -191,7 +191,7 @@ void Packet_UMsgManager::parsePacket_UMsg_RoomChat(User* user, TCPConnection::Pa
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_NICKNAME);
-	if (!userCharacterResult.result) {
+	if (userCharacterResult.result <= 0) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 		return;
 	}
