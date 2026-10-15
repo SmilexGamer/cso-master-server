@@ -17,7 +17,7 @@ public:
 	User* GetUserByUserID(unsigned long userID);
 	void DisconnectUserByConnection(TCPConnection::pointer connection, const boost::system::error_code& ec = {});
 	bool IsUserLoggedIn(User* user);
-	bool SendLoginPackets(User* user, Packet_ReplyType reply = Packet_ReplyType::NoReply);
+	void SendLoginPackets(User* user, Packet_ReplyType reply = Packet_ReplyType::NoReply);
 	void SendFullUserListPacket(TCPConnection::pointer connection) const noexcept;
 	void SendAddUserPacketToAll(User* user) const noexcept;
 	void SendRemoveUserPacketToAll(User* user) const noexcept;

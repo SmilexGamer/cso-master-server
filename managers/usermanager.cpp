@@ -128,15 +128,15 @@ bool UserManager::IsUserLoggedIn(User* user) {
 	return true;
 }
 
-bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
+void UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 	if (user == NULL) {
-		return false;
+		return;
 	}
 
 	auto& connection = user->GetConnection();
 	if (connection == NULL) {
 		DisconnectUser(user);
-		return false;
+		return;
 	}
 
 	const UserCharacterResult& userCharacterResult = user->GetUserCharacter(USERCHARACTER_FLAG_ALL);
@@ -144,7 +144,7 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		packetManager.SendPacket_Reply(connection, Packet_ReplyType::SysError);
 
 		DisconnectUser(user);
-		return false;
+		return;
 	}
 
 	if (connection->SetupEncryptCipher(serverConfig.encryptCipherMethod)) {
@@ -198,8 +198,6 @@ bool UserManager::SendLoginPackets(User* user, Packet_ReplyType reply) {
 		SendFullUserListPacket(connection);
 		roomManager.SendFullRoomListPacket(connection);
 	}
-
-	return true;
 }
 
 void UserManager::SendFullUserListPacket(TCPConnection::pointer connection) const noexcept {

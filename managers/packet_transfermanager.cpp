@@ -70,9 +70,7 @@ void Packet_TransferManager::ParsePacket_TransferLogin(TCPConnection::Packet::po
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(newUser)) {
-		return;
-	}
+	userManager.SendLoginPackets(newUser);
 }
 
 void Packet_TransferManager::ParsePacket_RequestTransfer(TCPConnection::Packet::pointer packet) {

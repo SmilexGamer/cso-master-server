@@ -112,9 +112,7 @@ void Packet_CharacterManager::ParsePacket_RecvCharacter(TCPConnection::Packet::p
 		return;
 	}
 
-	if (!userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess)) {
-		return;
-	}
+	userManager.SendLoginPackets(user, Packet_ReplyType::CreateCharacterSuccess);
 }
 
 void Packet_CharacterManager::SendPacket_Character(TCPConnection::pointer connection) {
